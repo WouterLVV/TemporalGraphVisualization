@@ -352,3 +352,8 @@ dmypy.json
 .pytype/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,pycharm+all,pycharm+iml
+
+.idea/
+output/
+data/
+tijd doina
