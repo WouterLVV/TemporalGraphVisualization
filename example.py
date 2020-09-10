@@ -39,7 +39,7 @@ import csv
 #     print(track)
 #     g.draw_graph(False, track)
 
-with open("co-presence/tij_pres_LyonSchool.dat", 'r') as f:
+with open("data/tij_pres_LyonSchool.dat", 'r') as f:
     reader = csv.reader(f, delimiter=" ")
     data = [(int(d[1]), int(d[2]), int((int(d[0])-34240)/20)) for d in reader if int(d[0]) < 36000]
     nodes = [d[0] for d in data]

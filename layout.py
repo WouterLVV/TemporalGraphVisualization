@@ -4,22 +4,29 @@ import cairo
 class SugiyamaCluster:
     def __init__(self, tc: TimeCluster):
         self.tc = tc
+        tc.sc = self
 
         self.rank = self.tc.id
         self.root = self
         self.align = self
         self.ys = []
 
+        self.ysize = 1.
+
         self.pos = (-1., -1.)
         self.ypos = -1.
+
+    def __str__(self):
+        return f"SugiyamaCluster {str((self.tc.layer, self.tc.id))}/{self.rank} at {str(self.pos)}"
 
 
 class SugiyamaLayout:
     def __init__(self, g: TimeGraph):
         self.g = g
-        self.orders = [self.g.clusters[t].copy() for t in range(self.g.num_steps)]
+
         self.clusters = [[SugiyamaCluster(self.g.clusters[t][i]) for i in range(len(self.g.clusters[t]))] for t in
                          range(self.g.num_steps)]
+        self.orders = [self.clusters[t].copy() for t in range(self.g.num_steps)]
 
         self.num_layers = self.g.num_steps
 
@@ -30,7 +37,15 @@ class SugiyamaLayout:
         self.xmargin = 1.
         self.ymargin = 1.
 
+        self.cluster_height_scale = 0.4
+
         self.bottom = 0.
+
+        self.cluster_width = 0.5
+        self.line_width = 0.2
+        self.line_separation = 0.1
+
+        self.cluster_margin = 0.5-self.line_width-self.line_separation
 
 
     # ---------------- Helper Functions -------------------#
@@ -54,12 +69,12 @@ class SugiyamaLayout:
         :return: The cluster and the weight of the connection
         """
         incomings = list(c.tc.incoming.items())
-        incomings.sort(key=lambda x: (len(x[1]), self.clusters[c.tc.layer - 1][x[0]].rank), reverse=True)
+        incomings.sort(key=lambda x: (len(x[1]), x[0].sc.rank), reverse=True)
         ptr = 0
         while ptr < len(incomings) and len(incomings[ptr][1]) == len(incomings[0][1]):
             ptr += 1
 
-        brother = self.clusters[c.tc.layer - 1][incomings[(ptr - (1 if lower else 0)) // 2][0]]
+        brother = incomings[(ptr - (1 if lower else 0)) // 2][0].sc
         connsize = len(incomings[0][1])
         return brother, connsize
 
@@ -99,8 +114,8 @@ class SugiyamaLayout:
             pass_ctr += 1
             forward = not forward
             print(pass_ctr)
-
-        self.expand3(orders_new)
+        self.orders = orders_new
+        self.expand3()
 
     def barycenter_pass(self, forward, ignore_loners=False):
         if forward:
@@ -136,8 +151,8 @@ class SugiyamaLayout:
 
             while True:
                 if w.rank > 0:
-                    u = self.pred(w).root
-                    self.place_plock(u)
+                    u = self.pred(w)
+                    self.place_plock(u.root)
 
                     # # Sink stuff does not work properly
                     # if v.sink == v:
@@ -145,27 +160,27 @@ class SugiyamaLayout:
                     # if v.sink != u.sink:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
-                    v.ypos = max(v.ypos, u.ypos + self.yseparation)
+                    v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (v.ysize + u.ysize)/2.)
 
                 w = w.align
                 if w == v:
                     break
 
-    def expand3(self, orders, ignore_loners=False):
+    def expand3(self, ignore_loners=False):
         inf = float('inf')
         for tc in self.clusters:
             for cluster in tc:
                 cluster.align = cluster
                 cluster.root = cluster
-                cluster.sink = cluster
-                cluster.shift = inf
-                cluster.ysize = len(cluster.tc)
+                # cluster.sink = cluster
+                # cluster.shift = inf
+                cluster.ysize = len(cluster.tc) * self.cluster_height_scale
                 cluster.ypos = -1.
 
         for t in range(1, self.g.num_steps):
             r = -1
 
-            for cluster in orders[t]:
+            for cluster in self.orders[t]:
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
                 brother, connsize = self.largest_median_incoming(cluster)
 
@@ -177,16 +192,16 @@ class SugiyamaLayout:
                     # priority to the new connection is only given if the weight is higher than all crossings
                     if brother.rank <= r:
                         for i in range(brother.rank, r + 1):
-                            prev_cluster = orders[t - 1][i]
+                            prev_cluster = self.orders[t - 1][i]
                             if prev_cluster.align != prev_cluster.root and len(
-                                    prev_cluster.outgoing[prev_cluster.align.id]) > connsize:
+                                    prev_cluster.tc.outgoing[prev_cluster.align.tc]) > connsize:
                                 allowed = False
                                 break
 
                         # If the new connection is allowed to exist, first remove all current connections that cross it
                         if allowed:
                             for i in range(brother.rank, r + 1):
-                                prev_cluster = orders[t - 1][i]
+                                prev_cluster = self.orders[t - 1][i]
                                 if prev_cluster.align != prev_cluster.root: # prev_cluster must not be an endpoint
                                     node_to_reset = prev_cluster.align
                                     node_to_reset.align = node_to_reset
@@ -201,18 +216,15 @@ class SugiyamaLayout:
                         r = brother.rank
 
 
-
         for cluster in [cluster for tc in self.clusters for cluster in tc]:
             if cluster.root == cluster:
                 self.place_plock(cluster)
         self.bottom = 0.
         for cluster in [cluster for tc in self.clusters for cluster in tc]:
-            if cluster.layer == 4 and cluster.id == 14:
-                print("poepie")
             cluster.ypos = cluster.root.ypos
             # if cluster.root.sink.shift < inf:
             #     cluster.ypos += cluster.root.sink.shift
-            cluster.pos = (cluster.layer * self.xseparation + self.xmargin,
+            cluster.pos = (cluster.tc.layer * self.xseparation + self.xmargin,
                            cluster.ypos)  # + (cluster.root.sink.shift if cluster.root.sink.shift < inf else 0.))
 
         down = min([cluster.pos[1] for tc in self.clusters for cluster in tc]) - self.ymargin
@@ -221,7 +233,7 @@ class SugiyamaLayout:
 
         self.bottom = max([cluster.pos[1] for tc in self.clusters for cluster in tc])
         print("done")
-        for (i, order) in enumerate(orders):
+        for (i, order) in enumerate(self.orders):
             prev = -1
             for cluster in order:
                 if cluster.pos[1] <= prev:
@@ -242,37 +254,64 @@ class SugiyamaLayout:
             context.scale(self.scale, self.scale)
 
             context.set_source_rgb(1., 0., 0.)
-            context.set_line_width(0.1)
-            for t in range(self.g.num_steps - 1):
+            context.set_line_width(self.line_width)
+            rel_line_coords = dict()
+            for t in range(self.g.num_steps):
                 for cluster in self.clusters[t]:
-                    if ignore_loners and len(cluster) <= 1:
+                    tcluster = cluster.tc
+                    incomings = list(tcluster.incoming.items())
+                    incomings.sort(key=lambda x: x[0].sc.rank)
+                    outgoings = list(tcluster.outgoing.items())
+                    outgoings.sort(key=lambda x: x[0].sc.rank)
+
+                    ctr = 0
+                    total = len(cluster.tc)
+                    for (c, members) in incomings:
+                        width = len(members)
+                        rel_line_coords[(tcluster, c)] = (ctr + width/2)/total
+                        ctr += width
+
+                    ctr = 0
+                    for (c, members) in outgoings:
+                        width = len(members)
+                        rel_line_coords[(tcluster, c)] = (ctr + width / 2) / total
+                        ctr += width
+
+            for t in range(self.g.num_steps-1):
+                for cluster in self.clusters[t]:
+                    if ignore_loners and len(cluster.tc) <= 1:
                         continue
 
-                    smid = cluster.pos[1]
+                    stop = cluster.pos[1] - cluster.ysize/2.
+                    outgoings = list(cluster.tc.outgoing.items())
 
-                    for (target_id, members) in cluster.outgoing.items():
-                        target = self.clusters[t + 1][target_id]
-                        if ignore_loners and len(target) == 1:
+                    for (ttarget, members) in outgoings:
+                        starget = ttarget.sc
+                        if ignore_loners and len(ttarget) == 1:
                             continue
                         weight = len(members)
-                        context.set_line_width(0.1 * weight)
+                        context.set_line_width(self.line_width * weight)
                         if len(marked_nodes.intersection(members)) > 0:
                             context.set_source_rgb(0., 0., 1.)
                         else:
                             context.set_source_rgb(1., 0., 0.)
 
-                        tmid = target.pos[1]
-                        context.move_to(cluster.pos[0], smid)
+                        ttop = starget.pos[1] - starget.ysize/2.
 
-                        context.curve_to(cluster.pos[0] + self.xseparation * 0.3, smid,
-                                         target.pos[0] - self.xseparation * 0.3, tmid, target.pos[0], tmid)
+                        source_y = stop + cluster.ysize*self.cluster_margin + cluster.ysize * (1-2*self.cluster_margin) * rel_line_coords[(cluster.tc, ttarget)]
+                        target_y = ttop + starget.ysize*self.cluster_margin + starget.ysize * (1-2*self.cluster_margin) * rel_line_coords[(ttarget, cluster.tc)]
+                        context.move_to(cluster.pos[0], source_y)
+
+                        context.curve_to(cluster.pos[0] + self.xseparation * 0.3, source_y,
+                                         starget.pos[0] - self.xseparation * 0.3, target_y, starget.pos[0], target_y)
 
                         # context.line_to(target.pos[0], tmid)
                         context.stroke()
 
             context.stroke()
 
-            context.set_line_width(0.3)
+            context.set_line_width(self.cluster_width)
+            context.set_source_rgb(0., 0., 0.)
 
             for t in range(self.g.num_steps):
                 for cluster in self.clusters[t]:
