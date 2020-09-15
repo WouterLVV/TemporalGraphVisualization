@@ -55,7 +55,7 @@ with open("data/tij_pres_LyonSchool.dat", 'r') as f:
     track.add(41)
     track.add(100)
     print(track)
-    sg = SugiyamaLayout(g)
+    sg = SugiyamaLayout(g, minimum_cluster_size=2, minimum_connections_size=1)
     sg.draw_graph(False, track, 50)
 
 # with open("data/primaryschool.csv", 'r') as f:

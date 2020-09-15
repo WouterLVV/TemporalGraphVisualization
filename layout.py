@@ -16,16 +16,49 @@ class SugiyamaCluster:
         self.pos = (-1., -1.)
         self.ypos = -1.
 
+        self.members = self.tc.members
+
+        self.incoming = dict()
+        self.outgoing = dict()
+
+        self.insize = 0
+        self.outsize = 0
+
+
+
+
     def __str__(self):
         return f"SugiyamaCluster {str((self.tc.layer, self.tc.id))}/{self.rank} at {str(self.pos)}"
 
 
 class SugiyamaLayout:
-    def __init__(self, g: TimeGraph):
+    def __init__(self, g: TimeGraph, minimum_cluster_size=0, minimum_connections_size=0):
         self.g = g
 
-        self.clusters = [[SugiyamaCluster(self.g.clusters[t][i]) for i in range(len(self.g.clusters[t]))] for t in
-                         range(self.g.num_steps)]
+        self.clusters = [
+                [SugiyamaCluster(self.g.clusters[t][i]) for i in range(len(self.g.clusters[t]))
+                                                        if len(self.g.clusters[t][i]) >= minimum_cluster_size]
+            for t in range(self.g.num_steps)]
+
+        for t in range(self.g.num_steps):
+            for cluster in self.clusters[t]:
+                for c, mems in cluster.tc.incoming.items():
+                    if len(mems) >= minimum_connections_size and len(c) >= minimum_cluster_size:
+                        cluster.incoming[c.sc] = len(mems)
+                        cluster.insize += len(mems)
+
+                        c.sc.outgoing[cluster] = len(mems)
+                        c.sc.outsize += len(mems)
+
+        toremove = set()
+        for t in range(self.g.num_steps):
+            for cluster in self.clusters[t]:
+                if cluster.outsize + cluster.insize == 0:
+                    toremove.add(cluster)
+
+        for cluster in toremove:
+            self.clusters[cluster.tc.layer].remove(cluster)
+
         self.orders = [self.clusters[t].copy() for t in range(self.g.num_steps)]
 
         self.num_layers = self.g.num_steps
@@ -41,7 +74,7 @@ class SugiyamaLayout:
 
         self.bottom = 0.
 
-        self.cluster_width = 0.5
+        self.cluster_width = 2.
         self.line_width = 0.2
         self.line_separation = 0.1
 
@@ -68,14 +101,17 @@ class SugiyamaLayout:
         :param c: Cluster to find the incoming median of
         :return: The cluster and the weight of the connection
         """
-        incomings = list(c.tc.incoming.items())
-        incomings.sort(key=lambda x: (len(x[1]), x[0].sc.rank), reverse=True)
+        if c.insize == 0:
+            return None, 0
+
+        incomings = list(c.incoming.items())
+        incomings.sort(key=lambda x: (x[1], x[0].rank), reverse=True)
         ptr = 0
-        while ptr < len(incomings) and len(incomings[ptr][1]) == len(incomings[0][1]):
+        while ptr < len(incomings) and incomings[ptr][1] == incomings[0][1]:
             ptr += 1
 
-        brother = incomings[(ptr - (1 if lower else 0)) // 2][0].sc
-        connsize = len(incomings[0][1])
+        brother = incomings[(ptr - (1 if lower else 0)) // 2][0]
+        connsize = incomings[0][1]
         return brother, connsize
 
 
@@ -85,63 +121,56 @@ class SugiyamaLayout:
 
         # First layer is initialized on their id
         for i, cluster in enumerate(self.clusters[0]):
-            if ignore_loners and len(cluster.tc) == 1:
-                continue
             cluster.pos = (self.xmargin, i)
             cluster.rank = i
 
-
+        orders = [self.clusters[t].copy() for t in range(self.g.num_steps)]
+        orders_tmp = [order.copy() for order in orders]
         forward = True
-        pass_ctr = 1
-        orders_old = self.barycenter_pass(forward, ignore_loners)
-        orders_new = None
-        forward = False
+        pass_ctr = 0
 
         # Keep doing passes until the maximum number has been reached or the order does no longer change
         # Always end with a forward pass
         while pass_ctr < max_pass or forward:
-            orders_new = self.barycenter_pass(forward, ignore_loners)
+            orders = self.barycenter_pass(forward, orders)
+
             if forward:
                 unchanged = True
                 for t in range(self.num_layers - 1):
-                    unchanged &= orders_old[t] == orders_new[t]
+                    unchanged &= orders[t] == orders_tmp[t]
                     if not unchanged:
                         break
                 if unchanged:
                     break
-                orders_old = orders_new
+                orders_tmp = [order.copy() for order in orders]
 
             pass_ctr += 1
             forward = not forward
             print(pass_ctr)
-        self.orders = orders_new
+        self.orders = orders
         self.expand3()
 
-    def barycenter_pass(self, forward, ignore_loners=False):
+    def barycenter_pass(self, forward, orders):
         if forward:
             r = range(1, self.num_layers)
-            s = 0
-            prev = 1
         else:
             r = range(self.num_layers - 2, -1, -1)
-            s = self.num_layers - 1
-            prev = -1
-        orders = []
-        order = self.clusters[s].copy()
-        order.sort(key=lambda c: c.rank)
-        orders.append(order)
+
         for t in r:
-            order = []
-            for cluster in self.clusters[t]:
-                if ignore_loners and len(cluster.tc) == 1:
-                    continue
-                cluster.rank = sum([self.clusters[t - prev][self.g.nodes[n].clusters[t - prev]].rank for n in
-                                    cluster.tc.members]) / len(cluster.tc)
-                order.append(cluster)
+            order = orders[t]
+            for cluster in order:
+
+                if forward:
+                    if cluster.insize > 0:
+                        cluster.rank = sum([n.rank * l for n, l in cluster.incoming.items()]) / cluster.insize
+                else:
+                    if cluster.outsize > 0:
+                        cluster.rank = sum([n.rank * l for n, l in cluster.outgoing.items()]) / cluster.outsize
+
             order.sort(key=lambda c: c.rank)
             for i, cluster in enumerate(order):
                 cluster.rank = i
-            orders.append(order)
+
         return orders
 
     def place_plock(self, v):
@@ -184,7 +213,7 @@ class SugiyamaLayout:
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
                 brother, connsize = self.largest_median_incoming(cluster)
 
-                if cluster.align == cluster:
+                if cluster.align == cluster and brother is not None:
 
                     allowed = True
 
@@ -193,8 +222,7 @@ class SugiyamaLayout:
                     if brother.rank <= r:
                         for i in range(brother.rank, r + 1):
                             prev_cluster = self.orders[t - 1][i]
-                            if prev_cluster.align != prev_cluster.root and len(
-                                    prev_cluster.tc.outgoing[prev_cluster.align.tc]) > connsize:
+                            if prev_cluster.align != prev_cluster.root and prev_cluster.outgoing[prev_cluster.align] > connsize:
                                 allowed = False
                                 break
 
@@ -241,7 +269,7 @@ class SugiyamaLayout:
                 prev = cluster.pos[1]
 
 
-    # ---------------- Drawing Functions -------------------#
+    # ---------------- Drawing Functions ------------------- #
 
     def draw_graph(self, ignore_loners=False, marked_nodes=None, max_iterations=100):
         if marked_nodes is None:
@@ -258,52 +286,46 @@ class SugiyamaLayout:
             rel_line_coords = dict()
             for t in range(self.g.num_steps):
                 for cluster in self.clusters[t]:
-                    tcluster = cluster.tc
-                    incomings = list(tcluster.incoming.items())
-                    incomings.sort(key=lambda x: x[0].sc.rank)
-                    outgoings = list(tcluster.outgoing.items())
-                    outgoings.sort(key=lambda x: x[0].sc.rank)
+                    incomings = list(cluster.incoming.items())
+                    incomings.sort(key=lambda x: x[0].rank)
+                    outgoings = list(cluster.outgoing.items())
+                    outgoings.sort(key=lambda x: x[0].rank)
 
                     ctr = 0
-                    total = len(cluster.tc)
                     for (c, members) in incomings:
-                        width = len(members)
-                        rel_line_coords[(tcluster, c)] = (ctr + width/2)/total
+                        width = members
+                        rel_line_coords[(cluster, c)] = (ctr + width/2)/cluster.insize
                         ctr += width
 
                     ctr = 0
                     for (c, members) in outgoings:
-                        width = len(members)
-                        rel_line_coords[(tcluster, c)] = (ctr + width / 2) / total
+                        width = members
+                        rel_line_coords[(cluster, c)] = (ctr + width / 2) / cluster.outsize
                         ctr += width
 
             for t in range(self.g.num_steps-1):
                 for cluster in self.clusters[t]:
-                    if ignore_loners and len(cluster.tc) <= 1:
-                        continue
 
                     stop = cluster.pos[1] - cluster.ysize/2.
-                    outgoings = list(cluster.tc.outgoing.items())
+                    outgoings = list(cluster.outgoing.items())
 
-                    for (ttarget, members) in outgoings:
-                        starget = ttarget.sc
-                        if ignore_loners and len(ttarget) == 1:
-                            continue
-                        weight = len(members)
+                    for (target, members) in outgoings:
+
+                        weight = members
                         context.set_line_width(self.line_width * weight)
-                        if len(marked_nodes.intersection(members)) > 0:
+                        if len(marked_nodes.intersection(cluster.tc.outgoing[target.tc])) > 0:
                             context.set_source_rgb(0., 0., 1.)
                         else:
                             context.set_source_rgb(1., 0., 0.)
 
-                        ttop = starget.pos[1] - starget.ysize/2.
+                        ttop = target.pos[1] - target.ysize/2.
 
-                        source_y = stop + cluster.ysize*self.cluster_margin + cluster.ysize * (1-2*self.cluster_margin) * rel_line_coords[(cluster.tc, ttarget)]
-                        target_y = ttop + starget.ysize*self.cluster_margin + starget.ysize * (1-2*self.cluster_margin) * rel_line_coords[(ttarget, cluster.tc)]
+                        source_y = stop + cluster.ysize*self.cluster_margin + cluster.ysize * (1-2*self.cluster_margin) * rel_line_coords[(cluster, target)]
+                        target_y = ttop + target.ysize*self.cluster_margin + target.ysize * (1-2*self.cluster_margin) * rel_line_coords[(target, cluster)]
                         context.move_to(cluster.pos[0], source_y)
 
                         context.curve_to(cluster.pos[0] + self.xseparation * 0.3, source_y,
-                                         starget.pos[0] - self.xseparation * 0.3, target_y, starget.pos[0], target_y)
+                                         target.pos[0] - self.xseparation * 0.3, target_y, target.pos[0], target_y)
 
                         # context.line_to(target.pos[0], tmid)
                         context.stroke()
