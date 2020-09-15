@@ -15,6 +15,7 @@ class SugiyamaCluster:
 
         self.pos = (-1., -1.)
         self.ypos = -1.
+        self.ypos2 = 1.
 
         self.members = self.tc.members
 
@@ -70,7 +71,7 @@ class SugiyamaLayout:
         self.xmargin = 1.
         self.ymargin = 1.
 
-        self.cluster_height_scale = 0.4
+        self.cluster_height_scale = 1.
 
         self.bottom = 0.
 
@@ -78,7 +79,7 @@ class SugiyamaLayout:
         self.line_width = 0.2
         self.line_separation = 0.1
 
-        self.cluster_margin = 0.5-self.line_width-self.line_separation
+        self.cluster_margin = 0.5-(self.line_width+self.line_separation)/2.
 
 
     # ---------------- Helper Functions -------------------#
@@ -93,7 +94,17 @@ class SugiyamaLayout:
             return None
         return self.orders[c.tc.layer][c.rank - 1]
 
-    def largest_median_incoming(self, c: SugiyamaCluster, lower=True):
+    def succ(self, c: SugiyamaCluster):
+        """Returns the predecessor of this cluster (e.g. the cluster with rank+1)
+
+        :param c: Cluster to find the predecessor of
+        :return: SugiyamaCluster or None if no predecessor exists
+        """
+        if c.rank == len(self.clusters[c.tc.layer])-1:
+            return None
+        return self.orders[c.tc.layer][c.rank + 1]
+
+    def largest_median_connection(self, c: SugiyamaCluster, lower=True, incoming=True):
         """Returns the cluster with the largest connection to this one.
 
         If multiple candidates with equal connection weight exist, returns the lower median in ordering
@@ -101,17 +112,22 @@ class SugiyamaLayout:
         :param c: Cluster to find the incoming median of
         :return: The cluster and the weight of the connection
         """
-        if c.insize == 0:
+
+        if incoming:
+            connections = list(c.incoming.items())
+        else:
+            connections = list(c.outgoing.items())
+
+        if len(connections) == 0:
             return None, 0
 
-        incomings = list(c.incoming.items())
-        incomings.sort(key=lambda x: (x[1], x[0].rank), reverse=True)
+        connections.sort(key=lambda x: (x[1], x[0].rank), reverse=True)
         ptr = 0
-        while ptr < len(incomings) and incomings[ptr][1] == incomings[0][1]:
+        while ptr < len(connections) and connections[ptr][1] == connections[0][1]:
             ptr += 1
 
-        brother = incomings[(ptr - (1 if lower else 0)) // 2][0]
-        connsize = incomings[0][1]
+        brother = connections[(ptr - (1 if lower else 0)) // 2][0]
+        connsize = connections[0][1]
         return brother, connsize
 
 
@@ -173,7 +189,7 @@ class SugiyamaLayout:
 
         return orders
 
-    def place_plock(self, v):
+    def place_block(self, v):
         if v.ypos < 0.:
             v.ypos = 0.
             w = v
@@ -181,7 +197,7 @@ class SugiyamaLayout:
             while True:
                 if w.rank > 0:
                     u = self.pred(w)
-                    self.place_plock(u.root)
+                    self.place_block(u.root)
 
                     # # Sink stuff does not work properly
                     # if v.sink == v:
@@ -189,29 +205,93 @@ class SugiyamaLayout:
                     # if v.sink != u.sink:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
-                    v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (v.ysize + u.ysize)/2.)
+                    v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (w.ysize + u.ysize)/2.)
 
                 w = w.align
                 if w == v:
                     break
 
-    def expand3(self, ignore_loners=False):
-        inf = float('inf')
-        for tc in self.clusters:
-            for cluster in tc:
-                cluster.align = cluster
-                cluster.root = cluster
-                # cluster.sink = cluster
-                # cluster.shift = inf
-                cluster.ysize = len(cluster.tc) * self.cluster_height_scale
-                cluster.ypos = -1.
+    def place_block_rev(self, v):
+        if v.ypos2 > 0.:
+            v.ypos2 = 0.
+            w = v
 
-        for t in range(1, self.g.num_steps):
+            while True:
+                u = self.succ(w)
+                if u is not None:
+
+                    self.place_block_rev(u.root)
+
+                    # # Sink stuff does not work properly
+                    # if v.sink == v:
+                    #     v.sink = u.sink
+                    # if v.sink != u.sink:
+                    #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
+                    # else:
+                    v.ypos2 = min(v.ypos2, u.root.ypos2 - (self.yseparation + (w.ysize + u.ysize)/2.))
+
+                w = w.align
+                if w == v:
+                    break
+
+    def avg_block(self, v):
+        if v.ypos < 0.:
+            v.ypos = v.pos[1]
+            w = v
+            upper_bound = v.pos[1]
+            lower_bound = float('inf')
+            total = 0.
+            ctr = 0
+
+            while True:
+                u = self.succ(w)
+                if u is not None:
+                    self.avg_block(u.root)
+
+                    # # Sink stuff does not work properly
+                    # if v.sink == v:
+                    #     v.sink = u.sink
+                    # if v.sink != u.sink:
+                    #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
+                    # else:
+                    lower_bound = min(lower_bound, u.root.ypos - self.yseparation - (v.ysize + u.ysize)/2.)
+                    # v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (v.ysize + u.ysize)/2.)
+
+                for k, value in w.outgoing.items():
+                    if k == w.align:
+                        continue
+                    ctr += value
+                    total += k.pos[1] * value
+
+                for k, value in w.align.incoming.items():
+                    if k == w:
+                        continue
+                    ctr += value
+                    total += k.pos[1] * value
+
+                w = w.align
+                if w == v:
+                    break
+            if ctr == 0:
+                v.ypos = upper_bound
+            else:
+                v.ypos = max(upper_bound, min(lower_bound, total/ctr))
+
+    def align_clusters(self, forward=True):
+
+        if forward:
+            it = range(1, self.g.num_steps)
+            l = 1
+        else:
+            it = range(self.g.num_steps-2, -1, -1)
+            l = -1
+
+        for t in it:
             r = -1
 
             for cluster in self.orders[t]:
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
-                brother, connsize = self.largest_median_incoming(cluster)
+                brother, connsize = self.largest_median_connection(cluster, incoming=forward)
 
                 if cluster.align == cluster and brother is not None:
 
@@ -221,15 +301,15 @@ class SugiyamaLayout:
                     # priority to the new connection is only given if the weight is higher than all crossings
                     if brother.rank <= r:
                         for i in range(brother.rank, r + 1):
-                            prev_cluster = self.orders[t - 1][i]
-                            if prev_cluster.align != prev_cluster.root and prev_cluster.outgoing[prev_cluster.align] > connsize:
+                            prev_cluster = self.orders[t - l][i]
+                            if prev_cluster.align != prev_cluster.root and (prev_cluster.outgoing if forward else prev_cluster.incoming)[prev_cluster.align] > connsize:
                                 allowed = False
                                 break
 
                         # If the new connection is allowed to exist, first remove all current connections that cross it
                         if allowed:
                             for i in range(brother.rank, r + 1):
-                                prev_cluster = self.orders[t - 1][i]
+                                prev_cluster = self.orders[t - l][i]
                                 if prev_cluster.align != prev_cluster.root: # prev_cluster must not be an endpoint
                                     node_to_reset = prev_cluster.align
                                     node_to_reset.align = node_to_reset
@@ -243,21 +323,63 @@ class SugiyamaLayout:
 
                         r = brother.rank
 
+    def update_positions(self):
 
         for cluster in [cluster for tc in self.clusters for cluster in tc]:
-            if cluster.root == cluster:
-                self.place_plock(cluster)
-        self.bottom = 0.
-        for cluster in [cluster for tc in self.clusters for cluster in tc]:
-            cluster.ypos = cluster.root.ypos
-            # if cluster.root.sink.shift < inf:
-            #     cluster.ypos += cluster.root.sink.shift
-            cluster.pos = (cluster.tc.layer * self.xseparation + self.xmargin,
-                           cluster.ypos)  # + (cluster.root.sink.shift if cluster.root.sink.shift < inf else 0.))
+
+            cluster.pos = (cluster.tc.layer * self.xseparation + self.xmargin, cluster.root.ypos)
 
         down = min([cluster.pos[1] for tc in self.clusters for cluster in tc]) - self.ymargin
         for cluster in [cluster for tc in self.clusters for cluster in tc]:
             cluster.pos = (cluster.pos[0], cluster.pos[1] - down)
+
+    def avg_positions(self):
+        down2 = min([cluster.ypos2 for tc in self.clusters for cluster in tc])
+
+        for cluster in [cluster for tc in self.clusters for cluster in tc]:
+            if cluster.root == cluster:
+                cluster.ypos2 -= down2
+
+        for cluster in [cluster for tc in self.clusters for cluster in tc]:
+
+            cluster.pos = (cluster.tc.layer * self.xseparation + self.xmargin, (cluster.root.ypos + cluster.root.ypos2)/2.)
+
+        down = min([cluster.pos[1] for tc in self.clusters for cluster in tc]) - self.ymargin
+        for cluster in [cluster for tc in self.clusters for cluster in tc]:
+            cluster.pos = (cluster.pos[0], cluster.pos[1] - down)
+
+    def expand3(self):
+        inf = float('inf')
+        for tc in self.clusters:
+            for cluster in tc:
+                cluster.align = cluster
+                cluster.root = cluster
+                # cluster.sink = cluster
+                # cluster.shift = inf
+                cluster.ysize = len(cluster.tc) * self.cluster_height_scale
+                cluster.ypos = -1.
+                cluster.ypos2 = 1.
+
+        self.align_clusters(forward=True)
+
+
+        for cluster in [cluster for tc in self.clusters for cluster in tc]:
+            if cluster.root == cluster:
+                self.place_block(cluster)
+                self.place_block_rev(cluster)
+        self.bottom = 0.
+
+        self.avg_positions()
+
+        for _ in range(5):
+            for cluster in [cluster for tc in self.clusters for cluster in tc]:
+                cluster.ypos = -1.
+
+            for cluster in [cluster for tc in self.clusters for cluster in tc]:
+                if cluster.root == cluster:
+                    self.avg_block(cluster)
+
+            self.update_positions()
 
         self.bottom = max([cluster.pos[1] for tc in self.clusters for cluster in tc])
         print("done")
