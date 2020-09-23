@@ -41,7 +41,7 @@ import csv
 
 with open("data/tij_pres_LyonSchool.dat", 'r') as f:
     reader = csv.reader(f, delimiter=" ")
-    data = [(int(d[1]), int(d[2]), int((int(d[0])-34240)/20)) for d in reader if int(d[0]) < 36000]
+    data = [(int(d[1]), int(d[2]), int((int(d[0])-34240)/20)) for d in reader if int(d[0]) < 40000]
     nodes = [d[0] for d in data]
     nodes.extend([d[1] for d in data])
     nodes = list(set(nodes))
@@ -55,7 +55,7 @@ with open("data/tij_pres_LyonSchool.dat", 'r') as f:
     track.add(41)
     track.add(100)
     print(track)
-    sg = SugiyamaLayout(g, minimum_cluster_size=2, minimum_connections_size=1)
+    sg = SugiyamaLayout(g, minimum_cluster_size=1, minimum_connections_size=2)
     sg.draw_graph(False, track, 50)
 
 # with open("data/primaryschool.csv", 'r') as f:

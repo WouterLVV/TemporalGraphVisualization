@@ -66,12 +66,12 @@ class SugiyamaLayout:
 
         self.scale = 2.
         self.yseparation = 5.0
-        self.xseparation = 50.0
+        self.xseparation = 15.0
 
         self.xmargin = 1.
         self.ymargin = 1.
 
-        self.cluster_height_scale = 1.
+        self.cluster_height_scale = 0.
 
         self.bottom = 0.
 
@@ -205,7 +205,9 @@ class SugiyamaLayout:
                     # if v.sink != u.sink:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
-                    v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (w.ysize + u.ysize)/2.)
+
+                    # v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (w.ysize + u.ysize)/2.)
+                    v.ypos = max(v.ypos, u.root.ypos + (w.ysize + u.ysize) / 2. + self.yseparation * (1. if (len(set(w.incoming.keys()).intersection(set(u.incoming.keys()))) + len(set(w.outgoing.keys()).intersection(set(u.outgoing.keys()))) > 0) else 4.))
 
                 w = w.align
                 if w == v:
@@ -228,8 +230,9 @@ class SugiyamaLayout:
                     # if v.sink != u.sink:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
-                    v.ypos2 = min(v.ypos2, u.root.ypos2 - (self.yseparation + (w.ysize + u.ysize)/2.))
 
+                    # v.ypos2 = min(v.ypos2, u.root.ypos2 - (self.yseparation + (w.ysize + u.ysize)/2.))
+                    v.ypos2 = min(v.ypos2, u.root.ypos2 - ((w.ysize + u.ysize) / 2. + self.yseparation * (1. if (len(set(w.incoming.keys()).intersection(set(u.incoming.keys()))) + len(set(w.outgoing.keys()).intersection(set(u.outgoing.keys()))) > 0) else 4.)))
                 w = w.align
                 if w == v:
                     break
