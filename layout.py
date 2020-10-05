@@ -13,7 +13,7 @@ class SugiyamaCluster:
         self.root = self
         self.align = self
         self.ys = []
-        self.chain_length = 1
+        self.chain_length = -1
 
         self.ysize = 1.
 
@@ -46,10 +46,10 @@ class SugiyamaLayout:
             for cluster in self.clusters[t]:
                 for c, mems in cluster.tc.incoming.items():
                     if len(mems) >= minimum_connections_size and len(c) >= minimum_cluster_size:
-                        cluster.incoming[c.sc] = len(mems)
+                        cluster.incoming[c.sc] = mems
                         cluster.insize += len(mems)
 
-                        c.sc.outgoing[cluster] = len(mems)
+                        c.sc.outgoing[cluster] = mems
                         c.sc.outsize += len(mems)
 
         toremove = set()
@@ -66,12 +66,14 @@ class SugiyamaLayout:
         self.num_layers = self.g.num_steps
 
         self.scale = 2.
+
         self.yseparation = 1.0
         self.separation_factor = 2.
         self.xseparation = 15.0
 
-        self.xmargin = 1.
-        self.ymargin = 1.
+
+        self.xmargin = 10.
+        self.ymargin = 10.
 
         self.cluster_height_scale = 2.
 
@@ -80,8 +82,10 @@ class SugiyamaLayout:
         self.max_chain = -1
 
         self.cluster_width = 2.
-        self.line_width = 0.2
-        self.line_separation = 0.1
+        self.line_width = 1.
+        self.line_separation = 0.0
+
+        self.default_line_color = (1., 0., 0., 1.)
 
         self.cluster_margin = 0.5 - (self.line_width + self.line_separation) / 2.
 
@@ -124,13 +128,13 @@ class SugiyamaLayout:
         if len(connections) == 0:
             return None, 0
 
-        connections.sort(key=lambda x: (x[1], x[0].rank), reverse=True)
+        connections.sort(key=lambda x: (len(x[1]), x[0].rank), reverse=True)
         ptr = 0
         while ptr < len(connections) and connections[ptr][1] == connections[0][1]:
             ptr += 1
 
         brother = connections[(ptr - (1 if lower else 0)) // 2][0]
-        connsize = connections[0][1]
+        connsize = len(connections[0][1])
         return brother, connsize
 
     # ---------------- Location Functions -------------------#
@@ -187,12 +191,12 @@ class SugiyamaLayout:
                 inrank = 0.
                 outrank = 0.
                 if cluster.insize > 0:
-                    inrank = sum([n.rank * l for n, l in cluster.incoming.items()]) / cluster.insize
+                    inrank = sum([n.rank * len(l) for n, l in cluster.incoming.items()]) / cluster.insize
                 else:
                     inrank = cluster.rank
 
                 if cluster.outsize > 0:
-                    outrank = sum([n.rank * l for n, l in cluster.outgoing.items()]) / cluster.outsize
+                    outrank = sum([n.rank * len(l) for n, l in cluster.outgoing.items()]) / cluster.outsize
                 else:
                     outrank = cluster.rank
 
@@ -304,14 +308,14 @@ class SugiyamaLayout:
                 for k, value in w.outgoing.items():
                     if k == w.align:
                         continue
-                    ctr += value
-                    total += k.pos[1] * value
+                    ctr += len(value)
+                    total += k.pos[1] * len(value)
 
                 for k, value in w.align.incoming.items():
                     if k == w:
                         continue
-                    ctr += value
-                    total += k.pos[1] * value
+                    ctr += len(value)
+                    total += k.pos[1] * len(value)
 
                 w = w.align
                 if w == v:
@@ -348,8 +352,8 @@ class SugiyamaLayout:
                         for i in range(brother.rank, r + 1):
                             prev_cluster = self.orders[t - l][i]
                             if prev_cluster.align != prev_cluster.root and \
-                                    (prev_cluster.outgoing if forward else prev_cluster.incoming)[
-                                        prev_cluster.align] > connsize:
+                                    len((prev_cluster.outgoing if forward else prev_cluster.incoming)[
+                                        prev_cluster.align]) > connsize:
                                 allowed = False
                                 break
 
@@ -444,7 +448,10 @@ class SugiyamaLayout:
 
     # ---------------- Drawing Functions ------------------- #
 
-    def draw_graph(self, filename: str = "output/example.svg", ignore_loners=False, marked_nodes=None, max_iterations=100):
+    def draw_graph(self, filename: str = "output/example.svg", ignore_loners=False, marked_nodes=None, max_iterations=100, colormap=None):
+        if colormap is None:
+            colormap = dict()
+
         if marked_nodes is None:
             marked_nodes = set()
         self.set_locations(ignore_loners, max_pass=max_iterations)
@@ -467,13 +474,13 @@ class SugiyamaLayout:
 
                     ctr = 0
                     for (c, members) in incomings:
-                        width = members
+                        width = len(members)
                         rel_line_coords[(cluster, c)] = (ctr + width / 2) / cluster.insize
                         ctr += width
 
                     ctr = 0
                     for (c, members) in outgoings:
-                        width = members
+                        width = len(members)
                         rel_line_coords[(cluster, c)] = (ctr + width / 2) / cluster.outsize
                         ctr += width
 
@@ -484,26 +491,39 @@ class SugiyamaLayout:
                     outgoings = list(cluster.outgoing.items())
 
                     for (target, members) in outgoings:
-
-                        weight = members
-                        context.set_line_width(self.line_width * weight)
-                        if len(marked_nodes.intersection(cluster.tc.outgoing[target.tc])) > 0:
-                            context.set_source_rgb(0., 0., 1.)
-                        else:
-                            context.set_source_rgb(1., 0., 0.)
+                        weight = len(members)
 
                         ttop = target.pos[1] - target.ysize / 2.
 
                         source_y = stop + cluster.ysize * self.cluster_margin + cluster.ysize * (
-                                    1 - 2 * self.cluster_margin) * rel_line_coords[(cluster, target)]
+                                1 - 2 * self.cluster_margin) * rel_line_coords[(cluster, target)]
                         target_y = ttop + target.ysize * self.cluster_margin + target.ysize * (
-                                    1 - 2 * self.cluster_margin) * rel_line_coords[(target, cluster)]
-                        context.move_to(cluster.pos[0], source_y)
+                                1 - 2 * self.cluster_margin) * rel_line_coords[(target, cluster)]
 
-                        context.curve_to(cluster.pos[0] + self.xseparation * 0.3, source_y,
-                                         target.pos[0] - self.xseparation * 0.3, target_y, target.pos[0], target_y)
+                        lines = dict()
+                        for mem in members:
+                            if mem.name not in lines.keys():
+                                lines[mem.name] = 0
+                            lines[mem.name] += 1
 
-                        # context.line_to(target.pos[0], tmid)
+                        ctr = 0
+                        for name, thiccness in sorted(list(lines.items())):
+                            context.set_line_width(self.line_width*thiccness)
+                            if name in colormap.keys():
+                                (r,g,b,a) = colormap[name]
+                            else:
+                                (r,g,b,a) = self.default_line_color
+                            context.set_source_rgba(r, g, b, a)
+
+
+
+                            y_start = source_y + ctr*self.line_width
+                            y_end = target_y + ctr*self.line_width
+
+                            context.move_to(cluster.pos[0], y_start)
+                            context.curve_to(cluster.pos[0] + self.xseparation * 0.3, y_start,
+                                             target.pos[0] - self.xseparation * 0.3, y_end, target.pos[0], y_end)
+
                         context.stroke()
 
             context.stroke()

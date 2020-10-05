@@ -8,7 +8,7 @@ from collections import deque
 class TimeNode:
     """Simple data structure for nodes than can belong to different groups over time"""
 
-    def __init__(self, conns: set, max_step: int, id=-1, name=None, color=None):
+    def __init__(self, conns:set=None, max_step:int=-1, id=-1, name=None):
         """Initializes a TimeNode structure
 
         :param conns: a set of connections this node has in tuple form (neighbour, time step)
@@ -20,13 +20,13 @@ class TimeNode:
         self.name = name
 
         self.nbs = [set() for _ in range(max_step)]
-        self.clusters = [-1] * max_step
+        self.clusters = [None] * max_step
 
         if conns is not None:
             for (n, t) in conns:
                 self.nbs[t].add(n)
 
-    def add_connection(self, n : int, t : int) -> None:
+    def add_connection(self, n, t : int) -> None:
         """Adds a connection to this node
 
         :param n: node id of the neighbouring node
@@ -64,14 +64,14 @@ class TimeCluster:
 
         self.layer = layer
 
-    def add(self, node_id: int):
-        """Adds a single node id to this cluster
+    def add(self, node: TimeNode):
+        """Adds a single node to this cluster
 
-        :param node_id89: identifier of the node added to this cluster
+        :param node: identifier of the node added to this cluster
         :return:
         """
 
-        self.members.add(node_id)
+        self.members.add(node)
 
     def add_connection(self, target, members):
         """Adds a connection from or to the target timecluster for members
@@ -84,7 +84,7 @@ class TimeCluster:
         """
 
         t = target.layer
-        if type(members) == int:
+        if type(members) == TimeNode:
 
             if members not in self.members:
                 raise Exception("Connection contains members not in this cluster")
@@ -156,12 +156,12 @@ class TimeGraph:
         if isinstance(nodes, int):
             self.nodes = [TimeNode(None, num_steps, id) for id in range(nodes)]
         else:
-            self.nodes = [TimeNode(None, num_steps, i, d[0], d[1]) for i,d in enumerate(nodes)]
+            self.nodes = [TimeNode(max_step=num_steps, id=i, name=d) for i,d in enumerate(nodes)]
 
 
         for (f, b, t) in conns:
-            self.nodes[f].add_connection(b, t)
-            self.nodes[b].add_connection(f, t)
+            self.nodes[f].add_connection(self.nodes[b], t)
+            self.nodes[b].add_connection(self.nodes[f], t)
 
         self.clusters = [self.create_layer_components(t) for t in range(self.num_steps)]
         self.connect_clusters()
@@ -189,16 +189,16 @@ class TimeGraph:
 
             # Populate cluster through flood fill
             q = deque()
-            q.append(node.id)
+            q.append(node)
             while len(q) > 0:
-                n_id = q.pop()
+                n = q.pop()
 
-                clust.add(n_id)
-                self.nodes[n_id].clusters[t] = ctr
-                for nb in self.nodes[n_id].nbs[t]:
-                    if nb not in seen:
+                clust.add(n)
+                n.clusters[t] = clust
+                for nb in n.nbs[t]:
+                    if nb.id not in seen:
                         q.append(nb)
-                        seen.add(nb)
+                        seen.add(nb.id)
 
             clusts.append(clust)
             ctr += 1
@@ -212,18 +212,13 @@ class TimeGraph:
         :return: None
         """
 
-        for n_id in range(len(self.nodes)):
+        for n in self.nodes:
 
             for t in range(self.num_steps - 1):
-                head = self.nodes[n_id].clusters[t]
-                tail = self.nodes[n_id].clusters[t + 1]
+                head = n.clusters[t]
+                tail = n.clusters[t + 1]
 
-                self.get_cluster(t, head).add_connection(
-                    self.get_cluster(t + 1, tail),
-                    n_id)
-
-                self.get_cluster(t + 1, tail).add_connection(
-                    self.get_cluster(t, head),
-                    n_id)
+                head.add_connection(tail, n)
+                tail.add_connection(head, n)
 
 
