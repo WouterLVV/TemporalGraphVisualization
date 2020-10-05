@@ -8,7 +8,7 @@ from collections import deque
 class TimeNode:
     """Simple data structure for nodes than can belong to different groups over time"""
 
-    def __init__(self, conns: set, max_step: int, id=-1, name=None):
+    def __init__(self, conns: set, max_step: int, id=-1, name=None, color=None):
         """Initializes a TimeNode structure
 
         :param conns: a set of connections this node has in tuple form (neighbour, time step)
@@ -67,7 +67,7 @@ class TimeCluster:
     def add(self, node_id: int):
         """Adds a single node id to this cluster
 
-        :param node_id: identifier of the node added to this cluster
+        :param node_id89: identifier of the node added to this cluster
         :return:
         """
 
@@ -142,18 +142,22 @@ class TimeGraph:
     :ivar nodes: List of nodes
     :ivar clusters: List of list of clusters
     """
-    def __init__(self, conns, num_nodes: int, num_steps: int):
+    def __init__(self, conns, nodes, num_steps: int):
         """Initializes a TimeGraph
 
         :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
-        :param num_nodes: Total number of nodes.
+        :param nodes: Total number of nodes.
         :param num_steps: Total number of steps
         """
 
         self.num_steps = num_steps
-        self.num_nodes = num_nodes
+        self.num_nodes = nodes
 
-        self.nodes = [TimeNode(None, num_steps, id) for id in range(num_nodes)]
+        if isinstance(nodes, int):
+            self.nodes = [TimeNode(None, num_steps, id) for id in range(nodes)]
+        else:
+            self.nodes = [TimeNode(None, num_steps, i, d[0], d[1]) for i,d in enumerate(nodes)]
+
 
         for (f, b, t) in conns:
             self.nodes[f].add_connection(b, t)

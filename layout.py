@@ -1,5 +1,6 @@
 from TimeGraph import TimeGraph, TimeCluster
 import cairo
+import math
 
 
 class SugiyamaCluster:
@@ -65,13 +66,14 @@ class SugiyamaLayout:
         self.num_layers = self.g.num_steps
 
         self.scale = 2.
-        self.yseparation = 5.0
+        self.yseparation = 1.0
+        self.separation_factor = 2.
         self.xseparation = 15.0
 
         self.xmargin = 1.
         self.ymargin = 1.
 
-        self.cluster_height_scale = 0.
+        self.cluster_height_scale = 2.
 
         self.bottom = 0.
 
@@ -173,7 +175,7 @@ class SugiyamaLayout:
         self.orders = orders
         self.expand3()
 
-    def barycenter_pass(self, forward, orders, alpha = 0.95):
+    def barycenter_pass(self, forward, orders):
         if forward:
             r = range(1, self.num_layers)
         else:
@@ -216,6 +218,9 @@ class SugiyamaLayout:
 
         return orders
 
+    def shared_neighbours(self, u, v):
+        return len(set(v.incoming.keys()).intersection(set(u.incoming.keys()))) + len(set(v.outgoing.keys()).intersection(set(u.outgoing.keys())))
+
     def place_block(self, v):
         if v.ypos < 0.:
             v.ypos = 0.
@@ -233,7 +238,11 @@ class SugiyamaLayout:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
                     # v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (w.ysize + u.ysize)/2.)
-                    v.ypos = max(v.ypos, u.root.ypos + (w.ysize + u.ysize) / 2. + self.yseparation * (1. if (len(set(w.incoming.keys()).intersection(set(u.incoming.keys()))) + len(set(w.outgoing.keys()).intersection(set(u.outgoing.keys()))) > 0) else 4.))
+                    separation_factor = 1.
+                    if self.shared_neighbours(u, w) > 0:
+                        separation_factor = self.separation_factor
+
+                    v.ypos = max(v.ypos, u.root.ypos + (w.ysize + u.ysize) / 2. + self.yseparation * separation_factor)
 
 
                 w = w.align
@@ -257,8 +266,11 @@ class SugiyamaLayout:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
 
+                    separation_factor = 1.
+                    if self.shared_neighbours(u, w) > 0:
+                        separation_factor = self.separation_factor
                     # v.ypos2 = min(v.ypos2, u.root.ypos2 - (self.yseparation + (w.ysize + u.ysize)/2.))
-                    v.ypos2 = min(v.ypos2, u.root.ypos2 - ((w.ysize + u.ysize) / 2. + self.yseparation * (1. if (len(set(w.incoming.keys()).intersection(set(u.incoming.keys()))) + len(set(w.outgoing.keys()).intersection(set(u.outgoing.keys()))) > 0) else 4.)))
+                    v.ypos2 = min(v.ypos2, u.root.ypos2 - ((w.ysize + u.ysize) / 2. + self.yseparation * separation_factor))
                 w = w.align
                 if w == v:
                     break
@@ -283,7 +295,10 @@ class SugiyamaLayout:
                     # if v.sink != u.sink:
                     #     u.sink.shift = min(u.sink.shift, v.ypos - u.ypos - self.yseparation)
                     # else:
-                    lower_bound = min(lower_bound, u.root.ypos - self.yseparation - (v.ysize + u.ysize) / 2.)
+                    separation_factor = 1.
+                    if self.shared_neighbours(u, w) > 0:
+                        separation_factor = self.separation_factor
+                    lower_bound = min(lower_bound, u.root.ypos - self.yseparation*separation_factor - (v.ysize + u.ysize) / 2.)
                     # v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (v.ysize + u.ysize)/2.)
 
                 for k, value in w.outgoing.items():
@@ -392,7 +407,7 @@ class SugiyamaLayout:
                 cluster.root = cluster
                 # cluster.sink = cluster
                 # cluster.shift = inf
-                cluster.ysize = len(cluster.tc) * self.cluster_height_scale
+                cluster.ysize =  math.sqrt(len(cluster.tc)) * self.cluster_height_scale
                 cluster.ypos = -1.
                 cluster.ypos2 = 1.
                 cluster.chain_length = 1
@@ -405,7 +420,8 @@ class SugiyamaLayout:
                 # self.place_block_rev(cluster)
         self.bottom = 0.
 
-        self.avg_positions()
+        # self.avg_positions()
+        self.update_positions()
 
         for _ in range(5):
             for cluster in [cluster for tc in self.clusters for cluster in tc]:
