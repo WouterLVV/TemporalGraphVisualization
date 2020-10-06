@@ -1,3 +1,5 @@
+from collections import Counter
+
 from TimeGraph import TimeGraph, TimeCluster
 import cairo
 import math
@@ -65,29 +67,29 @@ class SugiyamaLayout:
 
         self.num_layers = self.g.num_steps
 
-        self.scale = 2.
+        self.scale = 1.
 
         self.yseparation = 1.0
-        self.separation_factor = 2.
+        self.separation_factor = 1.
         self.xseparation = 15.0
 
 
         self.xmargin = 10.
         self.ymargin = 10.
 
-        self.cluster_height_scale = 2.
+        self.cluster_height_scale = 1.
 
         self.bottom = 0.
 
         self.max_chain = -1
 
-        self.cluster_width = 2.
-        self.line_width = 1.
-        self.line_separation = 0.0
+        self.cluster_width = 0.1
+        self.line_width = 0.15
+        self.line_separation = 0.01
 
         self.default_line_color = (1., 0., 0., 1.)
 
-        self.cluster_margin = 0.5 - (self.line_width + self.line_separation) / 2.
+        self.cluster_margin = (0.5 - (self.line_width + self.line_separation) / 2.)/self.cluster_height_scale
 
     # ---------------- Helper Functions -------------------#
 
@@ -147,6 +149,7 @@ class SugiyamaLayout:
             cluster.rank = i
 
         orders = [self.clusters[t].copy() for t in range(self.g.num_steps)]
+        # orders[0].sort(key=lambda x: Counter([y.name for y in x.members]).most_common(1)[0][0])
         orders_tmp = [order.copy() for order in orders]
         forward = True
         pass_ctr = 0
@@ -517,14 +520,15 @@ class SugiyamaLayout:
 
 
 
-                            y_start = source_y + ctr*self.line_width
-                            y_end = target_y + ctr*self.line_width
+                            y_start = source_y + (ctr - weight/2)*self.line_width
+                            y_end = target_y + (ctr - weight/2)*self.line_width
 
                             context.move_to(cluster.pos[0], y_start)
                             context.curve_to(cluster.pos[0] + self.xseparation * 0.3, y_start,
                                              target.pos[0] - self.xseparation * 0.3, y_end, target.pos[0], y_end)
 
-                        context.stroke()
+                            context.stroke()
+                            ctr += thiccness
 
             context.stroke()
 
