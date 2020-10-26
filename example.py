@@ -72,7 +72,7 @@ with open("data/tij_pres_LyonSchool.dat", 'r') as f:
     nodenames = [str(random.randint(1, 4)) for _ in nodes]
     num_steps = max([d[2] for d in data])+1
     g = TimeGraph(data, nodenames, num_steps)
-    sg = SugiyamaLayout(g, minimum_cluster_size=1, minimum_connections_size=1)
+    sg = SugiyamaLayout(g, min_clust_size=2, min_conn_size=1)
     sg.draw_graph(ignore_loners=False, max_iterations=50, colormap={"1": (1., 0.5, 0.5, 1.), "2": (0.5, 1., 0.5, 1.), "3": (0.5, 0.5, 1., 1.), "4": (0.5, 0.5, 0.5, 1.) })
 
 #
