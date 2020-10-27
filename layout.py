@@ -84,7 +84,7 @@ class SugiyamaLayout:
 
 
 
-        self.scale = 1.
+        self.scale = 10.
 
         self.yseparation = .3
         self.separation_factor = 1.
@@ -101,12 +101,12 @@ class SugiyamaLayout:
         self.max_chain = -1
 
         self.cluster_width = 0.1
-        self.line_width = 0.15
+        self.line_width = 0.0
         self.line_separation = 0.01
 
         self.default_line_color = (1., 0., 0., 1.)
 
-        self.cluster_margin = (0.5 - (self.line_width + self.line_separation) / 2.)/self.cluster_height_scale
+        self.cluster_margin = 0.2
 
     # ---------------- Helper Functions -------------------#
 
@@ -459,6 +459,15 @@ class SugiyamaLayout:
     # ---------------- Drawing Functions ------------------- #
 
     def _fit_line_width(self):
+        max_line_width = float('inf')
+        for cluster in self.clusters:
+            line_width_in = line_width_out = float('inf')
+            if cluster.insize > 0:
+                line_width_in = (cluster.ysize - (len(cluster.incoming.keys()) - 1)*self.line_separation) / cluster.insize
+            if cluster.outsize > 0:
+                line_width_out = (cluster.ysize - (len(cluster.outgoing.keys()) - 1) * self.line_separation) / cluster.outsize
+            max_line_width = min(max_line_width, line_width_in, line_width_out)
+        return max_line_width*(1.-2*self.cluster_margin)
 
     def draw_graph(self, filename: str = "output/example.svg", ignore_loners=False, marked_nodes=None, max_iterations=100, colormap=None):
         if colormap is None:
@@ -473,6 +482,8 @@ class SugiyamaLayout:
                               self.bottom * self.scale + 2 * self.ymargin) as surface:
             context = cairo.Context(surface)
             context.scale(self.scale, self.scale)
+
+            self.line_width = self._fit_line_width()
 
             context.set_source_rgb(1., 0., 0.)
             context.set_line_width(self.line_width)
@@ -520,6 +531,7 @@ class SugiyamaLayout:
 
                         ctr = 0
                         for name, thiccness in sorted(list(lines.items())):
+                            ctr += thiccness/2.
                             context.set_line_width(self.line_width*thiccness)
                             if name in colormap.keys():
                                 (r,g,b,a) = colormap[name]
@@ -537,7 +549,7 @@ class SugiyamaLayout:
                                              target.pos[0] - self.xseparation * 0.3, y_end, target.pos[0], y_end)
 
                             context.stroke()
-                            ctr += thiccness
+                            ctr += thiccness/2.
 
             context.stroke()
 
