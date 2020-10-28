@@ -35,7 +35,6 @@ class TimeNode:
         """
         self.nbs[t].add(n)
 
-
 class TimeCluster:
     """Data structure that holds a cluster of connected nodes
 
@@ -125,8 +124,6 @@ class TimeCluster:
     def __str__(self):
         return f"TimeCluster: {self.layer}, {self.id}"
 
-
-
 #---------------------------------------------#
 #                Main class                   #
 #---------------------------------------------#
@@ -146,7 +143,7 @@ class TimeGraph:
         """Initializes a TimeGraph
 
         :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
-        :param nodes: Total number of nodes.
+        :param nodes: Either an int (#nodes) or a list [ node_name, ... ]
         :param num_steps: Total number of steps
         """
 
@@ -220,5 +217,3 @@ class TimeGraph:
 
                 head.add_connection(tail, n)
                 tail.add_connection(head, n)
-
-
