@@ -9,7 +9,7 @@ OUTGOING = BACKWARD = False
 
 
 class SugiyamaCluster:
-    def __init__(self, tc: TimeCluster, minimum_cluster_size, minimum_connection_size):
+    def __init__(self, tc: TimeCluster, minimum_cluster_size, minimum_connection_size, height_method):
         # Link to original TimeCluster and vice versa
         self.tc = tc
         tc.sc = self
@@ -35,13 +35,22 @@ class SugiyamaCluster:
         self.chain_length = 1
 
         # Location properties
-        self.pos = (-1., -1.)
-        self.ypos = -1.
-        self.ypos2 = 1.
-        self.avg_rank = -1
+        self.x = -1
+        self.y = -1
+        self._y = -1  # storage value if self.y should not be changed immediately
 
         # Drawing properties
-        self.draw_size = 1.
+        self.draw_size = self.draw_height(height_method)
+
+    def draw_height(self, method):
+        if method == 'linear':
+            return len(self.members)
+        elif method == 'sqrt':
+            return math.sqrt(len(self.members))
+        elif method == 'log':
+            return math.log(len(self.members))
+        elif method == 'constant':
+            return 1.
 
     def _build(self, minimum_cluster_size, minimum_connection_size):
         for c, connection_nodes in self.tc.incoming.items():
@@ -71,6 +80,9 @@ class SugiyamaCluster:
         self.align = self.root
         self.root.chain_length = max(1, self.chain_length - 1)
 
+    def pos(self):
+        return self.x, self.y
+
     def __str__(self):
         return f"SugiyamaCluster {str((self.tc.layer, self.tc.id))}/{self.rank} at {str(self.pos)}"
 
@@ -82,49 +94,62 @@ class SugiyamaLayout:
 
     # ----------------- init Functions --------------------#
 
-    def __init__(self, g: TimeGraph, minimum_cluster_size=0, minimum_connection_size=0):
+    def __init__(self, g: TimeGraph,
+                 minimum_cluster_size=0, minimum_connection_size=0,
+                 line_width=-1.,
+                 horizontal_density=1., vertical_density=1.2,
+                 cluster_width=0,
+                 cluster_height_method='sqrt',
+                 font_size=10):
 
         # Set basic information from the time graph
         self.g = g
         self.num_layers = self.g.num_steps
 
         # Set different collection objects
-        self.clusters, self.layers = self.build_and_trim_clusters(minimum_cluster_size, minimum_connection_size)
+        self.clusters, self.layers = self.build_and_trim_clusters(minimum_cluster_size,
+                                                                  minimum_connection_size,
+                                                                  cluster_height_method)
         self.ordered = []  # Filled by reset_order()
         self.reset_order()
 
         # Set flags
         self.is_ordered = False
+        self.is_aligned = False
 
-        # # This is all drawing parameters so yeet
-        # self.scale = 10.
-        #
-        # self.yseparation = .3
-        # self.separation_factor = 1.
-        # self.xseparation = 15.0
-        #
-        #
-        # self.xmargin = 10.
-        # self.ymargin = 10.
-        #
-        # self.cluster_height_scale = 1.
-        #
-        # self.bottom = 0.
-        #
-        # self.max_chain = -1
-        #
-        # self.cluster_width = 0.1
-        # self.line_width = 0.0
-        # self.line_separation = 0.01
-        #
-        # self.default_line_color = (1., 0., 0., 1.)
-        #
-        # self.cluster_margin = 0.2
+        self.max_cluster_size, self.max_bundle_size = self.calculate_maxes()
 
-    def build_and_trim_clusters(self, minimum_cluster_size, minimum_connection_size):
+        # Location settings
+        # 1 point = 0.352 mm, or 3 points = 1 mm
+        self.xseparation_frac = horizontal_density  # (fraction) from user
+        self.yseparation_frac = vertical_density  # (fraction) from user
+        self.line_width = line_width  # (in points) from user
+        self.font_size = font_size  # (in points) from user
+        self.cluster_width = cluster_width  # (in points) from user; if left 0, computed automatically
+
+        self.scale = 1  # (fraction) do not change
+        self.separation_factor = 1  # (fraction) do not change
+        self.cluster_margin = 0  # (in points) do not change
+        self.xmargin = 20  # (in points) small
+
+        # these are set automatically before drawing
+        self.yseparation = 0  # (in points) yseparation_frac * max. bundle thickness, else clusters merge vertically
+        self.xseparation = 0  # (in points) xseparation_frac * max. bundle thickness
+        self.ymargin = 0  # (in points) 50% of max. bundle thickness, else bottom bundles are cropped halfway
+        self.bottom = 0  # (in points) computed automatically from data
+
+        # self.cluster_height_scale = 1 # do not use
+        # self.line_separation = 0  # (in points) do not use
+
+        self.max_chain = -1
+
+        self.default_line_color = (0, 0, 0, 1)  # (0, 0.4, 0.8, 1) # r, g, b, a
+        self.default_cluster_color = (0, 0, 0)  # r, g, b
+
+    def build_and_trim_clusters(self, minimum_cluster_size, minimum_connection_size, height_method):
         layers = [
                   [cluster for cluster in
-                   [SugiyamaCluster(self.g.clusters[t][i], minimum_cluster_size, minimum_connection_size)
+                   [SugiyamaCluster(self.g.clusters[t][i], minimum_cluster_size, minimum_connection_size, height_method)
                     for i in range(len(self.g.clusters[t]))
                     if len(self.g.clusters[t][i]) >= minimum_cluster_size
                     ]
@@ -136,6 +161,11 @@ class SugiyamaLayout:
         clusters = [x for t in range(self.num_layers) for x in layers[t]]
 
         return clusters, layers
+
+    def calculate_maxes(self):
+        max_cluster_height = max([cluster.draw_size for cluster in self.clusters])
+        max_bundle_size = max([max(map(len, cluster.neighbours.values())) for cluster in self.clusters])
+        return max_cluster_height, max_bundle_size
 
     # ---------------- Helper Functions -------------------#
 
@@ -225,6 +255,8 @@ class SugiyamaLayout:
             pass_ctr += 1
             direction_flag = not direction_flag
 
+        self.is_ordered = True
+
     @staticmethod
     def _get_cluster_ranks(cluster):
         if cluster.insize > 0:
@@ -268,6 +300,48 @@ class SugiyamaLayout:
                 layer = self.ordered[t]
                 self._bary_rank_layer(layer, direction_flag)
 
+    def get_num_crossings(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
+        upper = cluster1
+        lower = cluster2
+        if upper.rank > lower.rank:
+            upper, lower = lower, upper
+        return self.get_num_crossings_relative(upper, lower)
+
+
+    @staticmethod
+    def get_num_crossings_relative(upper: SugiyamaCluster, lower: SugiyamaCluster):
+        sins_lower = sorted(upper.incoming.items(), key=lambda x: x[0].rank)
+        sins_upper = sorted(lower.incoming.items(), key=lambda x: x[0].rank)
+        i = j = crossings = 0
+
+        while i < len(sins_lower) and j < len(sins_upper):
+            if sins_upper[j] > sins_lower[i]:
+                crossings += len(sins_lower) - i
+                i += 1
+            elif sins_upper[j] < sins_lower[i]:
+                j += 1
+            else:
+                i += 1
+                j += 1
+        return crossings
+
+    def crossing_diff_if_swapped(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
+        upper = cluster1
+        lower = cluster2
+        if upper.rank > lower.rank:
+            upper, lower = lower, upper
+        return self.get_num_crossings_relative(lower, upper) - self.get_num_crossings_relative(upper, lower)
+
+    def swap_clusters(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster, return_crossing_diff=False):
+        if return_crossing_diff:
+            crossings = self.get_num_crossings(cluster1, cluster2)
+
+        self.ordered[cluster1.rank], self.ordered[cluster2.rank] = self.ordered[cluster2.rank], self.ordered[cluster1.rank]
+        cluster1.rank, cluster2.rank = cluster2.rank, cluster1.rank
+
+        if return_crossing_diff:
+            return self.get_num_crossings(cluster1, cluster2) - crossings
+
     # ---------------- Alignment Functions ------------------ #
 
     def reset_alignments(self):
@@ -309,6 +383,8 @@ class SugiyamaLayout:
         endpoint.root.chain_length += 1
 
     def align_clusters(self, direction_flag=FORWARD, max_chain=-1):
+        if not self.is_ordered:
+            self.set_order()
 
         if direction_flag:
             layer_range = range(1, self.g.num_steps)
@@ -334,41 +410,119 @@ class SugiyamaLayout:
                     self.align_cluster(brother, cluster)
                     r = brother.rank
 
-    # ---------------- Location Functions ------------------- #
+    def crossing_diff_if_swapped_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
+        uroot = upper.root
+        lroot = lower.root
+        cluster = lroot
+        crossing_diff = 0
+        while True:
+            predecessor = self.pred(cluster)
+            if predecessor.root == uroot:
+                crossing_diff += self.crossing_diff_if_swapped(cluster, predecessor)
 
-    def set_locations(self):
+            cluster = cluster.align
+            if cluster == lroot:
+                break
+        return crossing_diff
+
+    def swap_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
+        uroot = upper.root
+        lroot = lower.root
+        cluster = lroot
+        while True:
+            predecessor = self.pred(cluster)
+            if predecessor.root == uroot:
+                self.swap_clusters(cluster, predecessor)
+
+            cluster = cluster.align
+            if cluster == lroot:
+                break
+
+    def wanted_direction(self, root: SugiyamaCluster):
+        l = []
+        l.append(self.largest_median_connection(root, direction=INCOMING))
+        cluster = root
+        while True:
+            l.append(cluster)
+            cluster = cluster.align
+            if cluster.align == root:
+                break
+
+        l.append(self.largest_median_connection(cluster, direction=OUTGOING))
+
+        total = 0
+        for i in range(1, len(l) - 1):
+            cluster = l[i]
+            for k, v in cluster.incoming.items():
+                total += len(v)*(k.rank - l[i-1].rank)
+
+            for k, v in cluster.outgoing.items():
+                total += len(v)*(k.rank - l[i+1].rank)
+
+        return total
+
+    def collapse_stairs_iteration(self):
+        for cluster in self.clusters:
+            if cluster.root != cluster:
+                continue
+
+            cluster.wanted_direction = self.wanted_direction(cluster)
 
         for cluster in self.clusters:
-            cluster.align = cluster
-            cluster.root = cluster
-            cluster.draw_size = math.sqrt(len(cluster)) * self.cluster_height_scale
-            cluster.ypos = -1.
-            cluster.ypos2 = 1.
-            cluster.chain_length = 1
+            if cluster.root != cluster:
+                continue
 
-        self.align_clusters(direction_flag=True, max_chain=self.max_chain)
+            if cluster.wanted_direction > 0:
 
-        for cluster in [cluster for tc in self.layers for cluster in tc]:
+                successor = self.succ(cluster)
+                while successor is not None and successor.root.chain_length > cluster.chain_length and self.crossing_diff_if_swapped_align(
+                        cluster, successor) < 1:
+                    self.swap_align(cluster, successor)
+                    successor = self.succ(cluster)
+
+                predecessor = self.pred(cluster)
+                while predecessor is not None and predecessor.root.chain_length < cluster.chain_length and predecessor.root.wanted_direction > 0 and self.crossing_diff_if_swapped_align(predecessor, cluster) < 1:
+                    self.swap_align(self.pred(cluster), cluster)
+                    predecessor = self.pred(cluster)
+
+            elif cluster.wanted_direction < 0:
+                predecessor = self.pred(cluster)
+                while predecessor is not None and predecessor.root.chain_length < cluster.chain_length and self.crossing_diff_if_swapped_align(predecessor, cluster) < 1:
+                    self.swap_align(self.pred(cluster), cluster)
+                    predecessor = self.pred(cluster)
+
+                successor = self.succ(cluster)
+                while successor is not None and successor.root.chain_length > cluster.chain_length and predecessor.root.wanted_direction < 0 and self.crossing_diff_if_swapped_align(cluster, successor) < 1:
+                    self.swap_align(cluster, successor)
+                    successor = self.succ(cluster)
+
+    # ---------------- Location Functions ------------------- #
+
+    def set_locations(self, cluster_separation=-1.):
+
+        if not self.is_aligned:
+            self.align_clusters()
+
+        for cluster in self.clusters:
             if cluster.root == cluster:
                 self.place_block(cluster)
-                # self.place_block_rev(cluster)
-        self.bottom = 0.
 
-        # self.avg_positions()
         self.update_positions()
 
         for _ in range(5):
-            for cluster in [cluster for tc in self.layers for cluster in tc]:
-                cluster.ypos = -1.
+            for cluster in self.clusters:
+                cluster._y = -1.
 
-            for cluster in [cluster for tc in self.layers for cluster in tc]:
+            for cluster in self.clusters:
                 if cluster.root == cluster:
                     self.avg_block(cluster)
 
             self.update_positions()
 
-        self.bottom = max([cluster.pos[1] for tc in self.layers for cluster in tc])
+        self.check_locations()
         print("done")
+
+    def check_locations(self):
         for (i, order) in enumerate(self.ordered):
             prev = -1
             for cluster in order:
@@ -376,114 +530,63 @@ class SugiyamaLayout:
                     print("wtf")
                 prev = cluster.pos[1]
 
-    def place_block(self, v):
-        if v.ypos < 0.:
-            v.ypos = 0.
-            w = v
+    def center_distance(self, u, v):
+        return self.yseparation_frac * (u.draw_size + v.draw_size) / 2.
+
+    def place_block(self, root):
+        if root._y < 0.:
+            root._y = 0.
+            cluster = root
 
             while True:
-                if w.rank > 0:
-                    u = self.pred(w)
-                    self.place_block(u.root)
+                if cluster.rank > 0:
+                    predecessor = self.pred(cluster)
+                    self.place_block(predecessor.root)
 
-                    separation_factor = 1.
-                    if self.num_shared_neighbours(u, w) > 0:
-                        separation_factor = self.separation_factor
+                    root.y = max(root._y, predecessor.root._y + self.center_distance(predecessor, cluster))
 
-                    v.ypos = max(v.ypos,
-                                 u.root.ypos + (w.ysize + u.draw_size) / 2. + self.yseparation * separation_factor)
-
-                w = w.align
-                if w == v:
+                cluster = cluster.align
+                if cluster == root:
                     break
 
-    def place_block_rev(self, v):
-        if v.ypos2 > 0.:
-            v.ypos2 = 0.
-            w = v
-
-            while True:
-                u = self.succ(w)
-                if u is not None:
-                    self.place_block_rev(u.root)
-
-                    separation_factor = 1.
-                    if self.num_shared_neighbours(u, w) > 0:
-                        separation_factor = self.separation_factor
-                    # v.ypos2 = min(v.ypos2, u.root.ypos2 - (self.yseparation + (w.ysize + u.ysize)/2.))
-                    v.ypos2 = min(v.ypos2,
-                                  u.root.ypos2 - ((w.ysize + u.draw_size) / 2. + self.yseparation * separation_factor))
-                w = w.align
-                if w == v:
-                    break
-
-    def avg_block(self, v):
-        if v.ypos < 0.:
-            v.ypos = v.pos[1]
-            w = v
-            upper_bound = v.pos[1]
+    def avg_block(self, root):
+        if root._y < 0.:
+            cluster = root
+            upper_bound = root.y
             lower_bound = float('inf')
             total = 0.
             ctr = 0
 
             while True:
-                u = self.succ(w)
-                if u is not None:
-                    self.avg_block(u.root)
+                successor = self.succ(cluster)
+                if successor is not None:
+                    self.avg_block(successor.root)
 
-                    separation_factor = 1.
-                    if self.num_shared_neighbours(u, w) > 0:
-                        separation_factor = self.separation_factor
-                    lower_bound = min(lower_bound, u.root.ypos - self.yseparation * separation_factor - (
-                            v.draw_size + u.draw_size) / 2.)
-                    # v.ypos = max(v.ypos, u.root.ypos + self.yseparation + (v.ysize + u.ysize)/2.)
+                    lower_bound = min(lower_bound, successor.root._y - self.center_distance(cluster, successor))
 
-                for k, value in w.outgoing.items():
-                    if k == w.align:
+                for k, value in cluster.outgoing.items():
+                    if k == cluster.align:
                         continue
                     ctr += len(value)
-                    total += k.pos[1] * len(value)
+                    total += k.y * len(value)
 
-                for k, value in w.align.incoming.items():
-                    if k == w:
+                for k, value in cluster.align.incoming.items():
+                    if k == cluster:
                         continue
                     ctr += len(value)
-                    total += k.pos[1] * len(value)
+                    total += k.y * len(value)
 
-                w = w.align
-                if w == v:
+                cluster = cluster.align
+                if cluster == root:
                     break
             if ctr == 0:
-                v.ypos = upper_bound
+                root._y = upper_bound
             else:
-                v.ypos = max(upper_bound, min(lower_bound, total / ctr))
+                root._y = max(upper_bound, min(lower_bound, total / ctr))
 
     def update_positions(self):
-
-        for cluster in [cluster for tc in self.layers for cluster in tc]:
-            cluster.pos = (cluster.tc.layer * self.xseparation + self.xmargin, cluster.root.ypos)
-
-        down = min([cluster.pos[1] for tc in self.layers for cluster in tc]) - self.ymargin
-        for cluster in [cluster for tc in self.layers for cluster in tc]:
-            cluster.pos = (cluster.pos[0], cluster.pos[1] - down)
-
-    def avg_positions(self):
-        down2 = min([cluster.ypos2 for tc in self.layers for cluster in tc])
-
-        for cluster in [cluster for tc in self.layers for cluster in tc]:
-            if cluster.root == cluster:
-                cluster.ypos2 -= down2
-
-        for cluster in [cluster for tc in self.layers for cluster in tc]:
-            cluster.pos = (
-                cluster.tc.layer * self.xseparation + self.xmargin, (cluster.root.ypos + cluster.root.ypos2) / 2.)
-
-        down = min([cluster.pos[1] for tc in self.layers for cluster in tc]) - self.ymargin
-        for cluster in [cluster for tc in self.layers for cluster in tc]:
-            cluster.pos = (cluster.pos[0], cluster.pos[1] - down)
-
-    def expand3(self, csize_func=None):
-
+        for cluster in self.clusters:
+            cluster.y = cluster._y
 
     # ---------------- Drawing Functions ------------------- #
 
