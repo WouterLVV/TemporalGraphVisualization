@@ -1,29 +1,31 @@
+(Legend: ++ done, -- to do, >> to revisit / something is in limbo because of the merge)
+
 Bugs
 
 ++ fix overlap at meeting
 ++ tighten SVGSurface (left/right margins)
-++ fixed font size for fixed bottom margin
-++ xseparation is best fixed to points rather than automated from max_bundle
-++ bottom margin also left to user
+>> xseparation is best fixed to points rather than automated from max_bundle
+>> bottom margin also left to user
+++ font size: from user, or pegged to the fixed xseparation
 ++ colours automatic from a palette
 ++ draw each cluster centered on its row (rather than top-aligned)
 -- layout suboptimal vertically
 
 Method
 
-++ automated cluster height
+>> automated cluster height
 ++ automated ymargin
-++ automated xseparation
+>> automated xseparation (undone though, best left controllable)
 ++ automated yseparation
 ++ start/end timestamp for separate block plotting
 ++ move user parameters to initialisation: font_size, xseparation, etc.
-++ xmargin = font_size
+>> xmargin = font_size
 
 ++ aggregate time as unconditional union of contacts (weak aggregation)
 ++ aggregate time only over significant, reoccurring links (strong aggregation)
 ++ respect absolute time, all sensed time blocks shown
 ++ annotate time on the x axis
-++ annotate bundle sizes (at changepoints)
+>> annotate bundle sizes (at changepoints)
 
 ++ metadata as colour
 
