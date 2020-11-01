@@ -160,7 +160,7 @@ class SugiyamaCluster:
                 break
             cluster = cluster.align
         # Similarly, add the cluster that the last one would like to align with
-        l.append(self.largest_median_connection(direction=OUTGOING)[0])
+        l.append(cluster.largest_median_connection(direction=OUTGOING)[0])
 
         total = 0
         for i in range(1, len(l) - 1):
@@ -207,7 +207,7 @@ class SugiyamaLayout:
                  minimum_cluster_size=0, minimum_connection_size=0,
                  line_width=-1., line_spacing=0.0,
                  line_curviness=0.3,
-                 horizontal_density=1., vertical_density=10,
+                 horizontal_density=1., vertical_density=1.,
                  cluster_width=-1,
                  cluster_height_method='sqrt',
                  font_size=-1):
@@ -797,9 +797,10 @@ class SugiyamaLayout:
             cluster.x = self.xmargin + self.xseparation * cluster.tc.layer
 
     def set_y_positions(self):
-        min_y = min(self.clusters, key=lambda x: x.y).y
+        min_y_clust = min(self.clusters, key=lambda x: x._y - x.draw_size / 2.)
+        min_y = min_y_clust._y - min_y_clust.draw_size / 2.
         for cluster in self.clusters:
-            cluster.y = cluster.root._y + cluster.draw_size / 2. + self.ymargin - min_y
+            cluster.y = cluster.root._y + self.ymargin - min_y
 
         self.bottom = max(map(lambda x: x.y + x.draw_size / 2., self.clusters)) + self.ymargin
 
@@ -944,8 +945,8 @@ class SugiyamaLayout:
             if (target, source) in already_drawn:
                 continue
 
-            self.draw_line(source, target, line_coordinates, colormap, context)
-            # self.draw_line_monochrome(source, target, line_coordinates, context)
+            # self.draw_line(source, target, line_coordinates, colormap, context)
+            self.draw_line_monochrome(source, target, line_coordinates, context)
 
             already_drawn.add((source, target))
             already_drawn.add((target, source))

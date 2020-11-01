@@ -74,7 +74,8 @@ with open("data/tij_pres_LyonSchool.dat", 'r') as f:
     g = TimeGraph(data, nodenames, num_steps)
     sg = SugiyamaLayout(g, minimum_cluster_size=1, minimum_connection_size=1, horizontal_density=5.)
     sg.set_order(barycenter_passes=1)
-    sg.align_clusters(max_chain=-1, stairs_iterations=5)
+    sg.align_clusters(max_chain=-1, stairs_iterations=10)
+    sg.set_locations(averaging_iterations=5)
     sg.draw_graph(colormap={"1": (1., 0.5, 0.5, 1.), "2": (0.5, 1., 0.5, 1.), "3": (0.5, 0.5, 1., 1.), "4": (0.5, 0.5, 0.5, 1.)})
 
 
