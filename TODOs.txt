@@ -10,6 +10,7 @@ Bugs
 ++ colours automatic from a palette
 ++ draw each cluster centered on its row (rather than top-aligned)
 -- layout suboptimal vertically
+-- draw a bundle incoming into root clusters
 
 Method
 
@@ -41,39 +42,47 @@ Network types
 
 ++ visualise (largely) contiguous, fine-grained proximity data (human, animal contact)
    RFID contacts encode space-time contiguous locations (visualised knowing the time, not the space interval)
+++ visualise sparse tempnets, e.g. emails, messages, bill sponsorship (regularised w. time aggregation)
+-- visualise hypergraphs (straightforward)
 -- visualise tempnets with edge duration, e.g. calls, badgers (straightforward)
--- visualise sparse tempnets, e.g. smses, bill sponsorship
--- visualise infection dynamics (SIR; follow all individuals)
 -- visualise bipartite networks, e.g. bee-flower
--- visualise hypergraphs, which are just subsets
+-- visualise infection dynamics (SIR; follow all individuals)
 
 Data
 
--- Physical proximity w. RFID/Zigbee/Bluetooth (Temporal Dyadic Networks)
-   SocioPatterns (6+69+1): 
-      + tij_pres_SFHH
-      + tij_pres_LH10
-      + tij_pres_InVS13/15
-      + tij_pres_LyonSchool
-      + tij_pres_Thiers13
-      + listcontacts_2009_04_28/07_17
-      + ht09_contact_list
-      - Kenyan households (most data within, and aggregated per hour with duration)
-   Dryad:
-      - raccoon (aggregated per week with duration)
-      - bumblebee 2 flowers
-      - Ellwood badgers (have sites, duration)
-   Reality Commons:
-      - badge (Zigbee)
-      - student dorm (Bluetooth)
-      - reality mining city mobility (Bluetooth and cell tower)
+-- Physical proximity RFID/Zigbee/Bluetooth (Temporal Dyadic Networks)
+      SocioPatterns (6 + 1..69 + 1): 
+         + tij_pres_SFHH
+         + tij_pres_LH10
+         + tij_pres_InVS13 and 15
+         + tij_pres_LyonSchool
+         + tij_pres_Thiers13
+         + listcontacts_2009_04_28/07_17
+         + ht09_contact_list
+         - Kenyan households (data within, aggregated per hour with duration)
+      Copenhagen study (1)
+         - bluetooth
+      Dryad:
+         - raccoon (aggregated per week with duration)
+         - bumblebee 2 flowers
+         - Ellwood badgers (have sites, duration)
+      Reality Commons:
+         - badge (Zigbee)
+         - student dorm (Bluetooth)
+         - reality mining city mobility (Bluetooth and cell tower)
 
--- Communication or collaboration (Temporal Hyper/graphs)
-      SNAP (12) or ARBenson (http://www.cs.cornell.edu/~arb/data/, 17):
-      + email EU x 4 depts.
-      - congress-bills
-      - tags/threads
-      - co-auth
+-- Communication, collaboration, information (Temporal Dyadic or Hypergraphs)
+      SNAP (4 + 1):
+         + email EU x 4 depts. (directed -> undirected)
+         + college msg. (directed -> undirected)
+      Copenhagen study (2)
+         + smses (directed -> undirected)
+         - calls (directed -> undirected)
+      A R Benson:
+         - email-Enron (directed -> undirected)
+         - tags-math-sx
+         - threads-ask-ubuntu (directed -> undirected)
+         - congress-bills
 
 Comparison
 

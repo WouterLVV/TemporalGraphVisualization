@@ -1,4 +1,4 @@
-def read_pair_contacts_from_file(fin_name, grain_t, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False):
+def read_pair_contacts_from_file(fin_name, separator=' ', grain_t=20, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False):
     """ Reads a temporal networks from a text file.
 
     Parameters
@@ -24,10 +24,12 @@ def read_pair_contacts_from_file(fin_name, grain_t, start_timestamp=-1, end_time
 
     with open(fin_name, 'r') as fin:
         for l in fin:
+            if l[0] == '#':
+                continue
             if timestamp_first:
-                t, u, v = map(int, l.split())
+                t, u, v = map(int, l.split(separator))
             else:
-                u, v, t = map(int, l.split())
+                u, v, t = map(int, l.split(separator))
 
             if (start_timestamp >= 0 and end_timestamp >= 0 and t >= start_timestamp and t <= end_timestamp) or \
                     (start_timestamp < 0 and end_timestamp < 0):
@@ -191,7 +193,7 @@ if __name__ == '__main__':
     start_timestamp, end_timestamp = 30281, 10000000
     aggregate_time_to, strength = 86400, 0 # one day, weak aggregation
 
-    pair_contacts = read_pair_contacts_from_file(fname, period, start_timestamp=start_timestamp, end_timestamp=end_timestamp, 
+    pair_contacts = read_pair_contacts_from_file(fname, separator=' ', grain_t=period, start_timestamp=start_timestamp, end_timestamp=end_timestamp, 
                                                                 timestamp_first=timestamp_first, add_missing=False, verbose=False)
     # node_metadata = read_node_metadata_from_file(mname)
     # print(node_metadata)
