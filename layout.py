@@ -945,8 +945,8 @@ class SugiyamaLayout:
             if (target, source) in already_drawn:
                 continue
 
-            # self.draw_line(source, target, line_coordinates, colormap, context)
-            self.draw_line_monochrome(source, target, line_coordinates, context)
+            self.draw_line(source, target, line_coordinates, colormap, context)
+            # self.draw_line_monochrome(source, target, line_coordinates, context)
 
             already_drawn.add((source, target))
             already_drawn.add((target, source))
