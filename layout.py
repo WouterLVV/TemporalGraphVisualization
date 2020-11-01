@@ -266,9 +266,9 @@ class SugiyamaLayout:
         for cluster in self.clusters:
             line_width_in = line_width_out = float('inf')
             if cluster.insize > 0:
-                line_width_in = cluster.draw_size / (cluster.insize + self.line_spacing * len(cluster.incoming))
+                line_width_in = cluster.draw_size / (cluster.insize + self.line_spacing * (len(cluster.incoming)-1))
             if cluster.outsize > 0:
-                line_width_out = cluster.draw_size / (cluster.outsize + self.line_spacing * len(cluster.outgoing))
+                line_width_out = cluster.draw_size / (cluster.outsize + self.line_spacing * (len(cluster.outgoing)-1))
             max_line_width = min(max_line_width, line_width_in, line_width_out)
         return max_line_width
 
@@ -797,12 +797,11 @@ class SugiyamaLayout:
             cluster.x = self.xmargin + self.xseparation * cluster.tc.layer
 
     def set_y_positions(self):
-        min_y_clust = min(self.clusters, key=lambda x: x._y - x.draw_size / 2.)
-        min_y = min_y_clust._y - min_y_clust.draw_size / 2.
+        min_y = min(map(lambda x: x.root._y - x.draw_size / 2., self.clusters))
         for cluster in self.clusters:
             cluster.y = cluster.root._y + self.ymargin - min_y
 
-        self.bottom = max(map(lambda x: x.y + x.draw_size / 2., self.clusters)) + self.ymargin
+        self.bottom = max(map(lambda x: x.root.y + x.draw_size / 2., self.clusters)) + self.ymargin
 
     ####################################################################################################################
     # ------------------------------------------- Drawing Functions -------------------------------------------------- #
@@ -850,7 +849,7 @@ class SugiyamaLayout:
 
     def draw_line_monochrome(self, source: SugiyamaCluster, target: SugiyamaCluster, line_coordinates: dict,
                              context: cairo.Context):
-        # Same as draw line, but disregards color information
+        # Same as draw line, but disregards color information.
         context.set_source_rgba(1., 0., 0., 1.)
         context.set_line_width(len(source.neighbours[target]) * self.line_width)
         y_source = line_coordinates[(source, target)]
@@ -865,7 +864,8 @@ class SugiyamaLayout:
 
     def draw_line(self, source: SugiyamaCluster, target: SugiyamaCluster,
                   line_coordinates: dict, colormap: dict,
-                  context: cairo.Context):
+                  context: cairo.Context,
+                  show_annotations=False):
         """Draws the connection between source and target with label colors
 
         The line is divided in sections according to the labels of the nodes in this connection.
@@ -876,6 +876,7 @@ class SugiyamaLayout:
         :param line_coordinates: Dictionary with absolute coordinates of the endpoints
         :param colormap: Dictionary with label names and associated colors
         :param context: cairo context to draw this line on
+        :param show_annotations: provides annotations when a line changes size significantly
         """
         members = source.neighbours[target]
         half_thickness = len(members) * self.line_width / 2.
@@ -884,6 +885,9 @@ class SugiyamaLayout:
         labels = sorted(list(labels.items()))
 
         cumulative = -half_thickness
+
+        source_base = line_coordinates[(source, target)]
+        target_base = line_coordinates[(target, source)]
 
         for (label, count) in labels:
             if label in colormap.keys():
@@ -896,8 +900,8 @@ class SugiyamaLayout:
             # Find the center of the line
             offset = cumulative + count * self.line_width / 2.
 
-            y_source = line_coordinates[(source, target)] + offset
-            y_target = line_coordinates[(target, source)] + offset
+            y_source = source_base + offset
+            y_target = target_base + offset
 
             context.move_to(source.x, y_source)
             context.curve_to(source.x + self.curve_offset, y_source,
@@ -909,9 +913,24 @@ class SugiyamaLayout:
             # Update so that it is at the top of the next line
             cumulative += count * self.line_width
 
+        if show_annotations:
+            # draw some annotatations of the bundle size
+            context.set_source_rgb(0, 0, 0)
+            context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+            context.set_font_size(min(self.line_width * len(members), self.xseparation*0.7))  # in user space units
+
+            if len(members) >= 1.5 * max(map(len, source.incoming.values()), default=0.):
+                to_print = str(len(members))
+                _, _, width, height, _, _ = context.text_extents(to_print)
+                context.move_to(source.x + self.xseparation / 2 - width / 2,
+                                (source_base + target_base) / 2 + height / 2)
+                context.show_text(to_print)
+                context.stroke()
+
     def draw_graph(self, filename: str = "output/example.svg",
                    colormap=None,
-                   show_timestamps=True, timestamp_translator=None):
+                   show_timestamps=True, timestamp_translator=None,
+                   show_annotations=False):
 
         if colormap is None:
             colormap = dict()
@@ -945,7 +964,7 @@ class SugiyamaLayout:
             if (target, source) in already_drawn:
                 continue
 
-            self.draw_line(source, target, line_coordinates, colormap, context)
+            self.draw_line(source, target, line_coordinates, colormap, context, show_annotations=show_annotations)
             # self.draw_line_monochrome(source, target, line_coordinates, context)
 
             already_drawn.add((source, target))

@@ -66,10 +66,11 @@ if __name__ == '__main__':
 
     g = TimeGraph(normalised_list_pair_contacts, node_metadata_list, num_timestamps)
     sg = SugiyamaLayout(g, minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster,
-                           line_width=1.2,
+                           line_width=-1,
                            cluster_height_method='linear',
                            horizontal_density=1,
                            vertical_density=1)
     sg.draw_graph(filename="flow_output/"+net_name+suffix+".svg",
                   colormap=colormap,
-                  timestamp_translator=timestamp_reverse_translator)
+                  timestamp_translator=timestamp_reverse_translator,
+                  show_annotations=True)
