@@ -357,3 +357,6 @@ dmypy.json
 output/
 data/
 tijd doina
+flow_output/
+sequence_view_output/
+tnet_sources/
