@@ -1,4 +1,4 @@
-def read_pair_contacts_from_file(fin_name, grain_t, start_timestamp=-1, end_timestamp=-1, verbose=False):
+def read_pair_contacts_from_file(fin_name, grain_t, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False):
     """ Reads a temporal networks from a text file.
 
     Parameters
@@ -24,7 +24,10 @@ def read_pair_contacts_from_file(fin_name, grain_t, start_timestamp=-1, end_time
 
     with open(fin_name, 'r') as fin:
         for l in fin:
-            t, u, v = map(int, l.split())
+            if timestamp_first:
+                t, u, v = map(int, l.split())
+            else:
+                u, v, t = map(int, l.split())
 
             if (start_timestamp >= 0 and end_timestamp >= 0 and t >= start_timestamp and t <= end_timestamp) or \
                     (start_timestamp < 0 and end_timestamp < 0):
@@ -36,14 +39,14 @@ def read_pair_contacts_from_file(fin_name, grain_t, start_timestamp=-1, end_time
                 break
 
     # add missing timestamps (without contacts)
-    timestamps = sorted(timestamps)
-    for i in range(1, len(timestamps)):
-        this_t = timestamps[i]
-        prev_t = timestamps[i-1]
-        if this_t > prev_t + grain_t:
-            for missing_t in range(prev_t+grain_t, this_t, grain_t):
-                #if missing_t not in pair_contacts: # not clear why needed
-                pair_contacts[missing_t] = []
+    if add_missing:
+        timestamps = sorted(timestamps)
+        for i in range(1, len(timestamps)):
+            this_t = timestamps[i]
+            prev_t = timestamps[i-1]
+            if this_t > prev_t + grain_t:
+                for missing_t in range(prev_t+grain_t, this_t, grain_t):
+                    pair_contacts[missing_t] = []
 
     if verbose:
         print("*** Pair contacts in", fin_name)
@@ -117,7 +120,7 @@ def strongly_aggregate_time(pair_contacts, old_period, new_period, strength=0.5)
 
     return aggregate_pair_contacts
 
-def normalise_list_pair_contacts(pair_contacts, node_metadata=None, old_time_unit='s'):
+def normalise_list_pair_contacts(pair_contacts, node_metadata=None, time_label='s'):
 
     # collect the original node ids and timestamps
     timestamps = sorted(list(pair_contacts.keys()))
@@ -132,14 +135,18 @@ def normalise_list_pair_contacts(pair_contacts, node_metadata=None, old_time_uni
     timestamp_reverse_translator = dict(enumerate(timestamps))
 
     from time import gmtime, strftime
-    if len(str(timestamps[0])) == 10: # timestamps are Unix? convert to string in my local time zone
+    if len(str(timestamps[0])) == 10: # timestamps are Unix seconds? convert to string in my local time zone
         for i in timestamp_reverse_translator:
             t = timestamp_reverse_translator[i]
             timestamp_reverse_translator[i] = strftime("%H:%M", gmtime(t))
-    elif old_time_unit == 's':        # timestamps are seconds? convert to hour:minute
+    elif time_label == 's':        # timestamps are seconds? convert to hour:minute
         for i in timestamp_reverse_translator:
             t = int(timestamp_reverse_translator[i])
             timestamp_reverse_translator[i] = str(int(t/3600)%24) + ":" + str(int((t%3600)/60)).zfill(2)
+    elif time_label == 'd':        # timestamps are days? convert to day number
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t/3600/24) + 1)
 
     # node id translator from original node id to a 0-index, and back
     nodeid_translator = dict([(old, new) for (new, old) in enumerate(nodeids)])
@@ -147,7 +154,7 @@ def normalise_list_pair_contacts(pair_contacts, node_metadata=None, old_time_uni
 
     # node metadata as a list following the new node ids
     node_metadata_list = []
-    if node_metadata:
+    if node_metadata != None:
         for i in range(len(nodeids)):
             node_metadata_list.append(node_metadata[nodeid_reverse_translator[i]])
 
@@ -163,28 +170,37 @@ def normalise_list_pair_contacts(pair_contacts, node_metadata=None, old_time_uni
 
 if __name__ == '__main__':
     start_timestamp, end_timestamp = -1, -1
-    period = 20
+    period = 1
+    node_metadata = None
+    timestamp_first = True
 
     # fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat"
     # fname = "tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt"
-    # original_time = 20
-    # delta_time = 200
-    # aggregate_time_to = 80
 
     # Primary school, 2 days
-    fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
-    mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
-    start_timestamp, end_timestamp = 120800, 130000 #151960
-    aggregate_time_to, strength = 600, 0.5
+    # fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
+    # mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
+    # period = 20
+    # start_timestamp, end_timestamp = 120800, 130000 #151960
+    # aggregate_time_to, strength = 600, 0.5
 
-    pair_contacts = read_pair_contacts_from_file(fname, period, start_timestamp, end_timestamp, False)
-    node_metadata = read_node_metadata_from_file(mname)
-    print(node_metadata)
+    # Email EU, 500+ days in 45 mil. seconds
+    fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
+    timestamp_first = False
+    period = 1
+    start_timestamp, end_timestamp = 30281, 10000000
+    aggregate_time_to, strength = 86400, 0 # one day, weak aggregation
+
+    pair_contacts = read_pair_contacts_from_file(fname, period, start_timestamp=start_timestamp, end_timestamp=end_timestamp, 
+                                                                timestamp_first=timestamp_first, add_missing=False, verbose=False)
+    # node_metadata = read_node_metadata_from_file(mname)
+    # print(node_metadata)
 
     aggregate_pair_contacts = strongly_aggregate_time(pair_contacts,
                                                       old_period=period, new_period=aggregate_time_to,
                                                       strength=strength)
+    print(aggregate_pair_contacts)
 
-    normalised_list_pair_contacts, num_timestamps, num_nodeids, timestamp_reverse_translator, nodeid_translator, node_metadata_list = \
-        normalise_list_pair_contacts(aggregate_pair_contacts, node_metadata)
-    print(node_metadata_list)
+    # normalised_list_pair_contacts, num_timestamps, num_nodeids, timestamp_reverse_translator, nodeid_translator, node_metadata_list = \
+    #     normalise_list_pair_contacts(aggregate_pair_contacts, node_metadata)
+    # print(node_metadata_list)

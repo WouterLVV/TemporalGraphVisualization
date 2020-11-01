@@ -42,10 +42,10 @@ Network types
 ++ visualise (largely) contiguous, fine-grained proximity data (human, animal contact)
    RFID contacts encode space-time contiguous locations (visualised knowing the time, not the space interval)
 -- visualise tempnets with edge duration, e.g. calls, badgers (straightforward)
--- visualise sparse tempnets, e.g. smses
+-- visualise sparse tempnets, e.g. smses, bill sponsorship
 -- visualise infection dynamics (SIR; follow all individuals)
 -- visualise bipartite networks, e.g. bee-flower
--- very good on hypergraphs, which are just subsets
+-- visualise hypergraphs, which are just subsets
 
 Data
 
@@ -68,11 +68,11 @@ Data
       - student dorm (Bluetooth)
       - reality mining city mobility (Bluetooth and cell tower)
 
--- Communication or collaboration (Temporal Hypergraphs)
-   ARBenson (http://www.cs.cornell.edu/~arb/data/, 17):
+-- Communication or collaboration (Temporal Hyper/graphs)
+      SNAP (12) or ARBenson (http://www.cs.cornell.edu/~arb/data/, 17):
+      + email EU x 4 depts.
       - congress-bills
       - tags/threads
-      - email
       - co-auth
 
 Comparison
