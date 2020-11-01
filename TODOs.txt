@@ -1,0 +1,86 @@
+Bugs
+
+++ fix overlap at meeting
+++ tighten SVGSurface
+++ fixed font size for fixed bottom margin
+-- xseparation is best fixed to points rather than automated from data (max_bundle)
+-- some undrawn contacts seem to spoil the layout?
+-- layout suboptimal; don't know why so much empty space (vertical and at left/right margins)
+-- better estimate bottom margin
+
+Method
+
+++ automated cluster height
+++ automated ymargin
+++ automated xseparation
+++ automated yseparation
+++ start/end timestamp for separate block plotting
+++ move user parameters to initialisation
+
+++ aggregate time as unconditional union of contacts (weak aggregation)
+++ aggregate time only over significant, reoccurring links (strong aggregation)
+++ respect absolute time, all sensed time blocks shown
+++ annotate time on the x axis
+
+++ metadata as colour
+
+-- annotate bundle sizes (one per community)
+-- complexity metric: temporal motifs (split+merge, stable comm.)
+-- emphasise stable communities on the plot, without adding visual overhead
+-- automatically set parameters (strength, new_period, minimum_connections_size) to discover communities
+      plot complexity metric vs. parameters (multi-objective), then choose
+
+Network types
+
+++ visualise (largely) contiguous, fine-grained proximity data (human, animal contact)
+   RFID contacts encode space-time contiguous locations (visualised knowing the time, not the space interval)
+-- visualise tempnets with edge duration, e.g. calls, badgers (straightforward)
+-- visualise sparse tempnets, e.g. smses
+-- visualise infection dynamics (SIR; follow all individuals)
+-- visualise bipartite networks, e.g. bee-flower
+
+Data
+-- Physical proximity w. RFID/Zigbee/Bluetooth
+   SocioPatterns (6+69+1): 
+      + tij_pres_SFHH
+      + tij_pres_LH10
+      + tij_pres_InVS13/15
+      + tij_pres_LyonSchool
+      + tij_pres_Thiers13
+      + listcontacts_2009_04_28/07_17
+      + ht09_contact_list
+      - Kenyan households (most data within, and aggregated per hour with duration)
+   Dryad:
+      - raccoon (aggregated per week with duration)
+      - bumblebee 2 flowers
+      - Ellwood badgers (have sites, duration)
+   Reality Commons:
+      - badge (Zigbee)
+      - student dorm (Bluetooth)
+      - reality mining city mobility (Bluetooth and cell tower)
+-- Communication or collaboration
+      - calls
+      - sms
+      - US House of Representatives co-voting
+
+Comparison
+
+++ sequence view
+++ node order: recurrent neighbours RN (Linhares 2017)
+-- node order: community-based node ordering CNO (Linhares 2019)
+-- temporal activity map
+-- list of adjacency matrices (clustered)
+
+Evaluation
+
+-- stability: aggregated plot changes slightly when changing the start timestamp
+   (check if stabilised with strong aggregation)
+-- aesthetic metrics
+   #line crossings
+   line wiggling
+   space efficiency
+-- scalability metrics
+   #time frames
+   #agents
+-- community-detection metrics (tbd)
+   bundle crossings
