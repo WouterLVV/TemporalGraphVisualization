@@ -929,8 +929,8 @@ class SugiyamaLayout:
             self.bottom += text_margin
 
         surface = cairo.SVGSurface(filename,
-                              (self.num_layers * self.xseparation + 2 * self.xmargin) * self.scale,
-                              (self.bottom) * self.scale)
+                              ((self.num_layers-1) * self.xseparation + 2 * self.xmargin) * self.scale,
+                               (self.bottom) * self.scale)
         context = cairo.Context(surface)
         context.scale(self.scale, self.scale)
 

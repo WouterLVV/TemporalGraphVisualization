@@ -1,12 +1,13 @@
 Bugs
 
 ++ fix overlap at meeting
-++ tighten SVGSurface
+++ tighten SVGSurface (left/right margins)
 ++ fixed font size for fixed bottom margin
--- xseparation is best fixed to points rather than automated from data (max_bundle)
--- some undrawn contacts seem to spoil the layout?
--- layout suboptimal; don't know why so much empty space (vertical and at left/right margins)
--- better estimate bottom margin
+++ xseparation is best fixed to points rather than automated from max_bundle
+++ bottom margin also left to user
+++ colours automatic from a palette
+++ draw each cluster centered on its row (rather than top-aligned)
+-- layout suboptimal vertically
 
 Method
 
@@ -15,20 +16,24 @@ Method
 ++ automated xseparation
 ++ automated yseparation
 ++ start/end timestamp for separate block plotting
-++ move user parameters to initialisation
+++ move user parameters to initialisation: font_size, xseparation, etc.
+++ xmargin = font_size
 
 ++ aggregate time as unconditional union of contacts (weak aggregation)
 ++ aggregate time only over significant, reoccurring links (strong aggregation)
 ++ respect absolute time, all sensed time blocks shown
 ++ annotate time on the x axis
+++ annotate bundle sizes (at changepoints)
 
 ++ metadata as colour
 
--- annotate bundle sizes (one per community)
 -- complexity metric: temporal motifs (split+merge, stable comm.)
--- emphasise stable communities on the plot, without adding visual overhead
+-- emphasise stable communities on the plot
 -- automatically set parameters (strength, new_period, minimum_connections_size) to discover communities
       plot complexity metric vs. parameters (multi-objective), then choose
+-- summarise stable community statistics _in time_: any emerging pattern?
+-- map community events (merge, split) to story events; have the narrative write itself
+   evaluate it with synthetic data w. ground truth!
 
 Network types
 
@@ -38,9 +43,11 @@ Network types
 -- visualise sparse tempnets, e.g. smses
 -- visualise infection dynamics (SIR; follow all individuals)
 -- visualise bipartite networks, e.g. bee-flower
+-- very good on hypergraphs, which are just subsets
 
 Data
--- Physical proximity w. RFID/Zigbee/Bluetooth
+
+-- Physical proximity w. RFID/Zigbee/Bluetooth (Temporal Dyadic Networks)
    SocioPatterns (6+69+1): 
       + tij_pres_SFHH
       + tij_pres_LH10
@@ -58,10 +65,13 @@ Data
       - badge (Zigbee)
       - student dorm (Bluetooth)
       - reality mining city mobility (Bluetooth and cell tower)
--- Communication or collaboration
-      - calls
-      - sms
-      - US House of Representatives co-voting
+
+-- Communication or collaboration (Temporal Hypergraphs)
+   ARBenson (http://www.cs.cornell.edu/~arb/data/, 17):
+      - congress-bills
+      - tags/threads
+      - email
+      - co-auth
 
 Comparison
 

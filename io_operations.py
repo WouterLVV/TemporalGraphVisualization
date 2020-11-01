@@ -65,9 +65,10 @@ def read_node_metadata_from_file(fin_name, verbose=True):
             categories.append(metadata)
 
     categories = list(set(categories))
-    print(sorted(categories))
+    if verbose:
+        print("*** Categories of nodes in metadata:\n\t", ' '.join(sorted(categories)))
 
-    return node_metadata
+    return node_metadata, sorted(categories)
 
 def initialise_aggregation(pair_contacts, old_period, new_period):
     old_timestamps = sorted(list(pair_contacts.keys()))
