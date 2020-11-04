@@ -39,7 +39,8 @@ mname = None
 # period, time_label = 20, 's'
 # start_timestamp, end_timestamp, add_missing = 120800, 151960, True
 # aggregate_time_to, strength = 600, 0.5
-# min_cluster = 10
+# min_cluster = 5
+
 
 # High school, 5 days x 8am-6pm
 # fname = "tnet_sources/sociopatterns/co-presence/tij_pres_Thiers13.dat"
@@ -50,13 +51,21 @@ mname = None
 # aggregate_time_to, strength = 600, 0.5
 # min_cluster = 10
 
-# Email EU, 500+ days in 45 mil. seconds
-# fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept4.txt"
-# timestamp_first = False
-# period, time_label = 1, 'd'
-# start_timestamp, end_timestamp, add_missing = -1, -1, False
-# aggregate_time_to, strength = 86400, 0 # day, weak aggregation
-# min_cluster = 2
+# Science Gallery
+# fname = "tnet_sources/sociopatterns-infectious/listcontacts_2009_04_28.txt"
+# fname = "tnet_sources/sociopatterns-infectious/listcontacts_2009_04_29.txt"
+# fname = "tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt"
+# aggregate_time_to, strength = 120, 0.5
+# colormap = {}
+
+
+#Email EU, 500+ days in 45 mil. seconds
+fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
+timestamp_first = False
+period, time_label = 1, 'd'
+start_timestamp, end_timestamp, add_missing = -1, -1, False
+aggregate_time_to, strength = 86400, 0 # day, weak aggregation
+min_cluster = 2
 
 # College msg, 193 days
 # fname = "tnet_sources/college-msg/CollegeMsg.txt"
@@ -67,15 +76,16 @@ mname = None
 # min_cluster = 4
 
 # Copenhagen smses
-fname = "tnet_sources/copenhagen-study/sms.csv"
-separator = ','
-timestamp_first = True
-period, time_label = 1, 's'
-start_timestamp, end_timestamp, add_missing = 0, 128018, True
-aggregate_time_to, strength = 3600, 0
-min_cluster = 1
+# fname = "tnet_sources/copenhagen-study/sms.csv"
+# separator = ','
+# timestamp_first = True
+# period, time_label = 1, 's'
+# start_timestamp, end_timestamp, add_missing = 0, 128018, True
+# aggregate_time_to, strength = 3600, 0
+# min_cluster = 1
 
 if __name__ == '__main__':
+
     net_name = (fname.split("/")[-1]).split(".")[0]
     suffix = ""
     if start_timestamp >= 0 and end_timestamp >= 0:
@@ -108,7 +118,13 @@ if __name__ == '__main__':
                                horizontal_density=1,
                                vertical_density=0.6)
 
+        sg.set_order(barycenter_passes=10, repetitions_per_pass=3)
+        sg.set_alignment(stairs_iterations=3)
         sg.draw_graph(filename="flow_output/"+net_name+suffix+".svg",
                       colormap=colormap,
                       timestamp_translator=timestamp_reverse_translator,
                       show_annotations=True)
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

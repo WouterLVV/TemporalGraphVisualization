@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections import Counter
-from typing import List
+from collections import Counter, deque
+from typing import List, Set
 
 from TimeGraph import TimeGraph, TimeCluster
 import cairocffi as cairo
@@ -33,10 +33,15 @@ class SugiyamaCluster:
         self.insize = 0  # Filled by build(), number of incoming connections
         self.outsize = 0  # Filled by build(), number of outgoing connections
 
+        self.largest_incoming = max(map(len, self.incoming.values()), default=0)
+        self.largest_outgoing = max(map(len, self.outgoing.values()), default=0)
+
         self.members = self.tc.members  # Set of TimeNodes in this cluster
 
         # Order properties
         self.rank = -1
+        self.inrank = -1
+        self.outrank = -1
         self.wanted_direction = 0
 
         # Alignment properties
@@ -83,18 +88,45 @@ class SugiyamaCluster:
 
         self.neighbours = {**self.incoming, **self.outgoing}
 
-    def get_cluster_ranks(self):
+    def update_cluster_ranks(self):
         if self.insize > 0:
             inrank = sum([nb.rank * len(conn) for nb, conn in self.incoming.items()]) / self.insize
         else:
-            inrank = self.rank
+            inrank = -1
 
         if self.outsize > 0:
             outrank = sum([n.rank * len(l) for n, l in self.outgoing.items()]) / self.outsize
         else:
-            outrank = self.rank
+            outrank = -1
 
+        self.inrank = inrank
+        self.outrank = outrank
         return inrank, outrank
+
+    def update_cluster_ranks_median(self):
+        inc = list(self.incoming.items())
+        out = list(self.outgoing.items())
+
+        self.inrank, self.outrank = self.weighted_median_rank(inc), self.weighted_median_rank(out)
+        return self.inrank, self.outrank
+
+    @staticmethod
+    def weighted_median_rank(nbs: List[(SugiyamaCluster, Set)]):
+        if len(nbs) == 0:
+            return -1
+
+        nbs.sort(key=lambda x: x[0].rank)
+        inc_total = sum(map(lambda x: len(x[1]), nbs))
+        ptr = 0
+        inc_sum = 0.
+        while inc_sum < inc_total / 2.:
+            inc_sum += len(nbs[ptr][1])
+            ptr += 1
+        if inc_total % 2 == 0 and inc_sum == inc_total // 2:
+            med = (nbs[ptr][0].rank + nbs[ptr - 1][0].rank) / 2.
+        else:
+            med = nbs[ptr - 1][0].rank
+        return med
 
     def reset_alignment(self):
         self.root = self
@@ -126,7 +158,7 @@ class SugiyamaCluster:
 
         connections.sort(key=lambda x: (len(x[1]), x[0].rank), reverse=True)
         ptr = 0
-        while ptr < len(connections) and connections[ptr][1] == connections[0][1]:
+        while ptr < len(connections) and len(connections[ptr][1]) == len(connections[0][1]):
             ptr += 1
 
         brother = connections[(ptr - (1 if lower else 0)) // 2][0]
@@ -152,7 +184,7 @@ class SugiyamaCluster:
         l = []
 
         # Add the cluster that the root would have aligned with if it was allowed
-        l.append(self.largest_median_connection(direction=INCOMING)[0])
+        # l.append(self.largest_median_connection(direction=INCOMING)[0])
         cluster = self
         while True:
             l.append(cluster)
@@ -160,29 +192,32 @@ class SugiyamaCluster:
                 break
             cluster = cluster.align
         # Similarly, add the cluster that the last one would like to align with
-        l.append(cluster.largest_median_connection(direction=OUTGOING)[0])
+        # l.append(cluster.largest_median_connection(direction=OUTGOING)[0])
 
         total = 0
-        for i in range(1, len(l) - 1):
+        for i in range(1, len(l)):
             cluster = l[i]
             # Compare incoming connections to the rank of the previous in the alignment
-            for k, v in cluster.incoming.items():
+            for k, v in l[i].incoming.items():
                 total += len(v) * (k.rank - l[i - 1].rank)
 
+        for i in range(0, len(l) - 1):
             # Compare outgoing connections to the rank of the next in the alignment
-            for k, v in cluster.outgoing.items():
+            for k, v in l[i].outgoing.items():
                 total += len(v) * (k.rank - l[i + 1].rank)
 
-        # The first and last elements of l were not part of the alignment for a reason
+        # The first and last elements of l are not aligned further for a reason
         # So we have to factor in the direction of where this alignment would have liked to go
-        if l[0] is not None and l[0].align.tc.layer == l[1].tc.layer:
-            total += l[0].align.rank - l[1].rank
+        left, _ = l[0].largest_median_connection(direction=INCOMING)
+        if left is not None and left.align.tc.layer == l[0].tc.layer:
+            total += left.align.rank - l[0].rank
 
-        if l[-1] is not None and l[-1].root.tc.layer <= l[-2].tc.layer:
-            prev = l[-1].root
-            while prev.align != l[-1]:
+        right, _ = l[-1].largest_median_connection(direction=OUTGOING)
+        if right is not None and right.root.tc.layer <= l[-1].tc.layer:
+            prev = right.root
+            while prev.align != right:
                 prev = prev.align
-            total += prev.rank - l[-2].rank
+            total += prev.rank - l[-1].rank
 
         self.wanted_direction = total
         return total
@@ -336,20 +371,60 @@ class SugiyamaLayout:
         for layer in self.ordered:
             for i, cluster in enumerate(layer):
                 cluster.rank = i
+        self.sort_by_supercluster()
         self.is_ordered = False
         self.is_aligned = False
         self.is_located = False
 
-    def set_order(self, barycenter_passes: int = 10, repetitions_per_pass: int = 5):
+    def sort_by_supercluster(self):
+        """Initialize the ranks of clusters to be near other clusters they are connected to
 
+        This works by building superclusters with flood fill. In this case we start new superclusters with the
+        highest unplaced cluster, instead of the leftmost one, because this balances much better
+        """
+        pointers = [0]*self.num_layers
+        seen = set()
+        max_layer_size = max(map(len, self.layers))
+
+        # traverse all clusters top to bottom instead of left to right
+        for i in range(max_layer_size):
+            for j in range(self.num_layers):
+                if i >= len(self.layers[j]) or i < pointers[j]:
+                    continue
+                cluster = self.ordered[j][i]
+
+                if cluster in seen:
+                    continue
+                seen.add(cluster)
+
+                # Start new supercluster and fill it with a flood fill
+                supercluster = []
+
+                q = deque()
+                q.append(cluster)
+                while len(q) > 0:
+                    current = q.pop()
+
+                    supercluster.append(current)
+                    for nb in current.neighbours:
+                        if nb not in seen:
+                            q.append(nb)
+                            seen.add(nb)
+
+                for scluster in supercluster:
+                    l = scluster.tc.layer
+                    self.swap_clusters(scluster, self.ordered[l][pointers[l]])
+                    pointers[l] += 1
+
+    def set_order(self, barycenter_passes: int = 10, repetitions_per_pass: int = 5):
         # Make copy to compare if ordering has stabilized
         orders_tmp = [order.copy() for order in self.ordered]
 
         # Keep doing passes until the maximum number has been reached or the order does no longer change
         for i in range(barycenter_passes):
             print(f"Pass #{i}")
-            self._barycenter(FORWARD, repetitions_per_pass)
-            self._barycenter(BACKWARD, repetitions_per_pass)
+            self._barycenter()
+            # self._barycenter()
 
             if orders_tmp == self.ordered:
                 print("Order stabilized")
@@ -360,33 +435,47 @@ class SugiyamaLayout:
         self.is_ordered = True
 
     @staticmethod
-    def _bary_rank_layer(layer: List[SugiyamaCluster], direction_flag):
+    def _bary_rank_layer(layer: List[SugiyamaCluster], alpha=0.5):
         for cluster in layer:
-            inr, outr = cluster.get_cluster_ranks()
+            cluster.update_cluster_ranks()
+            # cluster.update_cluster_ranks_median()
 
-            if direction_flag:
-                cluster.rank = inr
-                cluster.secondrank = outr
-            else:
-                cluster.rank = outr
-                cluster.secondrank = inr
+        start_inr = 0
+        prev_inr = 0.
+        start_outr = 0
+        prev_outr = 0.
+        for i in range(len(layer)):
 
-        layer.sort(key=lambda c: (c.rank, c.secondrank))
+            if layer[i].inrank >= 0.:
+                for j in range(start_inr, i):
+                    layer[j].inrank = (prev_inr + layer[i].inrank) / 2.
+                start_inr = i + 1
+                prev_inr = layer[i].inrank
+
+            if layer[i].outrank >= 0.:
+                for j in range(start_outr, i):
+                    layer[j].outrank = (prev_outr + layer[i].outrank) / 2.
+                start_outr = i+1
+                prev_outr = layer[i].outrank
+
+        for j in range(start_inr, len(layer)):
+                layer[j].inrank = prev_inr + 0.5
+
+        for j in range(start_outr, len(layer)):
+                layer[j].outrank = prev_outr + 0.5
+
+        total_outsize = sum(map(lambda x: x.outsize, layer))
+        total_insize = sum(map(lambda x: x.insize, layer))
+        layer.sort(key=lambda c: (c.inrank * total_insize * alpha + c.outrank * total_outsize * (1. - alpha)))
+        # layer.sort(key=lambda c: (c.inr * alpha + c.outr * (1.-alpha)))  # simpler
         for i, cluster in enumerate(layer):
             cluster.rank = i
 
-    def _barycenter(self, direction_flag, reps):
-        # True means forward pass (leaves first layer unchanged)
-        # False is backwards pass (last layer unchanged)
-        if direction_flag:
-            r = range(1, self.num_layers)
-        else:
-            r = range(self.num_layers - 2, -1, -1)
-
-        for _ in range(reps):
-            for t in r:
-                layer = self.ordered[t]
-                self._bary_rank_layer(layer, direction_flag)
+    def _barycenter(self):
+        for layer in self.ordered:
+            self._bary_rank_layer(layer, alpha=1.)
+            self._bary_rank_layer(layer, alpha=0.)
+            self._bary_rank_layer(layer)
 
     def swap_clusters(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
         order = self.ordered[cluster1.tc.layer]
@@ -458,7 +547,7 @@ class SugiyamaLayout:
         self.is_aligned = False
         self.is_located = False
 
-    def align_clusters(self, direction_flag=FORWARD, max_chain=-1, stairs_iterations=5):
+    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, max_inout_diff=2., stairs_iterations=5):
 
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
         # if not, it is called with the default parameters
@@ -474,6 +563,10 @@ class SugiyamaLayout:
             r = -1
 
             for cluster in self.ordered[layer]:
+                if (cluster.largest_incoming / cluster.largest_outgoing +  > max_inout_diff
+                        or cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff):
+                    continue
+
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
                 wanted, connsize = cluster.largest_median_connection(direction=direction_flag)
 
@@ -595,7 +688,7 @@ class SugiyamaLayout:
             if cluster == lroot:
                 break
 
-    def collapse_stairs_iteration(self, minimum_want=2, allowed_extra_crossings=0):
+    def collapse_stairs_iteration(self, minimum_want=2, allowed_extra_crossings=1):
         """Mitigates the staircase effect on connected parts of the graph
 
         The goal is to move shorter chains closer to their desired position. Shorter chains have a better chance to
@@ -621,7 +714,8 @@ class SugiyamaLayout:
         for cluster in self.clusters:
             if cluster.root != cluster:
                 continue
-
+            if cluster.tc.layer == 56 and cluster.tc.id == 65:
+                print("breakpoint")
             cluster.update_wanted_direction()
 
         for cluster in self.clusters:
@@ -683,7 +777,7 @@ class SugiyamaLayout:
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
         # if not, it is called with the default parameters
         if not self.is_aligned:
-            self.align_clusters()
+            self.set_alignment()
 
         self.set_x_positions()
 
@@ -979,8 +1073,11 @@ class SugiyamaLayout:
             cx, cy = cluster.pos()
             context.move_to(cx, cy - cluster.draw_size / 2.)
             context.line_to(cx, cy + cluster.draw_size / 2.)
-
-        context.stroke()
+            if cluster.tc.layer == 56 and cluster.tc.id == 65:
+                context.set_source_rgba(0, 1, 0)
+            else:
+                context.set_source_rgb(0, 0, 0)
+            context.stroke()
 
         if show_timestamps:
             context.set_source_rgb(0, 0, 0)
@@ -1004,4 +1101,7 @@ class SugiyamaLayout:
                 context.restore()
 
             context.stroke()
+
+        print(self.ordered[56][-3])
+        print(self.bottom)
 
