@@ -19,6 +19,10 @@ class UnorderedException(Exception):
     pass
 
 
+class NotEndpointException(Exception):
+    pass
+
+
 class SugiyamaCluster:
     def __init__(self, tc: TimeCluster, height_method):
         # Link to original TimeCluster and vice versa
@@ -33,8 +37,8 @@ class SugiyamaCluster:
         self.insize = 0  # Filled by build(), number of incoming connections
         self.outsize = 0  # Filled by build(), number of outgoing connections
 
-        self.largest_incoming = 0
-        self.largest_outgoing = 0
+        self.largest_incoming = 0  # Filled by build(), size of the largest incoming connection
+        self.largest_outgoing = 0  # Filled by build(), size of the largest outgoing connection
 
         self.members = self.tc.members  # Set of TimeNodes in this cluster
 
@@ -168,6 +172,12 @@ class SugiyamaCluster:
         return brother, connsize
 
     def align_with(self, next_cluster: SugiyamaCluster):
+        """puts next_cluster as the next link in this chain, if self is an endpoint
+
+        :param next_cluster: The cluster to align with current chain
+        """
+        if self.align != self.root:
+            raise NotEndpointException(f"Can only align if self is an endpoint, but {self} is aligned with {self.align}")
         self.align = next_cluster
         next_cluster.root = self.root
         next_cluster.align = self.root
@@ -176,25 +186,20 @@ class SugiyamaCluster:
     def update_wanted_direction(self):
         """Function to calculate which direction an alignment would like to move in depending on the ranks of its connections
 
-        :param root: The cluster that is at the root of the alignment.
         :return: The direction (positive is downwards, negative is upwards) and strength of the direction
         """
         if self.root != self:
             raise NotRootException("You can only call wanted_direction on an alignment root.")
 
-        # l holds the alignment plus a buffer of 1 at both sides
+        # l holds the alignment for quick access in all directions
         l = []
 
-        # Add the cluster that the root would have aligned with if it was allowed
-        # l.append(self.largest_median_connection(direction=INCOMING)[0])
         cluster = self
         while True:
             l.append(cluster)
             if cluster.align == self:
                 break
             cluster = cluster.align
-        # Similarly, add the cluster that the last one would like to align with
-        # l.append(cluster.largest_median_connection(direction=OUTGOING)[0])
 
         total = 0
         for i in range(1, len(l)):
@@ -246,8 +251,9 @@ class SugiyamaLayout:
                  line_curviness=0.3,
                  horizontal_density=1., vertical_density=1.,
                  cluster_width=-1,
-                 cluster_height_method='sqrt',
-                 font_size=-1):
+                 cluster_height_method='linear',
+                 font_size=-1,
+                 verbose=False):
 
         # Set basic information from the time graph
         self.g = g
@@ -266,7 +272,7 @@ class SugiyamaLayout:
         self.is_located = False
 
         # General info
-        max_cluster = max(self.clusters, key=lambda x: x.draw_size)
+        max_cluster = max(self.clusters, key=len)
         self.max_cluster_height = max_cluster.draw_size
         self.max_cluster_size = len(max_cluster)  # Amount of elements in cluster
         self.max_bundle_size = max([max(map(len, cluster.neighbours.values())) for cluster in self.clusters])  # Amount elements in connection
@@ -565,8 +571,8 @@ class SugiyamaLayout:
             r = -1
 
             for cluster in self.ordered[layer]:
-                if (#(cluster.largest_incoming + 1) / (cluster.largest_outgoing + 1) > max_inout_diff or
-                        (cluster.largest_outgoing + 1) / (cluster.largest_incoming + 1) > max_inout_diff):
+                if (cluster.insize == 0 or max_inout_diff < 0. or
+                        cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff):
                     continue
 
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
@@ -690,7 +696,7 @@ class SugiyamaLayout:
             if cluster == lroot:
                 break
 
-    def collapse_stairs_iteration(self, minimum_want=2, allowed_extra_crossings=1):
+    def collapse_stairs_iteration(self, minimum_want=3, allowed_extra_crossings=0):
         """Mitigates the staircase effect on connected parts of the graph
 
         The goal is to move shorter chains closer to their desired position. Shorter chains have a better chance to
@@ -716,8 +722,6 @@ class SugiyamaLayout:
         for cluster in self.clusters:
             if cluster.root != cluster:
                 continue
-            if cluster.tc.layer == 56 and cluster.tc.id == 65:
-                print("breakpoint")
             cluster.update_wanted_direction()
 
         for cluster in self.clusters:
@@ -728,7 +732,7 @@ class SugiyamaLayout:
             predecessor = self.pred(cluster)
 
             # Case 1
-            while (cluster.wanted_direction < -minimum_want
+            while (cluster.wanted_direction <= -minimum_want
                    and predecessor is not None and predecessor.root.chain_length > cluster.chain_length
                    and self.adjacent_alignments(predecessor, cluster)
                    and self.crossing_diff_if_swapped_align(predecessor, cluster) <= allowed_extra_crossings):
@@ -738,7 +742,7 @@ class SugiyamaLayout:
                 predecessor = self.pred(cluster)
 
             # Case 2
-            while (cluster.wanted_direction > minimum_want
+            while (cluster.wanted_direction >= minimum_want
                     and successor is not None and successor.root.chain_length > cluster.chain_length
                     and self.adjacent_alignments(cluster, successor)
                     and self.crossing_diff_if_swapped_align(cluster, successor) <= allowed_extra_crossings):
@@ -749,7 +753,7 @@ class SugiyamaLayout:
                 successor = self.succ(cluster)
 
             # Case 3
-            while (successor is not None and successor.root.chain_length < cluster.chain_length
+            while (successor is not None and successor.root.chain_length <= cluster.chain_length
                    and successor.root.wanted_direction < -minimum_want
                    and self.adjacent_alignments(cluster, successor)
                    and self.crossing_diff_if_swapped_align(cluster, successor) <= allowed_extra_crossings):
@@ -761,7 +765,7 @@ class SugiyamaLayout:
 
             # Case 4
             while (predecessor is not None and predecessor.root.chain_length < cluster.chain_length
-                    and predecessor.root.wanted_direction > minimum_want
+                    and predecessor.root.wanted_direction >= minimum_want
                     and self.adjacent_alignments(predecessor, cluster)
                     and self.crossing_diff_if_swapped_align(predecessor, cluster) <= allowed_extra_crossings):
 
