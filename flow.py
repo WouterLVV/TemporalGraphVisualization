@@ -124,7 +124,3 @@ if __name__ == '__main__':
                       colormap=colormap,
                       timestamp_translator=timestamp_reverse_translator,
                       show_annotations=True)
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes

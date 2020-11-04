@@ -33,8 +33,8 @@ class SugiyamaCluster:
         self.insize = 0  # Filled by build(), number of incoming connections
         self.outsize = 0  # Filled by build(), number of outgoing connections
 
-        self.largest_incoming = max(map(len, self.incoming.values()), default=0)
-        self.largest_outgoing = max(map(len, self.outgoing.values()), default=0)
+        self.largest_incoming = 0
+        self.largest_outgoing = 0
 
         self.members = self.tc.members  # Set of TimeNodes in this cluster
 
@@ -87,6 +87,8 @@ class SugiyamaCluster:
             self.outsize += len(connection_nodes)
 
         self.neighbours = {**self.incoming, **self.outgoing}
+        self.largest_incoming = max(map(len, self.incoming.values()), default=0)
+        self.largest_outgoing = max(map(len, self.outgoing.values()), default=0)
 
     def update_cluster_ranks(self):
         if self.insize > 0:
@@ -563,8 +565,8 @@ class SugiyamaLayout:
             r = -1
 
             for cluster in self.ordered[layer]:
-                if (cluster.largest_incoming / cluster.largest_outgoing +  > max_inout_diff
-                        or cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff):
+                if (#(cluster.largest_incoming + 1) / (cluster.largest_outgoing + 1) > max_inout_diff or
+                        (cluster.largest_outgoing + 1) / (cluster.largest_incoming + 1) > max_inout_diff):
                     continue
 
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
