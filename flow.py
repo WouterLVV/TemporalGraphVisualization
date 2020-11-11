@@ -33,13 +33,13 @@ mname = None
 # aggregate_time_to, strength = 120, 0.5
 
 # Primary school, 2 days
-# fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
-# mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
-# timestamp_first = True
-# period, time_label = 20, 's'
-# start_timestamp, end_timestamp, add_missing = 120800, 151960, True
-# aggregate_time_to, strength = 600, 0.5
-# min_cluster = 5
+fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
+mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
+timestamp_first = True
+period, time_label = 20, 's'
+start_timestamp, end_timestamp, add_missing = 120800, 151960, True
+aggregate_time_to, strength = 600, 0.5
+min_cluster = 5
 
 
 # High school, 5 days x 8am-6pm
@@ -60,12 +60,12 @@ mname = None
 
 
 #Email EU, 500+ days in 45 mil. seconds
-fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
-timestamp_first = False
-period, time_label = 1, 'd'
-start_timestamp, end_timestamp, add_missing = -1, -1, False
-aggregate_time_to, strength = 86400, 0 # day, weak aggregation
-min_cluster = 2
+# fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
+# timestamp_first = False
+# period, time_label = 1, 'd'
+# start_timestamp, end_timestamp, add_missing = -1, -1, False
+# aggregate_time_to, strength = 86400, 0 # day, weak aggregation
+# min_cluster = 2
 
 # College msg, 193 days
 # fname = "tnet_sources/college-msg/CollegeMsg.txt"
@@ -118,9 +118,12 @@ if __name__ == '__main__':
                                horizontal_density=1,
                                vertical_density=0.6)
 
-        sg.set_order(barycenter_passes=10, repetitions_per_pass=3)
+        sg.set_order(barycenter_passes=10)
         sg.set_alignment(stairs_iterations=3)
         sg.draw_graph(filename="flow_output/"+net_name+suffix+".svg",
                       colormap=colormap,
                       timestamp_translator=timestamp_reverse_translator,
-                      show_annotations=True)
+                      show_annotations=True,
+                      fading=True)
+
+        print(net_name)

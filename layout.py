@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import math
+import numpy as np
+from sklearn.preprocessing import normalize
+
 from collections import Counter, deque
-from typing import List, Set
+from typing import List, Set, Dict
 
 from TimeGraph import TimeGraph, TimeCluster
 import cairocffi as cairo
-import math
+
+from drawing_utils import coloured_bezier
+
 
 INCOMING = FORWARD = True
 OUTGOING = BACKWARD = False
@@ -424,7 +430,7 @@ class SugiyamaLayout:
                     self.swap_clusters(scluster, self.ordered[l][pointers[l]])
                     pointers[l] += 1
 
-    def set_order(self, barycenter_passes: int = 10, repetitions_per_pass: int = 5):
+    def set_order(self, barycenter_passes: int = 10):
         # Make copy to compare if ordering has stabilized
         orders_tmp = [order.copy() for order in self.ordered]
 
@@ -947,21 +953,6 @@ class SugiyamaLayout:
 
         return pairs
 
-    def draw_line_monochrome(self, source: SugiyamaCluster, target: SugiyamaCluster, line_coordinates: dict,
-                             context: cairo.Context):
-        # Same as draw line, but disregards color information.
-        context.set_source_rgba(1., 0., 0., 1.)
-        context.set_line_width(len(source.neighbours[target]) * self.line_width)
-        y_source = line_coordinates[(source, target)]
-        y_target = line_coordinates[(target, source)]
-
-        context.move_to(source.x, y_source)
-        context.curve_to(source.x + self.curve_offset, y_source,
-                         target.x - self.curve_offset, y_target,
-                         target.x, y_target)
-
-        context.stroke()
-
     def draw_line(self, source: SugiyamaCluster, target: SugiyamaCluster,
                   line_coordinates: dict, colormap: dict,
                   context: cairo.Context,
@@ -979,30 +970,20 @@ class SugiyamaLayout:
         :param show_annotations: provides annotations when a line changes size significantly
         """
         members = source.neighbours[target]
+        num_members = len(members)
+        thickness = num_members*self.line_width
         half_thickness = len(members) * self.line_width / 2.
 
         labels = Counter(map(lambda x: x.name, members))
-        labels = sorted(list(labels.items()))
+        labels = [(colormap.get(lbl, self.default_line_color), cnt/num_members) for (lbl, cnt) in sorted(list(labels.items()))]
 
-        cumulative = -half_thickness
+        y_source = line_coordinates[(source, target)]
+        y_target = line_coordinates[(target, source)]
 
-        source_base = line_coordinates[(source, target)]
-        target_base = line_coordinates[(target, source)]
-
-        for (label, count) in labels:
-            if label in colormap.keys():
-                (r, g, b, a) = colormap[label]
-            else:
-                (r, g, b, a) = self.default_line_color
+        if len(labels) == 1:
+            (r, g, b, a) = labels[0][0]
             context.set_source_rgba(r, g, b, a)
-            context.set_line_width(count * self.line_width)
-
-            # Find the center of the line
-            offset = cumulative + count * self.line_width / 2.
-
-            y_source = source_base + offset
-            y_target = target_base + offset
-
+            context.set_line_width(thickness)
             context.move_to(source.x, y_source)
             context.curve_to(source.x + self.curve_offset, y_source,
                              target.x - self.curve_offset, y_target,
@@ -1010,8 +991,14 @@ class SugiyamaLayout:
 
             context.stroke()
 
-            # Update so that it is at the top of the next line
-            cumulative += count * self.line_width
+        else:
+            coloured_bezier(context,
+                            (source.x, y_source),
+                            (source.x + self.curve_offset, y_source),
+                            (target.x - self.curve_offset, y_target),
+                            (target.x, y_target),
+                            labels,
+                            thickness)
 
         if show_annotations:
             # draw some annotatations of the bundle size
@@ -1023,14 +1010,30 @@ class SugiyamaLayout:
                 to_print = str(len(members))
                 _, _, width, height, _, _ = context.text_extents(to_print)
                 context.move_to(source.x + self.xseparation / 2 - width / 2,
-                                (source_base + target_base) / 2 + height / 2)
+                                (y_source + y_target) / 2 + height / 2)
                 context.show_text(to_print)
                 context.stroke()
 
+    def fade_cluster(self, ctx: cairo.Context, source: SugiyamaCluster, colormap: Dict, direction):
+        colors = [(colormap.get(lbl, self.default_line_color), cnt/len(source)) for (lbl, cnt) in sorted(list(Counter(map(lambda x: x.name, source.members)).items()))]
+        if direction:
+            coloured_bezier(ctx,
+                            (source.x - self.xseparation / 2., source.y),
+                            (source.x, source.y),
+                            (source.x, source.y),
+                            (source.x, source.y),
+                            colors=colors, width=self.line_width*len(source), detail=6, fade='in')
+        else:
+            coloured_bezier(ctx,
+                            (source.x + self.xseparation / 2., source.y),
+                            (source.x, source.y),
+                            (source.x, source.y),
+                            (source.x, source.y),
+                            colors=colors, width=self.line_width * len(source), detail=6, fade='in')
     def draw_graph(self, filename: str = "output/example.svg",
                    colormap=None,
                    show_timestamps=True, timestamp_translator=None,
-                   show_annotations=False):
+                   show_annotations=False, fading=False):
 
         if colormap is None:
             colormap = dict()
@@ -1058,6 +1061,13 @@ class SugiyamaLayout:
         for cluster in self.clusters:
             line_coordinates.update(self.calculate_line_origins(cluster))
 
+        if fading:
+            for cluster in self.clusters:
+                if cluster.insize == 0:
+                    self.fade_cluster(context, cluster, colormap, direction=INCOMING)
+                if cluster.outsize == 0:
+                    self.fade_cluster(context, cluster, colormap, direction=OUTGOING)
+
         already_drawn = set()
 
         for (source, target) in line_coordinates.keys():
@@ -1075,14 +1085,13 @@ class SugiyamaLayout:
         context.set_line_width(self.cluster_width)
         context.set_source_rgba(r, g, b, a)
 
+
+
+
         for cluster in self.clusters:
             cx, cy = cluster.pos()
             context.move_to(cx, cy - cluster.draw_size / 2.)
             context.line_to(cx, cy + cluster.draw_size / 2.)
-            if cluster.tc.layer == 56 and cluster.tc.id == 65:
-                context.set_source_rgba(0, 1, 0)
-            else:
-                context.set_source_rgb(0, 0, 0)
             context.stroke()
 
         if show_timestamps:
@@ -1108,6 +1117,5 @@ class SugiyamaLayout:
 
             context.stroke()
 
-        print(self.ordered[56][-3])
         print(self.bottom)
 
