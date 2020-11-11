@@ -1,0 +1,20 @@
+Changelog TemporalGraphVisualization
+
+=== 2020-11-11 ===
+= Features =
+
+ - initial ordering is now based on 'supercluster'
+
+ - improved barycenter ordering when a cluster did not have incoming or have outgoing connections
+
+ - Added drawing_utils, which provides a multicoloured bezier function (dramatically increases file size, however)
+
+ - Added fading options to the multicoloured bezier and as option for the graph
+
+= Bugfixes =
+
+ - Several bugs in the anti-staircase mechanism were ironed out
+
+= Documentation =
+
+ - Added: sort_by_supercluster

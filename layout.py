@@ -1030,6 +1030,7 @@ class SugiyamaLayout:
                             (source.x, source.y),
                             (source.x, source.y),
                             colors=colors, width=self.line_width * len(source), detail=6, fade='in')
+
     def draw_graph(self, filename: str = "output/example.svg",
                    colormap=None,
                    show_timestamps=True, timestamp_translator=None,
@@ -1084,9 +1085,6 @@ class SugiyamaLayout:
 
         context.set_line_width(self.cluster_width)
         context.set_source_rgba(r, g, b, a)
-
-
-
 
         for cluster in self.clusters:
             cx, cy = cluster.pos()
