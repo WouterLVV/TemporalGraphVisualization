@@ -10,7 +10,7 @@ Bugs
 ++ colours automatic from a palette
 ++ draw each cluster centered on its row (rather than top-aligned)
 -- layout suboptimal vertically
--- draw a bundle incoming into root clusters
+++ draw a bundle incoming into root clusters
 
 Method
 
