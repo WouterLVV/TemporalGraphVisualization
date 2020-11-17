@@ -58,7 +58,7 @@ def read_pair_contacts_from_file(fin_name, separator=' ', grain_t=20, start_time
 
     return pair_contacts
 
-def read_node_metadata_from_file(fin_name, verbose=True):
+def read_node_metadata_from_file(fin_name, verbose=False):
     node_metadata = {} # {node id: metadata/category as string}
     categories = []
 
@@ -82,7 +82,7 @@ def initialise_aggregation(pair_contacts, old_period, new_period):
     # old: a contact was active in (t–old_period, t]
     # new: a contact  is active in (t–new_period, t]
 
-    i = 0 # index in old timestamps
+    i = 0  # index in old timestamps
     new_timestamp = old_timestamps[0] - old_period + new_period
 
     while i < len(old_timestamps):

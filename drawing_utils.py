@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.preprocessing import normalize
 import sys
 
+epsilon = 1e-9
 
 def cubic_bezier(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray, p3: np.ndarray, numpoints=100):
     def cbpoint(t):
@@ -11,8 +12,8 @@ def cubic_bezier(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray, p3: np.ndarray,
     def cbpoint_deriv(t):
         return 3*((1-t)**2)*(p1-p0) + 6*(1-t)*t*(p2-p1) + 3*(t**2)*(p3-p2)
 
-    numpoints -= (numpoints % 3) - 1
-    points = np.linspace(0, 1, numpoints)
+    numpoints = max(4, numpoints - (numpoints % 2))
+    points = np.linspace(epsilon, 1-epsilon, numpoints)
     return np.array([x for x in map(cbpoint, points)]), np.array([x for x in map(cbpoint_deriv, points)])
 
 

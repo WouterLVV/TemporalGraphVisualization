@@ -1,14 +1,15 @@
 from collections import deque
+from typing import List
 
 
-#---------------------------------------------#
-#             Support classes                 #
-#---------------------------------------------#
+# --------------------------------------------- #
+#              Support classes                  #
+# --------------------------------------------- #
 
 class TimeNode:
     """Simple data structure for nodes than can belong to different groups over time"""
 
-    def __init__(self, conns:set=None, max_step:int=-1, id=-1, name=None):
+    def __init__(self, conns: set = None, max_step: int = -1, id=-1, name=None):
         """Initializes a TimeNode structure
 
         :param conns: a set of connections this node has in tuple form (neighbour, time step)
@@ -20,7 +21,7 @@ class TimeNode:
         self.name = name
 
         self.nbs = [set() for _ in range(max_step)]
-        self.clusters = [None] * max_step
+        self.clusters = [None] * max_step  # type: List[TimeCluster]
 
         if conns is not None:
             for (n, t) in conns:
@@ -78,7 +79,7 @@ class TimeCluster:
         If the connection already exists, the new member(s) is/are added to the existing connection.
 
         :param TimeCluster target: The TimeCluster to connect to. Should exist in either layer+1 or layer-1.
-        :param int or set members: id or set of ids that belong to this connection.
+        :param TimeNode or set members: id or set of ids that belong to this connection.
         :return: None
         """
 
@@ -124,9 +125,10 @@ class TimeCluster:
     def __str__(self):
         return f"TimeCluster: {self.layer}, {self.id}"
 
-#---------------------------------------------#
-#                Main class                   #
-#---------------------------------------------#
+
+# --------------------------------------------- #
+#                 Main class                    #
+# --------------------------------------------- #
 
 class TimeGraph:
     """Initializes a TimeGraph object
@@ -139,7 +141,7 @@ class TimeGraph:
     :ivar nodes: List of nodes
     :ivar clusters: List of list of clusters
     """
-    def __init__(self, conns, nodes, num_steps: int):
+    def __init__(self, conns, nodes: int or List[str], num_steps: int):
         """Initializes a TimeGraph
 
         :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
@@ -153,18 +155,19 @@ class TimeGraph:
         if isinstance(nodes, int):
             self.nodes = [TimeNode(None, num_steps, id) for id in range(nodes)]
         else:
-            self.nodes = [TimeNode(max_step=num_steps, id=i, name=d) for i,d in enumerate(nodes)]
+            self.nodes = [TimeNode(max_step=num_steps, id=i, name=d) for i, d in enumerate(nodes)]
 
 
         for (f, b, t) in conns:
             self.nodes[f].add_connection(self.nodes[b], t)
             self.nodes[b].add_connection(self.nodes[f], t)
 
-        self.clusters = [self.create_layer_components(t) for t in range(self.num_steps)]
+        self.layers = [self.create_layer_components(t) for t in range(self.num_steps)]
+        self.clusters = [x for t in range(self.num_steps) for x in self.layers[t]]
         self.connect_clusters()
 
     def get_cluster(self, t, id):
-        return self.clusters[t][id]
+        return self.layers[t][id]
 
     def create_layer_components(self, t: int):
         """Function that creates connected components in each layer
@@ -217,3 +220,24 @@ class TimeGraph:
 
                 head.add_connection(tail, n)
                 tail.add_connection(head, n)
+
+    def average_neighbours(self, minimum_cluster_size=1, minimum_connection_size=1):
+        num_connections = 0
+        num_clusters = 0
+        for cluster in self.clusters:
+            if len(cluster) < minimum_cluster_size:
+                continue
+            cluster_connections = 0
+            for k, v in cluster.outgoing.items():
+                if len(k) < minimum_cluster_size or len(v) < minimum_connection_size:
+                    continue
+                cluster_connections += 1
+            for k, v in cluster.incoming.items():
+                if len(k) < minimum_cluster_size or len(v) < minimum_connection_size:
+                    continue
+                cluster_connections += 1
+            if cluster_connections > 0:
+                num_clusters += 1
+                num_connections += cluster_connections
+
+        return num_connections / num_clusters

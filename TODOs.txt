@@ -9,8 +9,9 @@ Bugs
 ++ font size: from user, or pegged to the fixed xseparation
 ++ colours automatic from a palette
 ++ draw each cluster centered on its row (rather than top-aligned)
--- layout suboptimal vertically
+++ layout suboptimal vertically
 ++ draw a bundle incoming into root clusters
+-- Drawing artifacts on wide lines (because it is secretly going backwards first and then forwards, probably)
 
 Method
 

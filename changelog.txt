@@ -1,5 +1,28 @@
 Changelog TemporalGraphVisualization
 
+=== 2020-11-16 ===
+= Features =
+
+ - Coloured bezier detail now dependent on curviness (reduces file size and visual artifacts)
+
+ - Function to see the average number of neighbours per cluster in TimeGraph
+
+ - Debug mode switch and code to print debug info in SVG
+
+= Bugfixes =
+
+ - Bezier derivative not stable at exactly 0 or 1, so now has a small offset
+
+ - Fixed bug where cluster would get the wrong rank if it had no connections on one side (this fixed a LOT of issues)
+
+ - Fixed bug where amount of alignment crossings were not computed correctly
+
+= Documentation =
+
+ - Made upper and lower order in function definitions consistent (but these terms should still be renamed because confusing)
+
+
+
 === 2020-11-11 ===
 = Features =
 

@@ -12,10 +12,10 @@ import cairocffi as cairo
 
 from drawing_utils import coloured_bezier
 
-
 INCOMING = FORWARD = True
 OUTGOING = BACKWARD = False
 
+debug_mode = False
 
 class NotRootException(Exception):
     pass
@@ -327,9 +327,9 @@ class SugiyamaLayout:
     def build_and_trim_clusters(self, minimum_cluster_size, minimum_connection_size, height_method):
 
         layers = [
-            [SugiyamaCluster(self.g.clusters[t][i], height_method)
-             for i in range(len(self.g.clusters[t]))
-             if len(self.g.clusters[t][i]) >= minimum_cluster_size
+            [SugiyamaCluster(self.g.layers[t][i], height_method)
+             for i in range(len(self.g.layers[t]))
+             if len(self.g.layers[t][i]) >= minimum_cluster_size
              ]
             for t in range(self.g.num_steps)
         ]
@@ -449,7 +449,7 @@ class SugiyamaLayout:
         self.is_ordered = True
 
     @staticmethod
-    def _bary_rank_layer(layer: List[SugiyamaCluster], alpha=0.5):
+    def _bary_rank_layer(layer: List[SugiyamaCluster], max_inrank, max_outrank, alpha=0.5):
         for cluster in layer:
             cluster.update_cluster_ranks()
             # cluster.update_cluster_ranks_median()
@@ -473,23 +473,33 @@ class SugiyamaLayout:
                 prev_outr = layer[i].outrank
 
         for j in range(start_inr, len(layer)):
-                layer[j].inrank = prev_inr + 0.5
+                layer[j].inrank = max_inrank + 0.5
 
         for j in range(start_outr, len(layer)):
-                layer[j].outrank = prev_outr + 0.5
+                layer[j].outrank = max_outrank + 0.5
 
         total_outsize = sum(map(lambda x: x.outsize, layer))
         total_insize = sum(map(lambda x: x.insize, layer))
         layer.sort(key=lambda c: (c.inrank * total_insize * alpha + c.outrank * total_outsize * (1. - alpha)))
+
         # layer.sort(key=lambda c: (c.inr * alpha + c.outr * (1.-alpha)))  # simpler
         for i, cluster in enumerate(layer):
             cluster.rank = i
 
     def _barycenter(self):
-        for layer in self.ordered:
-            self._bary_rank_layer(layer, alpha=1.)
-            self._bary_rank_layer(layer, alpha=0.)
-            self._bary_rank_layer(layer)
+        for i in range(self.num_layers):
+            layer = self.ordered[i]
+            prev_layer_size = (len(self.ordered[i - 1]) - 1) if i > 0 else 0
+            next_layer_size = (len(self.ordered[i + 1]) - 1) if i < self.num_layers - 1 else 0
+
+            self._bary_rank_layer(layer, prev_layer_size, next_layer_size, alpha=0.999)
+
+        for i in range(self.num_layers-2, -1, -1):
+            layer = self.ordered[i]
+            prev_layer_size = (len(self.ordered[i - 1]) - 1) if i > 0 else 0
+            next_layer_size = (len(self.ordered[i + 1]) - 1) if i < self.num_layers - 1 else 0
+
+            self._bary_rank_layer(layer, prev_layer_size, next_layer_size, alpha=0.001)
 
     def swap_clusters(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
         order = self.ordered[cluster1.tc.layer]
@@ -506,7 +516,7 @@ class SugiyamaLayout:
     # The main ordering is done with barycenter, these functions can be used for smaller optimizations
 
     @staticmethod
-    def _compare_ranked_lists(lower: List[int], upper: List[int]):
+    def _compare_ranked_lists(upper: List[int], lower: List[int]):
         """Compare two ordered lists to see how many crossings they have
 
         Lists are assumed to be sorted low to high and contain ranks. A crossing is when a connection in the
@@ -515,17 +525,15 @@ class SugiyamaLayout:
         :param lower: List of ranks associated with the lower cluster.
         :param upper: List of ranks associated with the higher cluster
         """
-        i = j = crossings = 0
+        j = i = crossings = 0
 
-        while i < len(lower) and j < len(upper):
-            if upper[j] > lower[i]:
-                crossings += len(lower) - i
-                i += 1
-            elif upper[j] < lower[i]:
+        while j < len(lower) and i < len(upper):
+            if upper[i] > lower[j]:
                 j += 1
-            else:
+            elif upper[i] <= lower[j]:
+                crossings += j
                 i += 1
-                j += 1
+        crossings += (len(upper) - i) * j
 
         return crossings
 
@@ -533,23 +541,25 @@ class SugiyamaLayout:
     def get_num_crossings(cls, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
         """Count the number of crossings these 2 cluster have with each other.
 
-        If cluster1 is lower (higher rank) than cluster2, it will return the current number of crossings.
-        If cluster2 is lower, it will return the number of crossings as if they were swapped.
+        If cluster1 is upper (lower rank) than cluster2, it will return the current number of crossings.
+        If cluster2 is upper, it will return the number of crossings as if they were swapped.
 
-        :param cluster1: cluster that is assumed to be the lower cluster
-        :param cluster2: cluster that is assumed to be the higher cluster
+        :param cluster1: cluster that is assumed to be the upper cluster
+        :param cluster2: cluster that is assumed to be the lower cluster
         """
-        sins_lower = sorted(map(lambda x: x[0].rank, cluster1.incoming.items()))
-        sins_upper = sorted(map(lambda x: x[0].rank, cluster2.incoming.items()))
-        souts_lower = sorted(map(lambda x: x[0].rank, cluster1.outgoing.items()))
-        souts_upper = sorted(map(lambda x: x[0].rank, cluster2.outgoing.items()))
-        return (cls._compare_ranked_lists(sins_lower, sins_upper)
-                + cls._compare_ranked_lists(souts_lower, souts_upper))
+        sins_upper = sorted(map(lambda x: x[0].rank, cluster1.incoming.items()))
+        sins_lower = sorted(map(lambda x: x[0].rank, cluster2.incoming.items()))
+        souts_upper = sorted(map(lambda x: x[0].rank, cluster1.outgoing.items()))
+        souts_lower = sorted(map(lambda x: x[0].rank, cluster2.outgoing.items()))
+        return (cls._compare_ranked_lists(sins_upper, sins_lower)
+                + cls._compare_ranked_lists(souts_upper, souts_lower))
 
     def crossing_diff_if_swapped(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
         if cluster1.rank > cluster2.rank:
-            cluster1, cluster2 = cluster2, cluster1
-        return self.get_num_crossings(cluster2, cluster1) - self.get_num_crossings(cluster1, cluster2)
+            upper, lower = cluster2, cluster1
+        else:
+            upper, lower = cluster1, cluster2
+        return self.get_num_crossings(lower, upper) - self.get_num_crossings(upper, lower)
 
     ####################################################################################################################
     # ------------------------------------------- Alignment Functions ------------------------------------------------ #
@@ -561,7 +571,7 @@ class SugiyamaLayout:
         self.is_aligned = False
         self.is_located = False
 
-    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, max_inout_diff=2., stairs_iterations=5):
+    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, max_inout_diff=2., stairs_iterations=2):
 
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
         # if not, it is called with the default parameters
@@ -672,15 +682,16 @@ class SugiyamaLayout:
         lroot = lower.root
         cluster = lroot
         crossing_diff = 0
+        length = 0
         while True:
             predecessor = self.pred(cluster)
             if predecessor is not None and predecessor.root == uroot:
                 crossing_diff += self.crossing_diff_if_swapped(cluster, predecessor)
-
+                length += 1
             cluster = cluster.align
             if cluster == lroot:
                 break
-        return crossing_diff
+        return crossing_diff - 2*(length-1)
 
     def swap_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
         """Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
@@ -979,7 +990,9 @@ class SugiyamaLayout:
 
         y_source = line_coordinates[(source, target)]
         y_target = line_coordinates[(target, source)]
-
+        context.save()
+        context.rectangle(source.x, 0, target.x, self.bottom)
+        context.clip()
         if len(labels) == 1:
             (r, g, b, a) = labels[0][0]
             context.set_source_rgba(r, g, b, a)
@@ -998,7 +1011,8 @@ class SugiyamaLayout:
                             (target.x - self.curve_offset, y_target),
                             (target.x, y_target),
                             labels,
-                            thickness)
+                            thickness,
+                            detail=min(100, max(4, int(abs(y_target-y_source)*self.line_width))))
 
         if show_annotations:
             # draw some annotatations of the bundle size
@@ -1013,23 +1027,24 @@ class SugiyamaLayout:
                                 (y_source + y_target) / 2 + height / 2)
                 context.show_text(to_print)
                 context.stroke()
+        context.restore()
 
-    def fade_cluster(self, ctx: cairo.Context, source: SugiyamaCluster, colormap: Dict, direction):
-        colors = [(colormap.get(lbl, self.default_line_color), cnt/len(source)) for (lbl, cnt) in sorted(list(Counter(map(lambda x: x.name, source.members)).items()))]
+    def fade_cluster(self, ctx: cairo.Context, cluster: SugiyamaCluster, colormap: Dict, direction):
+        colors = [(colormap.get(lbl, self.default_line_color), cnt/len(cluster)) for (lbl, cnt) in sorted(list(Counter(map(lambda x: x.name, cluster.members)).items()))]
         if direction:
             coloured_bezier(ctx,
-                            (source.x - self.xseparation / 2., source.y),
-                            (source.x, source.y),
-                            (source.x, source.y),
-                            (source.x, source.y),
-                            colors=colors, width=self.line_width*len(source), detail=6, fade='in')
+                            (cluster.x - self.xseparation / 3., cluster.y),
+                            (cluster.x, cluster.y),
+                            (cluster.x, cluster.y),
+                            (cluster.x, cluster.y),
+                            colors=colors, width=self.line_width*len(cluster), detail=4, fade='in')
         else:
             coloured_bezier(ctx,
-                            (source.x + self.xseparation / 2., source.y),
-                            (source.x, source.y),
-                            (source.x, source.y),
-                            (source.x, source.y),
-                            colors=colors, width=self.line_width * len(source), detail=6, fade='in')
+                            (cluster.x + self.xseparation / 3., cluster.y),
+                            (cluster.x, cluster.y),
+                            (cluster.x, cluster.y),
+                            (cluster.x, cluster.y),
+                            colors=colors, width=self.line_width * len(cluster), detail=4, fade='in')
 
     def draw_graph(self, filename: str = "output/example.svg",
                    colormap=None,
@@ -1087,6 +1102,10 @@ class SugiyamaLayout:
         context.set_source_rgba(r, g, b, a)
 
         for cluster in self.clusters:
+            if cluster.tc.layer == 30 and cluster.tc.id == 31:
+                context.set_source_rgb(1,0,0)
+            else:
+                context.set_source_rgb(0,0,0)
             cx, cy = cluster.pos()
             context.move_to(cx, cy - cluster.draw_size / 2.)
             context.line_to(cx, cy + cluster.draw_size / 2.)
@@ -1114,6 +1133,19 @@ class SugiyamaLayout:
                 context.restore()
 
             context.stroke()
+
+        if debug_mode:
+            for cluster in self.clusters:
+                if cluster.root == cluster:
+                    context.set_source_rgb(0, 0, 0)
+                    context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+                    context.set_font_size(self.font_size * 0.2)  # in user space units # self.xseparation * 0.6
+                    context.move_to(cx + self.xseparation * 0.1, cy)
+                    context.show_text(f"{self.crossing_diff_if_swapped_align(self.pred(cluster), cluster) if self.pred(cluster) is not None else 0:.2f}")
+                # context.move_to(cx + self.xseparation * 0.1, cy)
+                # context.show_text(f"{cluster.outrank:.2f}")
+                #     context.move_to(cx - self.xseparation * 0.3, cy)
+                #     context.show_text(f"{cluster.inrank:.2f}")
 
         print(self.bottom)
 
