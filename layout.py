@@ -80,23 +80,15 @@ class SugiyamaCluster:
         else:
             return 0.
 
-    def build(self, minimum_cluster_size, minimum_connection_size):
+    def build(self):
         for c, connection_nodes in self.tc.incoming.items():
-
-            if len(connection_nodes) < minimum_connection_size or len(c) < minimum_cluster_size:
-                continue
-
             self.incoming[c.sc] = connection_nodes
-            self.insize += len(connection_nodes)
 
         for c, connection_nodes in self.tc.outgoing.items():
-
-            if len(connection_nodes) < minimum_connection_size or len(c) < minimum_cluster_size:
-                continue
-
             self.outgoing[c.sc] = connection_nodes
-            self.outsize += len(connection_nodes)
 
+        self.insize = self.tc.insize
+        self.outsize = self.tc.outsize
         self.neighbours = {**self.incoming, **self.outgoing}
         self.largest_incoming = max(map(len, self.incoming.values()), default=0)
         self.largest_outgoing = max(map(len, self.outgoing.values()), default=0)
@@ -331,7 +323,6 @@ class SugiyamaLayout:
         layers = [
             [SugiyamaCluster(self.g.layers[t][i], height_method)
              for i in range(len(self.g.layers[t]))
-             if len(self.g.layers[t][i]) >= minimum_cluster_size
              ]
             for t in range(self.g.num_steps)
         ]
@@ -339,11 +330,6 @@ class SugiyamaLayout:
         for layer in layers:
             for cluster in layer:
                 cluster.build(minimum_cluster_size, minimum_connection_size)
-
-        layers = [
-            [cluster for cluster in layer if cluster.insize + cluster.outsize > 0]
-            for layer in layers
-        ]
 
         clusters = [x for t in range(self.num_layers) for x in layers[t]]
 

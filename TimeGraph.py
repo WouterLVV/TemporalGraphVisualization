@@ -21,7 +21,7 @@ class TimeNode:
         self.name = name
 
         self.nbs = [set() for _ in range(max_step)]
-        self.clusters = [None] * max_step  # type: List[TimeCluster]
+        self.clusters = [None] * max_step  # type: List[TimeCluster or None]
 
         if conns is not None:
             for (n, t) in conns:
@@ -61,6 +61,8 @@ class TimeCluster:
         self.incoming = dict()
         self.outgoing = dict()
         self.members = set()
+
+        self.insize = self.outsize = 0
 
         self.layer = layer
 
@@ -116,6 +118,38 @@ class TimeCluster:
             else:
                 raise Exception("Connection can only be added to relevant cluster")
 
+    def update(self, min_conn_size):
+        """Trim connections according to some minimum connection size
+
+        :param min_conn_size: minimum size of connection to not be removed
+        :return: Whether this cluster is alive or is orphaned and has destroyed itself
+        """
+        self.insize = self.outsize = 0
+        for k, v in list(self.incoming.items()):
+            if len(v) < min_conn_size:
+                del self.incoming[k]
+            else:
+                self.insize += len(v)
+
+        for k, v in list(self.outgoing.items()):
+            if len(v) < min_conn_size:
+                del self.outgoing[k]
+            else:
+                self.outsize += len(v)
+
+        if self.insize + self.outsize == 0:
+            self.destroy()
+            return False
+        return True
+
+    def destroy(self):
+        for n in self.members:
+            n.clusters[self.layer] = None
+        for nb in self.incoming.keys():
+            nb.outgoing.pop(self, None)
+        for nb in self.outgoing.keys():
+            nb.incoming.pop(self, None)
+
     def __len__(self):
         return len(self.members)
 
@@ -141,7 +175,7 @@ class TimeGraph:
     :ivar nodes: List of nodes
     :ivar clusters: List of list of clusters
     """
-    def __init__(self, conns, nodes: int or List[str], num_steps: int):
+    def __init__(self, conns, nodes: int or List[str], num_steps: int, minimum_cluster_size=1, minimum_connection_size=1):
         """Initializes a TimeGraph
 
         :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
@@ -151,6 +185,9 @@ class TimeGraph:
 
         self.num_steps = num_steps
         self.num_nodes = nodes
+
+        self.min_clust_size = minimum_cluster_size
+        self.min_conn_size = minimum_connection_size
 
         if isinstance(nodes, int):
             self.nodes = [TimeNode(None, num_steps, id) for id in range(nodes)]
@@ -163,8 +200,13 @@ class TimeGraph:
             self.nodes[b].add_connection(self.nodes[f], t)
 
         self.layers = [self.create_layer_components(t) for t in range(self.num_steps)]
-        self.clusters = [x for t in range(self.num_steps) for x in self.layers[t]]
         self.connect_clusters()
+        self.layers = [
+            [cluster for cluster in layer if cluster.update(self.min_conn_size)]
+            for layer in self.layers
+        ]
+
+        self.clusters = [x for t in range(self.num_steps) for x in self.layers[t]]
 
     def get_cluster(self, t, id):
         return self.layers[t][id]
@@ -200,8 +242,11 @@ class TimeGraph:
                         q.append(nb)
                         seen.add(nb.id)
 
-            clusts.append(clust)
-            ctr += 1
+            if len(clust) >= self.min_clust_size:
+                clusts.append(clust)
+                ctr += 1
+            else:
+                clust.destroy()
         return clusts
 
     def connect_clusters(self):
@@ -218,8 +263,12 @@ class TimeGraph:
                 head = n.clusters[t]
                 tail = n.clusters[t + 1]
 
+                if head is None or tail is None:
+                    continue
+
                 head.add_connection(tail, n)
                 tail.add_connection(head, n)
+
 
     def average_neighbours(self, minimum_cluster_size=1, minimum_connection_size=1):
         num_connections = 0
@@ -241,3 +290,9 @@ class TimeGraph:
                 num_connections += cluster_connections
 
         return num_connections / num_clusters
+
+    def trim_clusters(self):
+        for layer in self.layers:
+            for c in layer:
+                if c.update(self.min_conn_size) == 0:
+                    c.destroy()
