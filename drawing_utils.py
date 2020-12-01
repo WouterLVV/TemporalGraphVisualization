@@ -1,9 +1,11 @@
 import cairocffi as cairo
+# import cairo
 import numpy as np
 from sklearn.preprocessing import normalize
 import sys
 
 epsilon = 1e-9
+
 
 def cubic_bezier(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray, p3: np.ndarray, numpoints=100):
     def cbpoint(t):
@@ -12,7 +14,7 @@ def cubic_bezier(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray, p3: np.ndarray,
     def cbpoint_deriv(t):
         return 3*((1-t)**2)*(p1-p0) + 6*(1-t)*t*(p2-p1) + 3*(t**2)*(p3-p2)
 
-    numpoints = max(4, numpoints - (numpoints % 2))
+    numpoints = max(4, numpoints - (numpoints % 3) + 1)
     points = np.linspace(epsilon, 1-epsilon, numpoints)
     return np.array([x for x in map(cbpoint, points)]), np.array([x for x in map(cbpoint_deriv, points)])
 
@@ -35,20 +37,26 @@ def coloured_bezier(ctx: cairo.Context, p0, p1, p2, p3, colors, width, detail=10
             ctx.set_source(fade_pattern(p0[0], p0[1], p3[0], p3[1], r, g, b, a, fade))
         ctx.set_line_width(frac*width)
         frac_sum += frac/2
-        for i in range(0, bez.shape[0] - 3, 2):
-            ctx.move_to(bez[i][0] - width * frac_sum * bezd[i][1], bez[i][1] + width * frac_sum * bezd[i][0])
+
+        ctx.move_to(bez[0][0] - width * frac_sum * bezd[0][1], bez[0][1] + width * frac_sum * bezd[0][0])
+        for i in range(0, bez.shape[0] - 3, 3):
             ctx.curve_to(bez[i + 1][0] - width * frac_sum * bezd[i + 1][1], bez[i + 1][1] + width * frac_sum * bezd[i + 1][0],
                          bez[i + 2][0] - width * frac_sum * bezd[i + 2][1], bez[i + 2][1] + width * frac_sum * bezd[i + 2][0],
                          bez[i + 3][0] - width * frac_sum * bezd[i + 3][1], bez[i + 3][1] + width * frac_sum * bezd[i + 3][0])
+        # for i in range(0, bez.shape[0] - 3, 2):
+        #     ctx.move_to(bez[i][0] - width * frac_sum * bezd[i][1], bez[i][1] + width * frac_sum * bezd[i][0])
+        #     ctx.curve_to(bez[i + 1][0] - width * frac_sum * bezd[i + 1][1], bez[i + 1][1] + width * frac_sum * bezd[i + 1][0],
+        #                  bez[i + 2][0] - width * frac_sum * bezd[i + 2][1], bez[i + 2][1] + width * frac_sum * bezd[i + 2][0],
+        #                  bez[i + 3][0] - width * frac_sum * bezd[i + 3][1], bez[i + 3][1] + width * frac_sum * bezd[i + 3][0])
 
         ctx.stroke()
         frac_sum += frac/2
 
 
 def fade_pattern(x0, y0, x1, y1, r, g, b, a, fade):
-    pat = cairo.patterns.LinearGradient(x0, y0, x1, y1)
+    pat = cairo.LinearGradient(x0, y0, x1, y1)
     if fade == 'None':
-        return cairo.patterns.SolidPattern(r, g, b, a)
+        return cairo.SolidPattern(r, g, b, a)
     elif fade == 'in':
         pat.add_color_stop_rgba(0, r, g, b, 0)
         pat.add_color_stop_rgba(1, r, g, b, a)

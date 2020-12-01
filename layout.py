@@ -9,6 +9,7 @@ from typing import List, Set, Dict
 
 from TimeGraph import TimeGraph, TimeCluster
 import cairocffi as cairo
+# import cairo
 
 from drawing_utils import coloured_bezier
 
@@ -305,7 +306,8 @@ class SugiyamaLayout:
 
         self.font_size = font_size if font_size >= 0 else self.xseparation * 0.6                 # (in points) from user
 
-        self.bottom = 0  # (in points) computed automatically from data
+        self.height = 0  # (in points) computed automatically from data
+        self.width = 0  # (in points) computed automatically from data
 
         self.default_line_color = (1., 0., 0., 1.)  # (0, 0.4, 0.8, 1) # r, g, b, a
         self.default_cluster_color = (0., 0., 0., 1.)  # r, g, b, a
@@ -912,13 +914,133 @@ class SugiyamaLayout:
     def set_x_positions(self):
         for cluster in self.clusters:
             cluster.x = self.xmargin + self.xseparation * cluster.tc.layer
+        self.width = 2*self.xmargin + self.xseparation * self.num_layers
 
     def set_y_positions(self):
         min_y = min(map(lambda x: x.root._y - x.draw_size / 2., self.clusters))
         for cluster in self.clusters:
             cluster.y = cluster.root._y + self.ymargin - min_y
 
-        self.bottom = max(map(lambda x: x.root.y + x.draw_size / 2., self.clusters)) + self.ymargin
+        self.height = max(map(lambda x: x.root.y + x.draw_size / 2., self.clusters)) + self.ymargin
+
+    ####################################################################################################################
+    # ------------------------------------------ Statistics Functions ------------------------------------------------ #
+    ####################################################################################################################
+
+    def layer_in_out_diff(self):
+        return [abs(sum(map(lambda x: x.insize, layer)) - sum(map(lambda x: x.outsize, layer))) for layer in self.layers]
+
+    def layer_num_clusters(self):
+        return list(map(len, self.layers))
+
+    def layer_num_members(self):
+        return list(map(sum, map(lambda x: map(len, x), self.layers)))
+
+    def homogeneity(self):
+        res = []
+        for layer in self.layers:
+            if len(layer) == 0:
+                res.append(0.)
+            else:
+                res.append(sum(map(lambda c: max(map(len, c.outgoing.values()), default=1), layer))/sum(map(len, layer)))
+        return res
+
+    def homogeneity_diff(self):
+        hom = self.homogeneity()
+        res = [0.]
+        for i in range(len(hom)-1):
+            res.append(abs(hom[i] - hom[i+1]))
+        return res
+
+    def streak_below(self, data, num):
+        longest = 0
+        current = 0
+        for d in data:
+            if d < num:
+                current += 1
+                if current > longest:
+                    longest = current
+            else:
+                current = 0
+        return longest
+
+    def streak_no_cross(self, data, num):
+        longest = 1
+        current = 1
+        crossings = 0
+        for i in range(len(data)-1):
+            if (data[i] < num) == (data[i+1] < num):
+                current += 1
+                if current > longest:
+                    longest = current
+            else:
+                current = 1
+                crossings += 1
+        return longest, crossings
+
+    def stat_surface(self, data):
+        h = self.height / 3
+        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, (0, 0, self.width, h*len(data)))
+        context = cairo.Context(surface)
+
+        marg = 0.1
+
+        for i, name in enumerate(data):
+
+            if name == "in_out_difference":
+                d = self.layer_in_out_diff()
+            elif name == "layer_num_clusters":
+                d = self.layer_num_clusters()
+            elif name == "layer_num_members":
+                d = self.layer_num_members()
+            elif name == "homogeneity":
+                d = self.homogeneity()
+            elif name == "homogeneity_diff":
+                d = self.homogeneity_diff()
+            else:
+                return
+
+            maxval = max(d)
+            scale = (h * (1. - 2*marg)) / maxval
+
+            context.set_source_rgba(0, 0, 0, 1)
+            context.move_to(self.xmargin*0.95, (i + marg)*h)
+            context.line_to(self.xmargin*0.9,  (i + marg)*h)
+            context.line_to(self.xmargin*0.9, (i + 1. - marg)*h)
+            context.line_to(self.width - self.xmargin, (i + 1. - marg)*h)
+            context.stroke()
+
+            text_to_show = f"{maxval:.2f}"
+            context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+            context.set_font_size(self.font_size*0.4)
+            _, _, tw, th, _, _ = context.text_extents(text_to_show)
+            context.move_to(self.xmargin*0.85 - tw, (i + marg)*h + th)
+            context.show_text(text_to_show)
+
+            avg = sum(d)/len(d)
+            context.set_source_rgba(0, 1, 0, 1)
+            context.move_to(self.xmargin, (i+marg)*h + (maxval - avg)*scale)
+            context.line_to(self.width - self.xmargin, (i + marg) * h + (maxval - avg) * scale)
+            context.stroke()
+
+            context.set_source_rgba(0, 0, 1, 1)
+
+            context.move_to(self.xmargin, (i + marg)*h + (maxval - d[0])*scale)
+            for j in range(1, len(d)):
+                context.line_to(self.xmargin + j*self.xseparation, (i + marg)*h + (maxval - d[j])*scale)
+
+            context.stroke()
+
+            streak, crossings = self.streak_no_cross(d, avg)
+            text_to_show = f"{name}: streak ({streak}), crossings ({crossings}), cross_percent ({(crossings/len(d)):2f})"
+
+            context.set_font_size(self.font_size*0.5)
+            _, _, tw, th, _, _ = context.text_extents(text_to_show)
+            context.move_to(0.3 * self.xseparation + self.xmargin, (i + marg)*h + th)
+            context.show_text(text_to_show)
+
+        surface.flush()
+        return surface
 
     ####################################################################################################################
     # ------------------------------------------- Drawing Functions -------------------------------------------------- #
@@ -991,8 +1113,9 @@ class SugiyamaLayout:
         y_source = line_coordinates[(source, target)]
         y_target = line_coordinates[(target, source)]
         context.save()
-        context.rectangle(source.x, 0, target.x, self.bottom)
+        context.rectangle(source.x, 0, target.x, self.height)
         context.clip()
+
         if len(labels) == 1:
             (r, g, b, a) = labels[0][0]
             context.set_source_rgba(r, g, b, a)
@@ -1040,38 +1163,45 @@ class SugiyamaLayout:
                             colors=colors, width=self.line_width*len(cluster), detail=4, fade='in')
         else:
             coloured_bezier(ctx,
+                            (cluster.x, cluster.y),
+                            (cluster.x, cluster.y),
+                            (cluster.x, cluster.y),
                             (cluster.x + self.xseparation / 3., cluster.y),
-                            (cluster.x, cluster.y),
-                            (cluster.x, cluster.y),
-                            (cluster.x, cluster.y),
-                            colors=colors, width=self.line_width * len(cluster), detail=4, fade='in')
+                            colors=colors, width=self.line_width * len(cluster), detail=4, fade='out')
 
-    def draw_graph(self, filename: str = "output/example.svg",
-                   colormap=None,
-                   show_timestamps=True, timestamp_translator=None,
-                   show_annotations=False, fading=False):
-
-        if colormap is None:
-            colormap = dict()
-
-        # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
-        # if not, it is called with the default parameters
-        if not self.is_located:
-            self.set_locations()
-
-        if show_timestamps:
-            if timestamp_translator is not None:
-                text_margin = max(map(len, timestamp_translator.values()))*self.font_size
-            else:
-                text_margin = (math.log10(self.num_layers) + 1)*self.font_size
-            self.bottom += text_margin
-
-        surface = cairo.SVGSurface(filename,
-                              ((self.num_layers-1) * self.xseparation + 2 * self.xmargin) * self.scale,
-                               (self.bottom) * self.scale)
+    def timestamp_surface(self, timestamp_translator):
+        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
         context = cairo.Context(surface)
-        context.scale(self.scale, self.scale)
+        context.set_source_rgb(0, 0, 0)
+        context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        context.set_font_size(self.font_size)  # in user space units # self.xseparation * 0.6
 
+        for t in range(self.num_layers):
+            context.move_to(self.xmargin + t * self.xseparation, 0)
+            context.line_to(self.xmargin + t * self.xseparation, self.xseparation * 0.2)
+
+            to_print = str(t)
+            if timestamp_translator:
+                to_print = timestamp_translator[t]
+
+            _, _, width, height, _, _ = context.text_extents(to_print)
+
+            context.move_to(self.xmargin + t * self.xseparation + height / 2,
+                            width + self.xseparation * 0.3)
+
+            context.save()
+            context.rotate(math.radians(270))  # angle in rad
+            context.show_text(to_print)
+            context.restore()
+
+        context.stroke()
+        surface.flush()
+        print(surface.ink_extents())
+        return surface
+
+    def connection_surface(self, colormap, show_annotations, fading):
+        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
+        context = cairo.Context(surface)
         line_coordinates = dict()  # k: (source, target), v: y-coordinate of endpoint in source.
 
         for cluster in self.clusters:
@@ -1096,56 +1226,125 @@ class SugiyamaLayout:
             already_drawn.add((source, target))
             already_drawn.add((target, source))
 
+        surface.flush()
+        print(surface.ink_extents())
+        return surface
+
+    def cluster_surface(self):
+        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
+        context = cairo.Context(surface)
         (r, g, b, a) = self.default_cluster_color
 
         context.set_line_width(self.cluster_width)
         context.set_source_rgba(r, g, b, a)
 
         for cluster in self.clusters:
-            if cluster.tc.layer == 30 and cluster.tc.id == 31:
-                context.set_source_rgb(1,0,0)
-            else:
-                context.set_source_rgb(0,0,0)
             cx, cy = cluster.pos()
             context.move_to(cx, cy - cluster.draw_size / 2.)
             context.line_to(cx, cy + cluster.draw_size / 2.)
             context.stroke()
+        surface.flush()
+        print(surface.ink_extents())
+        return surface
+
+    def debug_surface(self, debug_info: Set[str]):
+        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
+        context = cairo.Context(surface)
+
+        context.set_source_rgb(0.2, 0.2, 0.2)
+        context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        context.set_font_size(self.font_size * 0.2)
+
+        for cluster in self.clusters:
+            cx, cy = cluster.pos()
+            if cluster.root == cluster:
+                if "swap_above" in debug_info:
+                    context.move_to(cx + self.xseparation * 0.1, cy)
+                    context.show_text(
+                        f"{self.crossing_diff_if_swapped_align(self.pred(cluster), cluster) if self.pred(cluster) is not None else 0:.2f}")
+
+            if "ranks" in debug_info:
+                context.move_to(cx + self.xseparation * 0.1, cy)
+                context.show_text(f"{cluster.outrank:.2f}")
+                context.move_to(cx - self.xseparation * 0.3, cy)
+                context.show_text(f"{cluster.inrank:.2f}")
+
+            if "id" in debug_info:
+                context.move_to(cx + self.xseparation * 0.1, cy)
+                context.show_text(f"{cluster.tc.id}")
+                context.move_to(cx - self.xseparation * 0.3, cy)
+                context.show_text(f"{cluster.tc.layer}")
+        surface.flush()
+        return surface
+
+    def paint_surface(self, context, to_draw, x=0, y=0):
+        context.save()
+        context.set_source_surface(to_draw, x, y)
+        context.paint()
+        context.restore()
+
+    def draw_graph(self, filename: str = "output/example.svg",
+                   colormap=None,
+                   show_timestamps=True, timestamp_translator=None,
+                   show_annotations=False, debug_info=None, stats_info=None,
+                   fading=False):
+
+        if colormap is None:
+            colormap = dict()
+
+        # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
+        # if not, it is called with the default parameters
+        if not self.is_located:
+            self.set_locations()
+
+        surfaces = dict()
+
+        surfaces["conn"] = self.connection_surface(colormap, show_annotations=show_annotations, fading=fading)
+
+        surfaces["clus"] = self.cluster_surface()
+
+        if debug_info is not None:
+            surfaces["debu"] = self.debug_surface(debug_info=debug_info)
+
+        offset = 0
 
         if show_timestamps:
-            context.set_source_rgb(0, 0, 0)
-            context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            context.set_font_size(self.font_size)  # in user space units # self.xseparation * 0.6
+            timesurf = self.timestamp_surface(timestamp_translator)
+            _, _, _, timeheight = timesurf.ink_extents()
+            offset += self.ymargin + timeheight
+            surfaces["time"] = timesurf
 
-            for t in range(self.num_layers):
-                context.move_to(self.xmargin + t * self.xseparation, self.bottom - text_margin)
-                context.line_to(self.xmargin + t * self.xseparation, self.bottom - text_margin - self.xseparation * 0.2)
+        if stats_info is not None:
+            statsurf = self.stat_surface(stats_info)
+            _, _, _, statheight = statsurf.ink_extents()
+            offset += self.ymargin + statheight
+            surfaces["stat"] = statsurf
 
-                to_print = str(t)
-                if timestamp_translator:
-                    to_print = timestamp_translator[t]
-                _, _, width, height, _, _ = context.text_extents(to_print)
-                context.move_to(self.xmargin + t * self.xseparation + height / 2,
-                                self.bottom - text_margin + width + self.xseparation * 0.2)
+        surface = cairo.SVGSurface(filename,
+                                       (self.width + 2*self.xmargin)*self.scale,
+                                       (self.height + offset + 2*self.ymargin)*self.scale)
+        context = cairo.Context(surface)
+        # context.scale(self.scale, self.scale)
 
-                context.save()
-                context.rotate(math.radians(270))  # angle in rad
-                context.show_text(to_print)
-                context.restore()
 
-            context.stroke()
-
-        if debug_mode:
-            for cluster in self.clusters:
-                if cluster.root == cluster:
-                    context.set_source_rgb(0, 0, 0)
-                    context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-                    context.set_font_size(self.font_size * 0.2)  # in user space units # self.xseparation * 0.6
-                    context.move_to(cx + self.xseparation * 0.1, cy)
-                    context.show_text(f"{self.crossing_diff_if_swapped_align(self.pred(cluster), cluster) if self.pred(cluster) is not None else 0:.2f}")
-                # context.move_to(cx + self.xseparation * 0.1, cy)
-                # context.show_text(f"{cluster.outrank:.2f}")
-                #     context.move_to(cx - self.xseparation * 0.3, cy)
-                #     context.show_text(f"{cluster.inrank:.2f}")
-
-        print(self.bottom)
+        offset = self.height
+        self.paint_surface(context, surfaces["conn"])
+        self.paint_surface(context, surfaces["clus"])
+        if debug_info is not None:
+            self.paint_surface(context, surfaces["debu"])
+        if show_timestamps:
+            y = offset + self.ymargin
+            _, _, _, h = surfaces["time"].ink_extents()
+            offset += self.ymargin + h
+            self.paint_surface(context, surfaces["time"], y=y)
+        if stats_info is not None:
+            y = offset+self.ymargin
+            _, _, _, h = surfaces["stat"].ink_extents()
+            offset += self.ymargin + h
+            self.paint_surface(context, surfaces["stat"], y=y)
+        surface.flush()
+        surface.finish()
+        for s in surfaces.values():
+            s.finish()
+        print(offset)
 

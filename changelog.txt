@@ -1,5 +1,16 @@
 Changelog TemporalGraphVisualization
 
+=== 2020-11-30 ===
+= Features =
+
+ - Coloured bezier now uses multiple continuous curves instead of segments
+
+ - possibility to show certain statistics of the drawn graph
+
+= Bugfixes =
+
+ - Fixed bug where fade-out caused colors to flip
+
 === 2020-11-16 ===
 = Features =
 
