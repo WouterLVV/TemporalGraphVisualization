@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 import math
-import numpy as np
-from sklearn.preprocessing import normalize
-
 from collections import Counter, deque
-from typing import List, Set, Dict
+from typing import List, Set, Dict, Optional, Tuple
+
+import cairocffi as cairo
 
 from TimeGraph import TimeGraph, TimeCluster
-import cairocffi as cairo
-# import cairo
-
 from drawing_utils import coloured_bezier
+
+# from sklearn.preprocessing import normalize
+# import cairo
 
 INCOMING = FORWARD = True
 OUTGOING = BACKWARD = False
 
-debug_mode = False
 
 class NotRootException(Exception):
     pass
@@ -68,7 +66,12 @@ class SugiyamaCluster:
         # Drawing properties
         self.draw_size = self.draw_height(height_method)
 
-    def draw_height(self, method):
+    def draw_height(self, method: str) -> float:
+        """Determine vertical size of this cluster depending on its size
+
+        :param method: The function to apply to the member size. Accepts 'linear', 'sqrt', 'log' or 'constant'
+        :return: Size of this cluster
+        """
         if method == 'linear':
             return len(self.members)
         elif method == 'sqrt':
@@ -80,7 +83,10 @@ class SugiyamaCluster:
         else:
             return 0.
 
-    def build(self):
+    def build(self) -> None:
+        """Builds the neighbour set and related data from the base TimeCluster
+
+        """
         for c, connection_nodes in self.tc.incoming.items():
             self.incoming[c.sc] = connection_nodes
 
@@ -93,7 +99,14 @@ class SugiyamaCluster:
         self.largest_incoming = max(map(len, self.incoming.values()), default=0)
         self.largest_outgoing = max(map(len, self.outgoing.values()), default=0)
 
-    def update_cluster_ranks(self):
+    def update_cluster_ranks(self) -> Tuple[float, float]:
+        """Update the rank information of this cluster
+
+        Rank information is determined by the average rank of the incoming and outgoing connections. Since ranks can
+        vary wildly between layers, inrank and outrank can not be compared to each other or this clusters own rank.
+
+        :return: The average incoming rank and the average outgoing rank, or -1 for either if it has none on that side
+        """
         if self.insize > 0:
             inrank = sum([nb.rank * len(conn) for nb, conn in self.incoming.items()]) / self.insize
         else:
@@ -108,7 +121,14 @@ class SugiyamaCluster:
         self.outrank = outrank
         return inrank, outrank
 
-    def update_cluster_ranks_median(self):
+    def update_cluster_ranks_median(self) -> Tuple[float, float]:
+        """Update the rank information of this cluster using median instead of average
+
+        Rank information is determined by the median rank of the incoming and outgoing connections. Since ranks can
+        vary wildly between layers, inrank and outrank can not be compared to each other or this clusters own rank.
+
+        :return: The median incoming rank and the median outgoing rank
+        """
         inc = list(self.incoming.items())
         out = list(self.outgoing.items())
 
@@ -116,7 +136,13 @@ class SugiyamaCluster:
         return self.inrank, self.outrank
 
     @staticmethod
-    def weighted_median_rank(nbs: List[(SugiyamaCluster, Set)]):
+    def weighted_median_rank(nbs: List[(SugiyamaCluster, Set)]) -> float:
+        """Of a list of neighbours, return the median ranked neighbour adjusted for integer weighted connections
+
+        Instead of taking the median connection, this function finds the connection that the median ranked node belongs to
+        :param nbs: list of neighbours and connection members
+        :return: The rank of the cluster of which the median node is connected
+        """
         if len(nbs) == 0:
             return -1
 
@@ -133,12 +159,21 @@ class SugiyamaCluster:
             med = nbs[ptr - 1][0].rank
         return med
 
-    def reset_alignment(self):
+    def reset_alignment(self) -> None:
+        """
+        Reset the values used in determining alignment to their default values
+        """
         self.root = self
         self.align = self
         self.chain_length = 1
 
-    def reset_endpoint(self):
+    def reset_endpoint(self) -> None:
+        """
+        If this cluster is the second to last of a chain, make it the last in the chain
+        The cluster removed from the chain should be reset separately
+        """
+        if self.align == self.root or self.align.align != self.align.root:
+            return
         self.align = self.root
         self.root.chain_length = max(1, self.root.chain_length - 1)
 
@@ -170,7 +205,7 @@ class SugiyamaCluster:
         connsize = len(connections[0][1])
         return brother, connsize
 
-    def align_with(self, next_cluster: SugiyamaCluster):
+    def align_with(self, next_cluster: SugiyamaCluster) -> None:
         """puts next_cluster as the next link in this chain, if self is an endpoint
 
         :param next_cluster: The cluster to align with current chain
@@ -182,7 +217,7 @@ class SugiyamaCluster:
         next_cluster.align = self.root
         self.root.chain_length += 1
 
-    def update_wanted_direction(self):
+    def update_wanted_direction(self) -> int:
         """Function to calculate which direction an alignment would like to move in depending on the ranks of its connections
 
         :return: The direction (positive is downwards, negative is upwards) and strength of the direction
@@ -228,7 +263,11 @@ class SugiyamaCluster:
         self.wanted_direction = total
         return total
 
-    def pos(self):
+    def pos(self) -> Tuple[float, float]:
+        """Returns the current x and y coordinate of this cluster. This should be treated as the center of this cluster.
+
+        :return: tuple of x and y coordinate
+        """
         return self.x, self.y
 
     def __str__(self):
@@ -245,7 +284,6 @@ class SugiyamaLayout:
     ####################################################################################################################
 
     def __init__(self, g: TimeGraph,
-                 minimum_cluster_size=0, minimum_connection_size=0,
                  line_width=-1., line_spacing=0.0,
                  line_curviness=0.3,
                  horizontal_density=1., vertical_density=1.,
@@ -259,9 +297,7 @@ class SugiyamaLayout:
         self.num_layers = self.g.num_steps
 
         # Set different collection objects
-        self.clusters, self.layers = self.build_and_trim_clusters(minimum_cluster_size,
-                                                                  minimum_connection_size,
-                                                                  cluster_height_method)
+        self.clusters, self.layers = self.build_clusters(cluster_height_method)
         self.ordered = []  # Filled by reset_order()
         self.reset_order()
 
@@ -304,7 +340,14 @@ class SugiyamaLayout:
         self.default_line_color = (1., 0., 0., 1.)  # (0, 0.4, 0.8, 1) # r, g, b, a
         self.default_cluster_color = (0., 0., 0., 1.)  # r, g, b, a
 
-    def auto_line_width(self):
+    def auto_line_width(self) -> float:
+        """Calculates automatically the largest possible line width.
+
+         The line width is calculated such that the outgoing or incoming connection can only be as big as the cluster.
+        Assumes that the connection width is linear.
+
+        :return: The maximum reasonable line width
+        """
         max_line_width = float('inf')
         for cluster in self.clusters:
             line_width_in = line_width_out = float('inf')
@@ -315,11 +358,20 @@ class SugiyamaLayout:
             max_line_width = min(max_line_width, line_width_in, line_width_out)
         return max_line_width
 
-    def auto_cluster_width(self):
+    def auto_cluster_width(self) -> float:
+        """Simple default cluster width
+
+        :return: width that is 5% of the xseparation
+        """
         return self.xseparation * 0.05
 
-    def build_and_trim_clusters(self, minimum_cluster_size, minimum_connection_size, height_method):
+    def build_clusters(self, height_method: str) -> Tuple[List[SugiyamaCluster], List[List[SugiyamaCluster]]]:
+        """Create Sugiyamaclusters from the underlying graph
 
+        :param height_method: the string to pass to the cluster for it to determine its vertical size
+        :return: List of all clusters, first flattened, second in layers
+        :rtype: str
+        """
         layers = [
             [SugiyamaCluster(self.g.layers[t][i], height_method)
              for i in range(len(self.g.layers[t]))
@@ -329,7 +381,7 @@ class SugiyamaLayout:
 
         for layer in layers:
             for cluster in layer:
-                cluster.build(minimum_cluster_size, minimum_connection_size)
+                cluster.build()
 
         clusters = [x for t in range(self.num_layers) for x in layers[t]]
 
@@ -339,7 +391,7 @@ class SugiyamaLayout:
     # -------------------------------------------- Helper Functions -------------------------------------------------- #
     ####################################################################################################################
 
-    def pred(self, c: SugiyamaCluster) -> SugiyamaCluster:
+    def pred(self, c: SugiyamaCluster) -> Optional[SugiyamaCluster]:
         """Returns the predecessor of this cluster (e.g. the cluster with rank-1)
         
         :param c: Cluster to find the predecessor of
@@ -349,7 +401,7 @@ class SugiyamaLayout:
             return None
         return self.ordered[c.tc.layer][c.rank - 1]
 
-    def succ(self, c: SugiyamaCluster) -> SugiyamaCluster:
+    def succ(self, c: SugiyamaCluster) -> Optional[SugiyamaCluster]:
         """Returns the successor of this cluster (e.g. the cluster with rank+1)
 
         :param c: Cluster to find the successor of
@@ -368,7 +420,11 @@ class SugiyamaLayout:
     # --------------------------------------------- Order Functions -------------------------------------------------- #
     ####################################################################################################################
 
-    def reset_order(self):
+    def reset_order(self) -> None:
+        """Reset the ordering properties of this graph and invalidate successive steps done with previous ordering.
+
+        Clusters are first reset to the position in the original graph and then sorted by supercluster as a base case.
+        """
         self.ordered = [self.layers[t].copy() for t in range(self.num_layers)]
         for layer in self.ordered:
             for i, cluster in enumerate(layer):
@@ -378,7 +434,7 @@ class SugiyamaLayout:
         self.is_aligned = False
         self.is_located = False
 
-    def sort_by_supercluster(self):
+    def sort_by_supercluster(self) -> None:
         """Initialize the ranks of clusters to be near other clusters they are connected to
 
         This works by building superclusters with flood fill. In this case we start new superclusters with the
@@ -418,7 +474,15 @@ class SugiyamaLayout:
                     self.swap_clusters(scluster, self.ordered[l][pointers[l]])
                     pointers[l] += 1
 
-    def set_order(self, barycenter_passes: int = 10):
+    def set_order(self, barycenter_passes: int = 10) -> None:
+        """Order the clusters in self.ordered with the barycenter method
+
+        For each pass of the ordering, the barycenter method is applied once forward and once backward.
+        After each pass the ordering is checked whether it changed w.r.t. the previous. All passes are independent
+        So we can abort if they are the same.
+
+        :param barycenter_passes: The maximum number of times to repeat the barycenter procedure
+        """
         # Make copy to compare if ordering has stabilized
         orders_tmp = [order.copy() for order in self.ordered]
 
@@ -437,7 +501,24 @@ class SugiyamaLayout:
         self.is_ordered = True
 
     @staticmethod
-    def _bary_rank_layer(layer: List[SugiyamaCluster], max_inrank, max_outrank, alpha=0.5):
+    def _bary_rank_layer(layer: List[SugiyamaCluster], max_inrank: int, max_outrank: int, alpha: float = 0.5) -> None:
+        """Perform a barycenter sorting on this layer.
+
+        For each cluster the weighted average rank of all incoming and outgoing connections is calculated.
+        Then the ordering is decided by a combination of the inrank and outrank, determined by the total size of the
+        connections and the alpha factor. If one side has many connections over the other, the side with many
+        connections carries more weight. The alpha is the distribution factor, am alpha cose to 1 prioritizes incoming
+        connections, an alpha close to 0 prioritizes outgoing. If the alpha is exactly 0 or 1 it is more difficult to
+        separate to cluster with the same incoming or outgoing ocnnections.
+        If a cluster has no incoming connections it will get the average of the in values of the previous and next
+        cluster that do have a valid incoming value. If there is no successive cluster that has a valid value, they are
+        given the maximum rank of the previous layer, plus 0.5. Same for the outgoing rank.
+
+        :param layer: the layer to apply the procedure for
+        :param max_inrank: The maximum rank in the previous layer
+        :param max_outrank:  The maximum rank in the next layer
+        :param alpha: Weight factor between 0 and 1 that balances incoming and outgoing
+        """
         for cluster in layer:
             cluster.update_cluster_ranks()
             # cluster.update_cluster_ranks_median()
@@ -474,7 +555,13 @@ class SugiyamaLayout:
         for i, cluster in enumerate(layer):
             cluster.rank = i
 
-    def _barycenter(self):
+    def _barycenter(self) -> None:
+        """Perform barycenter ordering once forward once backward
+
+        Since each layer ordering depends on the previous layer, in the forward iteration layer 0 remains unchanged
+        and in the backwards iteration the last layer is unchanged. So for a full ordering both forwards and backwards
+        is needed.
+        """
         for i in range(self.num_layers):
             layer = self.ordered[i]
             prev_layer_size = (len(self.ordered[i - 1]) - 1) if i > 0 else 0
@@ -542,7 +629,15 @@ class SugiyamaLayout:
         return (cls._compare_ranked_lists(sins_upper, sins_lower)
                 + cls._compare_ranked_lists(souts_upper, souts_lower))
 
-    def crossing_diff_if_swapped(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
+    def crossing_diff_if_swapped(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster) -> int:
+        """Determine the relative difference in crossings if we were to swap the rank of these clusters.
+
+        The clusters should be of the same layer.
+
+        :param cluster1: One cluster
+        :param cluster2: The other cluster
+        :return: The relative difference. Negative indicates a decrease in crossings
+        """
         if cluster1.rank > cluster2.rank:
             upper, lower = cluster2, cluster1
         else:
@@ -721,7 +816,7 @@ class SugiyamaLayout:
         a. in case 1 and 2, this chain must be shorter than the predecessor/successor. For case 3 and 4 this is inverted
         b. the shorter chain must move in its desired direction, updated after every step.
             A direction value between 2 and -2 (inclusive) is optimal and is treated as no desired direction.
-        c. the alignments must be fully adjacent (ask me if this requirement is unclear
+        c. the alignments must be fully adjacent (ask me if this requirement is unclear)
         d. the swap may not increase the amount of crossings in the graph more than a certain amount (default: 0)
         """
         for cluster in self.clusters:
@@ -913,31 +1008,6 @@ class SugiyamaLayout:
     # ------------------------------------------ Statistics Functions ------------------------------------------------ #
     ####################################################################################################################
 
-    def layer_in_out_diff(self):
-        return [abs(sum(map(lambda x: x.insize, layer)) - sum(map(lambda x: x.outsize, layer))) for layer in self.layers]
-
-    def layer_num_clusters(self):
-        return list(map(len, self.layers))
-
-    def layer_num_members(self):
-        return list(map(sum, map(lambda x: map(len, x), self.layers)))
-
-    def homogeneity(self):
-        res = []
-        for layer in self.layers:
-            if len(layer) == 0:
-                res.append(0.)
-            else:
-                res.append(sum(map(lambda c: max(map(len, c.outgoing.values()), default=1), layer))/sum(map(len, layer)))
-        return res
-
-    def homogeneity_diff(self):
-        hom = self.homogeneity()
-        res = [0.]
-        for i in range(len(hom)-1):
-            res.append(abs(hom[i] - hom[i+1]))
-        return res
-
     def streak_below(self, data, num):
         longest = 0
         current = 0
@@ -974,15 +1044,15 @@ class SugiyamaLayout:
         for i, name in enumerate(data):
 
             if name == "in_out_difference":
-                d = self.layer_in_out_diff()
+                d = self.g.layer_in_out_diff()
             elif name == "layer_num_clusters":
-                d = self.layer_num_clusters()
+                d = self.g.layer_num_clusters()
             elif name == "layer_num_members":
-                d = self.layer_num_members()
+                d = self.g.layer_num_members()
             elif name == "homogeneity":
-                d = self.homogeneity()
+                d = self.g.homogeneity()
             elif name == "homogeneity_diff":
-                d = self.homogeneity_diff()
+                d = self.g.homogeneity_diff()
             else:
                 return
 

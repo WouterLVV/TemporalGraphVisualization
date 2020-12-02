@@ -1,5 +1,18 @@
 Changelog TemporalGraphVisualization
 
+=== 2020-12-02 ===
+= Features =
+
+ - Moved the minimum cluster and connection filtering to TimeGraph class
+
+ - Moved certain statistics to TimeGraph, because they do not depend on the drawing
+
+= Documentation =
+
+ - Added missing documentation to all SugiyamaCluster methods
+
+ - Added missing documentation to building and ordering sections of the SugiyamaLayout class
+
 === 2020-11-30 ===
 = Features =
 
@@ -10,6 +23,10 @@ Changelog TemporalGraphVisualization
 = Bugfixes =
 
  - Fixed bug where fade-out caused colors to flip
+
+= Other =
+
+ - Identified bug in cairo library (currently there exists an unmerged fix)
 
 === 2020-11-16 ===
 = Features =

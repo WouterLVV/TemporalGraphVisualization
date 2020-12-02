@@ -291,8 +291,27 @@ class TimeGraph:
 
         return num_connections / num_clusters
 
-    def trim_clusters(self):
+    def layer_in_out_diff(self):
+        return [abs(sum(map(lambda x: x.insize, layer)) - sum(map(lambda x: x.outsize, layer))) for layer in self.layers]
+
+    def layer_num_clusters(self):
+        return list(map(len, self.layers))
+
+    def layer_num_members(self):
+        return list(map(sum, map(lambda x: map(len, x), self.layers)))
+
+    def homogeneity(self):
+        res = []
         for layer in self.layers:
-            for c in layer:
-                if c.update(self.min_conn_size) == 0:
-                    c.destroy()
+            if len(layer) == 0:
+                res.append(0.)
+            else:
+                res.append(sum(map(lambda c: max(map(len, c.outgoing.values()), default=1), layer))/sum(map(len, layer)))
+        return res
+
+    def homogeneity_diff(self):
+        hom = self.homogeneity()
+        res = [0.]
+        for i in range(len(hom)-1):
+            res.append(abs(hom[i] - hom[i+1]))
+        return res

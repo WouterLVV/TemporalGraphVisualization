@@ -38,8 +38,8 @@ mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
 timestamp_first = True
 period, time_label = 20, 's'
 start_timestamp, end_timestamp, add_missing = 120800, 151960, True
-aggregate_time_to, strength = 600, 0.5
-min_cluster = 5
+aggregate_time_to, strength = 2000, 0.5
+min_cluster = 2
 
 
 # High school, 5 days x 8am-6pm
@@ -84,6 +84,7 @@ min_cluster = 5
 # aggregate_time_to, strength = 3600, 0
 # min_cluster = 1
 
+
 if __name__ == '__main__':
 
     net_name = (fname.split("/")[-1]).split(".")[0]
@@ -91,39 +92,40 @@ if __name__ == '__main__':
     if start_timestamp >= 0 and end_timestamp >= 0:
         suffix = "-from_" + str(start_timestamp) + "_to_" + str(end_timestamp)
 
-    if __name__ == '__main__':
-        pair_contacts = read_pair_contacts_from_file(fname, separator=separator, grain_t=period, 
-                                                            start_timestamp=start_timestamp, end_timestamp=end_timestamp, 
-                                                            timestamp_first=timestamp_first, add_missing=add_missing, verbose=False)
-        node_metadata, colormap = None, None
-        if mname:
-            node_metadata, categories = read_node_metadata_from_file(mname)
-            colormap = assign_colours_rgba_tuple(categories)
+    pair_contacts = read_pair_contacts_from_file(fname, separator=separator, grain_t=period,
+                                                        start_timestamp=start_timestamp, end_timestamp=end_timestamp,
+                                                        timestamp_first=timestamp_first, add_missing=add_missing, verbose=False)
+    node_metadata, colormap = None, None
+    if mname:
+        node_metadata, categories = read_node_metadata_from_file(mname)
+        colormap = assign_colours_rgba_tuple(categories)
 
-        aggregate_pair_contacts = strongly_aggregate_time(pair_contacts, 
-                                                          old_period=period, new_period=aggregate_time_to, 
-                                                          strength=strength)
+    aggregate_pair_contacts = strongly_aggregate_time(pair_contacts,
+                                                      old_period=period, new_period=aggregate_time_to,
+                                                      strength=strength)
 
-        normalised_list_pair_contacts, num_timestamps, num_nodeids, timestamp_reverse_translator, nodeid_translator, node_metadata_list = \
-                                  normalise_list_pair_contacts(aggregate_pair_contacts, node_metadata, time_label=time_label)
+    normalised_list_pair_contacts, num_timestamps, num_nodeids, timestamp_reverse_translator, nodeid_translator, node_metadata_list = \
+                              normalise_list_pair_contacts(aggregate_pair_contacts, node_metadata, time_label=time_label)
 
-        node_list = node_metadata_list
-        if not node_metadata_list:
-            node_list = num_nodeids
+    node_list = node_metadata_list
+    if not node_metadata_list:
+        node_list = num_nodeids
 
-        g = TimeGraph(normalised_list_pair_contacts, node_list, num_timestamps)
-        sg = SugiyamaLayout(g, minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster,
-                               line_width=1,
-                               cluster_height_method='linear',
-                               horizontal_density=1,
-                               vertical_density=0.6)
+    g = TimeGraph(normalised_list_pair_contacts, node_list, num_timestamps, minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster)
+    # print(g.average_neighbours(minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster))
+    sg = SugiyamaLayout(g, line_width=1,
+                           cluster_height_method='linear',
+                           horizontal_density=1,
+                           vertical_density=0.6)
 
-        sg.set_order(barycenter_passes=10)
-        sg.set_alignment(stairs_iterations=3)
-        sg.draw_graph(filename="flow_output/"+net_name+suffix+".svg",
-                      colormap=colormap,
-                      timestamp_translator=timestamp_reverse_translator,
-                      show_annotations=True,
-                      fading=True)
+    sg.set_order(barycenter_passes=10)
+    sg.set_alignment(stairs_iterations=5)
+    sg.draw_graph(filename="flow_output/"+net_name+suffix+".svg",
+                  colormap=colormap,
+                  timestamp_translator=timestamp_reverse_translator,
+                  show_annotations=False,
+                  show_timestamps=True,
+                  stats_info=("homogeneity_diff", "homogeneity", "in_out_difference", "layer_num_clusters", "layer_num_members"),
+                  fading=True)
+    print(net_name+suffix)
 
-        print(net_name)
