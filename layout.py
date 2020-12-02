@@ -286,7 +286,7 @@ class SugiyamaLayout:
     def __init__(self, g: TimeGraph,
                  line_width=-1., line_spacing=0.0,
                  line_curviness=0.3,
-                 horizontal_density=1., vertical_density=1.,
+                 horizontal_density=2., vertical_density=1.,
                  cluster_width=-1,
                  cluster_height_method='linear',
                  font_size=-1,
@@ -1035,7 +1035,7 @@ class SugiyamaLayout:
         return longest, crossings
 
     def stat_surface(self, data):
-        h = self.height / 3
+        h = min(self.height / 3, 200)
         surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, (0, 0, self.width, h*len(data)))
         context = cairo.Context(surface)
 
@@ -1068,7 +1068,7 @@ class SugiyamaLayout:
 
             text_to_show = f"{maxval:.2f}"
             context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            context.set_font_size(self.font_size*0.4)
+            context.set_font_size(min(self.font_size*0.4, h/10))
             _, _, tw, th, _, _ = context.text_extents(text_to_show)
             context.move_to(self.xmargin*0.85 - tw, (i + marg)*h + th)
             context.show_text(text_to_show)
@@ -1088,9 +1088,9 @@ class SugiyamaLayout:
             context.stroke()
 
             streak, crossings = self.streak_no_cross(d, avg)
-            text_to_show = f"{name}: streak ({streak}), crossings ({crossings}), cross_percent ({(crossings/len(d)):2f})"
+            text_to_show = f"{name}: avg ({avg:.3f}), streak ({streak}), crossings ({crossings}), cross_percent ({(crossings/len(d)):2f})"
 
-            context.set_font_size(self.font_size*0.5)
+            context.set_font_size(min(self.font_size*0.5, h/8))
             _, _, tw, th, _, _ = context.text_extents(text_to_show)
             context.move_to(0.3 * self.xseparation + self.xmargin, (i + marg)*h + th)
             context.show_text(text_to_show)
@@ -1252,7 +1252,7 @@ class SugiyamaLayout:
 
         context.stroke()
         surface.flush()
-        print(surface.ink_extents())
+        # print(surface.ink_extents())
         return surface
 
     def connection_surface(self, colormap, show_annotations, fading):
@@ -1283,7 +1283,7 @@ class SugiyamaLayout:
             already_drawn.add((target, source))
 
         surface.flush()
-        print(surface.ink_extents())
+        # print(surface.ink_extents())
         return surface
 
     def cluster_surface(self):
@@ -1300,7 +1300,7 @@ class SugiyamaLayout:
             context.line_to(cx, cy + cluster.draw_size / 2.)
             context.stroke()
         surface.flush()
-        print(surface.ink_extents())
+        # print(surface.ink_extents())
         return surface
 
     def debug_surface(self, debug_info: Set[str]):
@@ -1333,7 +1333,7 @@ class SugiyamaLayout:
         surface.flush()
         return surface
 
-    def paint_surface(self, context, to_draw, x=0, y=0):
+    def paint_surface(self, context, to_draw, x=0., y=0.):
         context.save()
         context.set_source_surface(to_draw, x, y)
         context.paint()
@@ -1343,7 +1343,7 @@ class SugiyamaLayout:
                    colormap=None,
                    show_timestamps=True, timestamp_translator=None,
                    show_annotations=False, debug_info=None, stats_info=None,
-                   fading=False):
+                   fading=False, scale=1.):
 
         if colormap is None:
             colormap = dict()
@@ -1377,10 +1377,10 @@ class SugiyamaLayout:
             surfaces["stat"] = statsurf
 
         surface = cairo.SVGSurface(filename,
-                                       (self.width + 2*self.xmargin)*self.scale,
-                                       (self.height + offset + 2*self.ymargin)*self.scale)
+                                       (self.width + 2*self.xmargin)*scale,
+                                       (self.height + offset + 2*self.ymargin)*scale)
         context = cairo.Context(surface)
-        # context.scale(self.scale, self.scale)
+        context.scale(scale, scale)
 
 
         offset = self.height
