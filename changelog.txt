@@ -1,5 +1,12 @@
 Changelog TemporalGraphVisualization
 
+=== 2020-12-03 ===
+= Documentation =
+
+ - Finished almost all documentation in layout.py
+
+ - Generated html documentation in html/
+
 === 2020-12-02 ===
 = Features =
 
