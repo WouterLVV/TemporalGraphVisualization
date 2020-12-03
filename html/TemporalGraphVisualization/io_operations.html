@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>TemporalGraphVisualization.io_operations API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>TemporalGraphVisualization.io_operations</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def read_pair_contacts_from_file(fin_name, separator=&#39; &#39;, grain_t=20, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False):
+    &#34;&#34;&#34; Reads a temporal networks from a text file.
+
+    Parameters
+    ----------
+        fin_name : str
+            input file with whitespace-separated triplets per line:
+            timestamp node1 node2 (assumed to appear chronologically)
+        grain_t : int
+            sensing interval in fin_name
+        start_timestamp, end_timestamp : int
+            interval of timestamps to read from file (inclusive)
+            either neither or both should be set
+        verbose : bool
+            if True then also print result (default False)
+    Returns
+    -------
+        pair_contacts : dict
+            key timestamp, value list of pair contacts
+    &#34;&#34;&#34;
+
+    pair_contacts = {} # {timestamp : list of tuples (pair in contact)}
+    timestamps = []
+
+    with open(fin_name, &#39;r&#39;) as fin:
+        for l in fin:
+            if l[0] == &#39;#&#39;:
+                continue
+            if timestamp_first:
+                t, u, v = map(int, l.split(separator))
+            else:
+                u, v, t = map(int, l.split(separator))
+
+            if (start_timestamp &gt;= 0 and end_timestamp &gt;= 0 and t &gt;= start_timestamp and t &lt;= end_timestamp) or \
+                    (start_timestamp &lt; 0 and end_timestamp &lt; 0):
+                timestamps.append(t)
+                lc = pair_contacts.get(t, [])
+                lc.append(tuple(sorted([u, v]))) # ensures contacts are saved in a unique form
+                pair_contacts[t] = lc
+            elif end_timestamp &gt;= 0 and t &gt; end_timestamp:
+                break
+
+    # add missing timestamps (without contacts)
+    if add_missing:
+        timestamps = sorted(timestamps)
+        for i in range(1, len(timestamps)):
+            this_t = timestamps[i]
+            prev_t = timestamps[i-1]
+            if this_t &gt; prev_t + grain_t:
+                for missing_t in range(prev_t+grain_t, this_t, grain_t):
+                    pair_contacts[missing_t] = []
+
+    if verbose:
+        print(&#34;*** Pair contacts in&#34;, fin_name)
+        tt = sorted(pair_contacts.keys())
+        for t in tt:
+            print(&#34;\t&#34;, t, pair_contacts[t])
+
+    return pair_contacts
+
+def read_node_metadata_from_file(fin_name, verbose=False):
+    node_metadata = {} # {node id: metadata/category as string}
+    categories = []
+
+    with open(fin_name, &#39;r&#39;) as fin:
+        for l in fin:
+            node, metadata = l.split()
+            node = int(node)
+            node_metadata[node] = metadata
+            categories.append(metadata)
+
+    categories = list(set(categories))
+    if verbose:
+        print(&#34;*** Categories of nodes in metadata:\n\t&#34;, &#39; &#39;.join(sorted(categories)))
+
+    return node_metadata, sorted(categories)
+
+def initialise_aggregation(pair_contacts, old_period, new_period):
+    old_timestamps = sorted(list(pair_contacts.keys()))
+    aggregate_pair_contacts = {}
+
+    # old: a contact was active in (t–old_period, t]
+    # new: a contact  is active in (t–new_period, t]
+
+    i = 0  # index in old timestamps
+    new_timestamp = old_timestamps[0] - old_period + new_period
+
+    while i &lt; len(old_timestamps):
+        while i &lt; len(old_timestamps) and old_timestamps[i] &lt;= new_timestamp:
+            contacts = aggregate_pair_contacts.get(new_timestamp, [])
+            contacts.extend(pair_contacts[old_timestamps[i]])
+            aggregate_pair_contacts[new_timestamp] = contacts
+            i += 1
+        new_timestamp += new_period
+
+    return aggregate_pair_contacts
+
+# def weakly_aggregate_time(pair_contacts, old_period, new_period):
+#       aggregate_pair_contacts = initialise_aggregation(pair_contacts, old_period, new_period)
+
+#       # removes any duplicate contacts
+#       for t in aggregate_pair_contacts:
+#               aggregate_pair_contacts[t] = list(set(aggregate_pair_contacts[t]))
+
+#       return aggregate_pair_contacts
+
+def strongly_aggregate_time(pair_contacts, old_period, new_period, strength=0.5):
+    aggregate_pair_contacts = initialise_aggregation(pair_contacts, old_period, new_period)
+
+    # removes all contacts from an aggregated timestamp which occur too infrequently
+    from collections import Counter
+    min_count_wanted = strength * (new_period / old_period)
+
+    for t in aggregate_pair_contacts:
+        new_pair_contacts = []
+
+        cntr = Counter(aggregate_pair_contacts[t])
+        for contact, count in cntr.items():
+            if count &gt;= min_count_wanted:
+                new_pair_contacts.append(contact)
+        aggregate_pair_contacts[t] = new_pair_contacts
+
+    return aggregate_pair_contacts
+
+def normalise_list_pair_contacts(pair_contacts, node_metadata=None, time_label=&#39;s&#39;):
+
+    # collect the original node ids and timestamps
+    timestamps = sorted(list(pair_contacts.keys()))
+
+    nodeids = set()
+    for t in pair_contacts:
+        nodeids |= set([node for contact in pair_contacts[t] for node in contact])
+    nodeids = sorted(list(nodeids))
+
+    # timestamp translators: from original t to a 0-index, and back from 0-index to a pretty-printed t
+    timestamp_translator = dict([(old, new) for (new, old) in enumerate(timestamps)])
+    timestamp_reverse_translator = dict(enumerate(timestamps))
+
+    from time import gmtime, strftime
+    if len(str(timestamps[0])) == 10: # timestamps are Unix seconds? convert to string in my local time zone
+        for i in timestamp_reverse_translator:
+            t = timestamp_reverse_translator[i]
+            timestamp_reverse_translator[i] = strftime(&#34;%H:%M&#34;, gmtime(t))
+    elif time_label == &#39;s&#39;:        # timestamps are seconds? convert to hour:minute
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t/3600)%24) + &#34;:&#34; + str(int((t%3600)/60)).zfill(2)
+    elif time_label == &#39;d&#39;:        # timestamps are days? convert to day number
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t/3600/24) + 1)
+
+    # node id translator from original node id to a 0-index, and back
+    nodeid_translator = dict([(old, new) for (new, old) in enumerate(nodeids)])
+    nodeid_reverse_translator = dict(enumerate(nodeids))
+
+    # node metadata as a list following the new node ids
+    node_metadata_list = []
+    if node_metadata != None:
+        for i in range(len(nodeids)):
+            node_metadata_list.append(node_metadata[nodeid_reverse_translator[i]])
+
+    # the normalised pair contacts
+    normalised_list_pair_contacts = []
+    for t in pair_contacts:
+        for (u, v) in pair_contacts[t]:
+            normalised_list_pair_contacts.append((nodeid_translator[u], nodeid_translator[v], timestamp_translator[t]))
+
+    # collect results
+    return normalised_list_pair_contacts, len(timestamps), len(nodeids), \
+           timestamp_reverse_translator, nodeid_translator, node_metadata_list
+
+if __name__ == &#39;__main__&#39;:
+    start_timestamp, end_timestamp = -1, -1
+    period = 1
+    node_metadata = None
+    timestamp_first = True
+
+    # fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat&#34;
+    # fname = &#34;tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt&#34;
+
+    # Primary school, 2 days
+    # fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat&#34;
+    # mname = &#34;tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat&#34;
+    # period = 20
+    # start_timestamp, end_timestamp = 120800, 130000 #151960
+    # aggregate_time_to, strength = 600, 0.5
+
+    # Email EU, 500+ days in 45 mil. seconds
+    fname = &#34;tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt&#34;
+    timestamp_first = False
+    period = 1
+    start_timestamp, end_timestamp = 30281, 10000000
+    aggregate_time_to, strength = 86400, 0 # one day, weak aggregation
+
+    pair_contacts = read_pair_contacts_from_file(fname, separator=&#39; &#39;, grain_t=period, start_timestamp=start_timestamp, end_timestamp=end_timestamp, 
+                                                                timestamp_first=timestamp_first, add_missing=False, verbose=False)
+    # node_metadata = read_node_metadata_from_file(mname)
+    # print(node_metadata)
+
+    aggregate_pair_contacts = strongly_aggregate_time(pair_contacts,
+                                                      old_period=period, new_period=aggregate_time_to,
+                                                      strength=strength)
+    print(aggregate_pair_contacts)
+
+    # normalised_list_pair_contacts, num_timestamps, num_nodeids, timestamp_reverse_translator, nodeid_translator, node_metadata_list = \
+    #     normalise_list_pair_contacts(aggregate_pair_contacts, node_metadata)
+    # print(node_metadata_list)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="TemporalGraphVisualization.io_operations.initialise_aggregation"><code class="name flex">
+<span>def <span class="ident">initialise_aggregation</span></span>(<span>pair_contacts, old_period, new_period)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialise_aggregation(pair_contacts, old_period, new_period):
+    old_timestamps = sorted(list(pair_contacts.keys()))
+    aggregate_pair_contacts = {}
+
+    # old: a contact was active in (t–old_period, t]
+    # new: a contact  is active in (t–new_period, t]
+
+    i = 0  # index in old timestamps
+    new_timestamp = old_timestamps[0] - old_period + new_period
+
+    while i &lt; len(old_timestamps):
+        while i &lt; len(old_timestamps) and old_timestamps[i] &lt;= new_timestamp:
+            contacts = aggregate_pair_contacts.get(new_timestamp, [])
+            contacts.extend(pair_contacts[old_timestamps[i]])
+            aggregate_pair_contacts[new_timestamp] = contacts
+            i += 1
+        new_timestamp += new_period
+
+    return aggregate_pair_contacts</code></pre>
+</details>
+</dd>
+<dt id="TemporalGraphVisualization.io_operations.normalise_list_pair_contacts"><code class="name flex">
+<span>def <span class="ident">normalise_list_pair_contacts</span></span>(<span>pair_contacts, node_metadata=None, time_label='s')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def normalise_list_pair_contacts(pair_contacts, node_metadata=None, time_label=&#39;s&#39;):
+
+    # collect the original node ids and timestamps
+    timestamps = sorted(list(pair_contacts.keys()))
+
+    nodeids = set()
+    for t in pair_contacts:
+        nodeids |= set([node for contact in pair_contacts[t] for node in contact])
+    nodeids = sorted(list(nodeids))
+
+    # timestamp translators: from original t to a 0-index, and back from 0-index to a pretty-printed t
+    timestamp_translator = dict([(old, new) for (new, old) in enumerate(timestamps)])
+    timestamp_reverse_translator = dict(enumerate(timestamps))
+
+    from time import gmtime, strftime
+    if len(str(timestamps[0])) == 10: # timestamps are Unix seconds? convert to string in my local time zone
+        for i in timestamp_reverse_translator:
+            t = timestamp_reverse_translator[i]
+            timestamp_reverse_translator[i] = strftime(&#34;%H:%M&#34;, gmtime(t))
+    elif time_label == &#39;s&#39;:        # timestamps are seconds? convert to hour:minute
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t/3600)%24) + &#34;:&#34; + str(int((t%3600)/60)).zfill(2)
+    elif time_label == &#39;d&#39;:        # timestamps are days? convert to day number
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t/3600/24) + 1)
+
+    # node id translator from original node id to a 0-index, and back
+    nodeid_translator = dict([(old, new) for (new, old) in enumerate(nodeids)])
+    nodeid_reverse_translator = dict(enumerate(nodeids))
+
+    # node metadata as a list following the new node ids
+    node_metadata_list = []
+    if node_metadata != None:
+        for i in range(len(nodeids)):
+            node_metadata_list.append(node_metadata[nodeid_reverse_translator[i]])
+
+    # the normalised pair contacts
+    normalised_list_pair_contacts = []
+    for t in pair_contacts:
+        for (u, v) in pair_contacts[t]:
+            normalised_list_pair_contacts.append((nodeid_translator[u], nodeid_translator[v], timestamp_translator[t]))
+
+    # collect results
+    return normalised_list_pair_contacts, len(timestamps), len(nodeids), \
+           timestamp_reverse_translator, nodeid_translator, node_metadata_list</code></pre>
+</details>
+</dd>
+<dt id="TemporalGraphVisualization.io_operations.read_node_metadata_from_file"><code class="name flex">
+<span>def <span class="ident">read_node_metadata_from_file</span></span>(<span>fin_name, verbose=False)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def read_node_metadata_from_file(fin_name, verbose=False):
+    node_metadata = {} # {node id: metadata/category as string}
+    categories = []
+
+    with open(fin_name, &#39;r&#39;) as fin:
+        for l in fin:
+            node, metadata = l.split()
+            node = int(node)
+            node_metadata[node] = metadata
+            categories.append(metadata)
+
+    categories = list(set(categories))
+    if verbose:
+        print(&#34;*** Categories of nodes in metadata:\n\t&#34;, &#39; &#39;.join(sorted(categories)))
+
+    return node_metadata, sorted(categories)</code></pre>
+</details>
+</dd>
+<dt id="TemporalGraphVisualization.io_operations.read_pair_contacts_from_file"><code class="name flex">
+<span>def <span class="ident">read_pair_contacts_from_file</span></span>(<span>fin_name, separator=' ', grain_t=20, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reads a temporal networks from a text file.</p>
+<h2 id="parameters">Parameters</h2>
+<pre><code>fin_name : str
+    input file with whitespace-separated triplets per line:
+    timestamp node1 node2 (assumed to appear chronologically)
+grain_t : int
+    sensing interval in fin_name
+start_timestamp, end_timestamp : int
+    interval of timestamps to read from file (inclusive)
+    either neither or both should be set
+verbose : bool
+    if True then also print result (default False)
+</code></pre>
+<h2 id="returns">Returns</h2>
+<pre><code>pair_contacts : dict
+    key timestamp, value list of pair contacts
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def read_pair_contacts_from_file(fin_name, separator=&#39; &#39;, grain_t=20, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False):
+    &#34;&#34;&#34; Reads a temporal networks from a text file.
+
+    Parameters
+    ----------
+        fin_name : str
+            input file with whitespace-separated triplets per line:
+            timestamp node1 node2 (assumed to appear chronologically)
+        grain_t : int
+            sensing interval in fin_name
+        start_timestamp, end_timestamp : int
+            interval of timestamps to read from file (inclusive)
+            either neither or both should be set
+        verbose : bool
+            if True then also print result (default False)
+    Returns
+    -------
+        pair_contacts : dict
+            key timestamp, value list of pair contacts
+    &#34;&#34;&#34;
+
+    pair_contacts = {} # {timestamp : list of tuples (pair in contact)}
+    timestamps = []
+
+    with open(fin_name, &#39;r&#39;) as fin:
+        for l in fin:
+            if l[0] == &#39;#&#39;:
+                continue
+            if timestamp_first:
+                t, u, v = map(int, l.split(separator))
+            else:
+                u, v, t = map(int, l.split(separator))
+
+            if (start_timestamp &gt;= 0 and end_timestamp &gt;= 0 and t &gt;= start_timestamp and t &lt;= end_timestamp) or \
+                    (start_timestamp &lt; 0 and end_timestamp &lt; 0):
+                timestamps.append(t)
+                lc = pair_contacts.get(t, [])
+                lc.append(tuple(sorted([u, v]))) # ensures contacts are saved in a unique form
+                pair_contacts[t] = lc
+            elif end_timestamp &gt;= 0 and t &gt; end_timestamp:
+                break
+
+    # add missing timestamps (without contacts)
+    if add_missing:
+        timestamps = sorted(timestamps)
+        for i in range(1, len(timestamps)):
+            this_t = timestamps[i]
+            prev_t = timestamps[i-1]
+            if this_t &gt; prev_t + grain_t:
+                for missing_t in range(prev_t+grain_t, this_t, grain_t):
+                    pair_contacts[missing_t] = []
+
+    if verbose:
+        print(&#34;*** Pair contacts in&#34;, fin_name)
+        tt = sorted(pair_contacts.keys())
+        for t in tt:
+            print(&#34;\t&#34;, t, pair_contacts[t])
+
+    return pair_contacts</code></pre>
+</details>
+</dd>
+<dt id="TemporalGraphVisualization.io_operations.strongly_aggregate_time"><code class="name flex">
+<span>def <span class="ident">strongly_aggregate_time</span></span>(<span>pair_contacts, old_period, new_period, strength=0.5)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def strongly_aggregate_time(pair_contacts, old_period, new_period, strength=0.5):
+    aggregate_pair_contacts = initialise_aggregation(pair_contacts, old_period, new_period)
+
+    # removes all contacts from an aggregated timestamp which occur too infrequently
+    from collections import Counter
+    min_count_wanted = strength * (new_period / old_period)
+
+    for t in aggregate_pair_contacts:
+        new_pair_contacts = []
+
+        cntr = Counter(aggregate_pair_contacts[t])
+        for contact, count in cntr.items():
+            if count &gt;= min_count_wanted:
+                new_pair_contacts.append(contact)
+        aggregate_pair_contacts[t] = new_pair_contacts
+
+    return aggregate_pair_contacts</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="TemporalGraphVisualization" href="index.html">TemporalGraphVisualization</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="TemporalGraphVisualization.io_operations.initialise_aggregation" href="#TemporalGraphVisualization.io_operations.initialise_aggregation">initialise_aggregation</a></code></li>
+<li><code><a title="TemporalGraphVisualization.io_operations.normalise_list_pair_contacts" href="#TemporalGraphVisualization.io_operations.normalise_list_pair_contacts">normalise_list_pair_contacts</a></code></li>
+<li><code><a title="TemporalGraphVisualization.io_operations.read_node_metadata_from_file" href="#TemporalGraphVisualization.io_operations.read_node_metadata_from_file">read_node_metadata_from_file</a></code></li>
+<li><code><a title="TemporalGraphVisualization.io_operations.read_pair_contacts_from_file" href="#TemporalGraphVisualization.io_operations.read_pair_contacts_from_file">read_pair_contacts_from_file</a></code></li>
+<li><code><a title="TemporalGraphVisualization.io_operations.strongly_aggregate_time" href="#TemporalGraphVisualization.io_operations.strongly_aggregate_time">strongly_aggregate_time</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>

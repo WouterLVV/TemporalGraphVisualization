@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import math
 from collections import Counter, deque
-from typing import List, Set, Dict, Optional, Tuple
+from numbers import Number
+from typing import List, Set, Dict, Optional, Tuple, Iterable, Sized, Collection
 
 import cairocffi as cairo
 
@@ -67,7 +68,8 @@ class SugiyamaCluster:
         self.draw_size = self.draw_height(height_method)
 
     def draw_height(self, method: str) -> float:
-        """Determine vertical size of this cluster depending on its size
+        """
+        Determine vertical size of this cluster depending on its size
 
         :param method: The function to apply to the member size. Accepts 'linear', 'sqrt', 'log' or 'constant'
         :return: Size of this cluster
@@ -84,7 +86,8 @@ class SugiyamaCluster:
             return 0.
 
     def build(self) -> None:
-        """Builds the neighbour set and related data from the base TimeCluster
+        """
+        Builds the neighbour set and related data from the base TimeCluster
 
         """
         for c, connection_nodes in self.tc.incoming.items():
@@ -100,7 +103,8 @@ class SugiyamaCluster:
         self.largest_outgoing = max(map(len, self.outgoing.values()), default=0)
 
     def update_cluster_ranks(self) -> Tuple[float, float]:
-        """Update the rank information of this cluster
+        """
+        Update the rank information of this cluster
 
         Rank information is determined by the average rank of the incoming and outgoing connections. Since ranks can
         vary wildly between layers, inrank and outrank can not be compared to each other or this clusters own rank.
@@ -122,7 +126,8 @@ class SugiyamaCluster:
         return inrank, outrank
 
     def update_cluster_ranks_median(self) -> Tuple[float, float]:
-        """Update the rank information of this cluster using median instead of average
+        """
+        Update the rank information of this cluster using median instead of average
 
         Rank information is determined by the median rank of the incoming and outgoing connections. Since ranks can
         vary wildly between layers, inrank and outrank can not be compared to each other or this clusters own rank.
@@ -137,7 +142,8 @@ class SugiyamaCluster:
 
     @staticmethod
     def weighted_median_rank(nbs: List[(SugiyamaCluster, Set)]) -> float:
-        """Of a list of neighbours, return the median ranked neighbour adjusted for integer weighted connections
+        """
+        Of a list of neighbours, return the median ranked neighbour adjusted for integer weighted connections
 
         Instead of taking the median connection, this function finds the connection that the median ranked node belongs to
         :param nbs: list of neighbours and connection members
@@ -178,7 +184,8 @@ class SugiyamaCluster:
         self.root.chain_length = max(1, self.root.chain_length - 1)
 
     def largest_median_connection(self, lower=True, direction=INCOMING) -> (SugiyamaCluster, int):
-        """Returns the cluster with the largest connection to this one.
+        """
+        Returns the cluster with the largest connection to this one.
 
         If multiple candidates with equal connection weight exist, returns the lower median in ordering
 
@@ -206,19 +213,22 @@ class SugiyamaCluster:
         return brother, connsize
 
     def align_with(self, next_cluster: SugiyamaCluster) -> None:
-        """puts next_cluster as the next link in this chain, if self is an endpoint
+        """
+        puts next_cluster as the next link in this chain, if self is an endpoint
 
         :param next_cluster: The cluster to align with current chain
         """
         if self.align != self.root:
-            raise NotEndpointException(f"Can only align if self is an endpoint, but {self} is aligned with {self.align}")
+            raise NotEndpointException(
+                f"Can only align if self is an endpoint, but {self} is aligned with {self.align}")
         self.align = next_cluster
         next_cluster.root = self.root
         next_cluster.align = self.root
         self.root.chain_length += 1
 
     def update_wanted_direction(self) -> int:
-        """Function to calculate which direction an alignment would like to move in depending on the ranks of its connections
+        """
+        Function to calculate which direction an alignment would like to move in depending on the ranks of its connections
 
         :return: The direction (positive is downwards, negative is upwards) and strength of the direction
         """
@@ -264,7 +274,8 @@ class SugiyamaCluster:
         return total
 
     def pos(self) -> Tuple[float, float]:
-        """Returns the current x and y coordinate of this cluster. This should be treated as the center of this cluster.
+        """
+        Returns the current x and y coordinate of this cluster. This should be treated as the center of this cluster.
 
         :return: tuple of x and y coordinate
         """
@@ -310,16 +321,18 @@ class SugiyamaLayout:
         max_cluster = max(self.clusters, key=len)
         self.max_cluster_height = max_cluster.draw_size
         self.max_cluster_size = len(max_cluster)  # Amount of elements in cluster
-        self.max_bundle_size = max([max(map(len, cluster.neighbours.values())) for cluster in self.clusters])  # Amount elements in connection
-        self.max_num_connection = max(map(lambda x: len(x.incoming), self.clusters))  # Amount of connections on one side of a cluster
+        self.max_bundle_size = max(
+            [max(map(len, cluster.neighbours.values())) for cluster in self.clusters])  # Amount elements in connection
+        self.max_num_connection = max(
+            map(lambda x: len(x.incoming), self.clusters))  # Amount of connections on one side of a cluster
 
         # Location settings
         # 1 point = 0.352 mm, or 3 points = 1 mm
         self.xseparation_frac = horizontal_density  # (fraction) from user
-        self.yseparation_frac = vertical_density    # (fraction) from user
-        self.line_spacing = line_spacing            # (fraction) from user; relative to line_width
+        self.yseparation_frac = vertical_density  # (fraction) from user
+        self.line_spacing = line_spacing  # (fraction) from user; relative to line_width
         self.line_width = line_width if line_width >= 0. else self.auto_line_width()  # (in points) from user
-        self.line_curviness = line_curviness                                          # (fraction) from user; (see curve_offset)
+        self.line_curviness = line_curviness  # (fraction) from user; (see curve_offset)
 
         self.scale = 1.  # (fraction) Scale the image
 
@@ -330,9 +343,9 @@ class SugiyamaLayout:
         self.xmargin = self.xseparation  # (in points) small
         self.cluster_width = cluster_width if cluster_width >= 0 else self.auto_cluster_width()  # (in points) from user
 
-        self.curve_offset = self.xseparation * self.line_curviness                               # (in points)
+        self.curve_offset = self.xseparation * self.line_curviness  # (in points)
 
-        self.font_size = font_size if font_size >= 0 else self.xseparation * 0.6                 # (in points) from user
+        self.font_size = font_size if font_size >= 0 else self.xseparation * 0.6  # (in points) from user
 
         self.height = 0  # (in points) computed automatically from data
         self.width = 0  # (in points) computed automatically from data
@@ -341,7 +354,8 @@ class SugiyamaLayout:
         self.default_cluster_color = (0., 0., 0., 1.)  # r, g, b, a
 
     def auto_line_width(self) -> float:
-        """Calculates automatically the largest possible line width.
+        """
+        Calculates automatically the largest possible line width.
 
          The line width is calculated such that the outgoing or incoming connection can only be as big as the cluster.
         Assumes that the connection width is linear.
@@ -352,21 +366,23 @@ class SugiyamaLayout:
         for cluster in self.clusters:
             line_width_in = line_width_out = float('inf')
             if cluster.insize > 0:
-                line_width_in = cluster.draw_size / (cluster.insize + self.line_spacing * (len(cluster.incoming)-1))
+                line_width_in = cluster.draw_size / (cluster.insize + self.line_spacing * (len(cluster.incoming) - 1))
             if cluster.outsize > 0:
-                line_width_out = cluster.draw_size / (cluster.outsize + self.line_spacing * (len(cluster.outgoing)-1))
+                line_width_out = cluster.draw_size / (cluster.outsize + self.line_spacing * (len(cluster.outgoing) - 1))
             max_line_width = min(max_line_width, line_width_in, line_width_out)
         return max_line_width
 
     def auto_cluster_width(self) -> float:
-        """Simple default cluster width
+        """
+        Simple default cluster width
 
         :return: width that is 5% of the xseparation
         """
         return self.xseparation * 0.05
 
     def build_clusters(self, height_method: str) -> Tuple[List[SugiyamaCluster], List[List[SugiyamaCluster]]]:
-        """Create Sugiyamaclusters from the underlying graph
+        """
+        Create Sugiyamaclusters from the underlying graph
 
         :param height_method: the string to pass to the cluster for it to determine its vertical size
         :return: List of all clusters, first flattened, second in layers
@@ -392,7 +408,8 @@ class SugiyamaLayout:
     ####################################################################################################################
 
     def pred(self, c: SugiyamaCluster) -> Optional[SugiyamaCluster]:
-        """Returns the predecessor of this cluster (e.g. the cluster with rank-1)
+        """
+        Returns the predecessor of this cluster (e.g. the cluster with rank-1)
         
         :param c: Cluster to find the predecessor of
         :return: SugiyamaCluster or None if no predecessor exists
@@ -402,7 +419,8 @@ class SugiyamaLayout:
         return self.ordered[c.tc.layer][c.rank - 1]
 
     def succ(self, c: SugiyamaCluster) -> Optional[SugiyamaCluster]:
-        """Returns the successor of this cluster (e.g. the cluster with rank+1)
+        """
+        Returns the successor of this cluster (e.g. the cluster with rank+1)
 
         :param c: Cluster to find the successor of
         :return: SugiyamaCluster or None if no successor exists
@@ -421,7 +439,8 @@ class SugiyamaLayout:
     ####################################################################################################################
 
     def reset_order(self) -> None:
-        """Reset the ordering properties of this graph and invalidate successive steps done with previous ordering.
+        """
+        Reset the ordering properties of this graph and invalidate successive steps done with previous ordering.
 
         Clusters are first reset to the position in the original graph and then sorted by supercluster as a base case.
         """
@@ -435,12 +454,13 @@ class SugiyamaLayout:
         self.is_located = False
 
     def sort_by_supercluster(self) -> None:
-        """Initialize the ranks of clusters to be near other clusters they are connected to
+        """
+        Initialize the ranks of clusters to be near other clusters they are connected to
 
         This works by building superclusters with flood fill. In this case we start new superclusters with the
         highest unplaced cluster, instead of the leftmost one, because this balances much better
         """
-        pointers = [0]*self.num_layers
+        pointers = [0] * self.num_layers
         seen = set()
         max_layer_size = max(map(len, self.layers))
 
@@ -475,7 +495,8 @@ class SugiyamaLayout:
                     pointers[l] += 1
 
     def set_order(self, barycenter_passes: int = 10) -> None:
-        """Order the clusters in self.ordered with the barycenter method
+        """
+        Order the clusters in self.ordered with the barycenter method
 
         For each pass of the ordering, the barycenter method is applied once forward and once backward.
         After each pass the ordering is checked whether it changed w.r.t. the previous. All passes are independent
@@ -502,7 +523,8 @@ class SugiyamaLayout:
 
     @staticmethod
     def _bary_rank_layer(layer: List[SugiyamaCluster], max_inrank: int, max_outrank: int, alpha: float = 0.5) -> None:
-        """Perform a barycenter sorting on this layer.
+        """
+        Perform a barycenter sorting on this layer.
 
         For each cluster the weighted average rank of all incoming and outgoing connections is calculated.
         Then the ordering is decided by a combination of the inrank and outrank, determined by the total size of the
@@ -538,14 +560,14 @@ class SugiyamaLayout:
             if layer[i].outrank >= 0.:
                 for j in range(start_outr, i):
                     layer[j].outrank = (prev_outr + layer[i].outrank) / 2.
-                start_outr = i+1
+                start_outr = i + 1
                 prev_outr = layer[i].outrank
 
         for j in range(start_inr, len(layer)):
-                layer[j].inrank = max_inrank + 0.5
+            layer[j].inrank = max_inrank + 0.5
 
         for j in range(start_outr, len(layer)):
-                layer[j].outrank = max_outrank + 0.5
+            layer[j].outrank = max_outrank + 0.5
 
         total_outsize = sum(map(lambda x: x.outsize, layer))
         total_insize = sum(map(lambda x: x.insize, layer))
@@ -556,7 +578,8 @@ class SugiyamaLayout:
             cluster.rank = i
 
     def _barycenter(self) -> None:
-        """Perform barycenter ordering once forward once backward
+        """
+        Perform barycenter ordering once forward once backward
 
         Since each layer ordering depends on the previous layer, in the forward iteration layer 0 remains unchanged
         and in the backwards iteration the last layer is unchanged. So for a full ordering both forwards and backwards
@@ -569,14 +592,20 @@ class SugiyamaLayout:
 
             self._bary_rank_layer(layer, prev_layer_size, next_layer_size, alpha=0.999)
 
-        for i in range(self.num_layers-2, -1, -1):
+        for i in range(self.num_layers - 2, -1, -1):
             layer = self.ordered[i]
             prev_layer_size = (len(self.ordered[i - 1]) - 1) if i > 0 else 0
             next_layer_size = (len(self.ordered[i + 1]) - 1) if i < self.num_layers - 1 else 0
 
             self._bary_rank_layer(layer, prev_layer_size, next_layer_size, alpha=0.001)
 
-    def swap_clusters(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
+    def swap_clusters(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster) -> None:
+        """
+        Swaps the ordered position/rank of two clusters clusters within the same layer
+
+        :param cluster1:
+        :param cluster2:
+        """
         order = self.ordered[cluster1.tc.layer]
         order[cluster1.rank], order[cluster2.rank] = order[cluster2.rank], order[cluster1.rank]
         cluster1.rank, cluster2.rank = cluster2.rank, cluster1.rank
@@ -592,7 +621,8 @@ class SugiyamaLayout:
 
     @staticmethod
     def _compare_ranked_lists(upper: List[int], lower: List[int]):
-        """Compare two ordered lists to see how many crossings they have
+        """
+        Compare two ordered lists to see how many crossings they have
 
         Lists are assumed to be sorted low to high and contain ranks. A crossing is when a connection in the
         lower list is above a connection in the higher list.
@@ -614,7 +644,8 @@ class SugiyamaLayout:
 
     @classmethod
     def get_num_crossings(cls, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
-        """Count the number of crossings these 2 cluster have with each other.
+        """
+        Count the number of crossings these 2 cluster have with each other.
 
         If cluster1 is upper (lower rank) than cluster2, it will return the current number of crossings.
         If cluster2 is upper, it will return the number of crossings as if they were swapped.
@@ -630,7 +661,8 @@ class SugiyamaLayout:
                 + cls._compare_ranked_lists(souts_upper, souts_lower))
 
     def crossing_diff_if_swapped(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster) -> int:
-        """Determine the relative difference in crossings if we were to swap the rank of these clusters.
+        """
+        Determine the relative difference in crossings if we were to swap the rank of these clusters.
 
         The clusters should be of the same layer.
 
@@ -648,14 +680,33 @@ class SugiyamaLayout:
     # ------------------------------------------- Alignment Functions ------------------------------------------------ #
     ####################################################################################################################
 
-    def reset_alignments(self):
+    def reset_alignments(self) -> None:
+        """
+        Reset all alignment values and flag all subsequent steps to be out of date.
+        """
         for cluster in self.clusters:
             cluster.reset_alignment()
         self.is_aligned = False
         self.is_located = False
 
-    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, max_inout_diff=2., stairs_iterations=2):
+    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, max_inout_diff=2., stairs_iterations=2) -> None:
+        """
+        Align clusters to be of the same chain to improved readability of the Graph.
 
+        Clusters try to be chained with their median largest incoming connection. A chain is a sequence of clusters
+        in successive layers that will all be placed at the same vertical coordinate. If two chains intersect
+        at a point, the largest connection is given priority and the other chain is broken. If a cluster cannot
+        align with its median largest cluster it will not try for other options.
+        After chains are formed, the function will try to reduce staircasing by swapping clusters around.
+
+        :param direction_flag: switch between aligning from left to right (forward) or right to left (backward)
+        :param max_chain: Maximum length a chain is allowed, or -1 if a chain can be arbitrarily long
+        :param max_inout_diff: Factor to prevent chains from forming when the difference between the largest incoming
+        and largest outgoing connection is too big. A factor of two will prevent aligning the cluster if the largest
+        outgoing connection is more than twice as large as its largest incoming. This prevents overenthousiastic
+        alignments that make little sense. -1 for no limit
+        :param stairs_iterations: The amount of iterations for the anti-staircase function.
+        """
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
         # if not, it is called with the default parameters
         if not self.is_ordered:
@@ -670,8 +721,9 @@ class SugiyamaLayout:
             r = -1
 
             for cluster in self.ordered[layer]:
-                if (cluster.insize == 0 or max_inout_diff < 0. or
-                        cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff):
+                if (cluster.insize == 0 or
+                        (
+                                max_inout_diff >= 0. and cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff)):
                     continue
 
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
@@ -695,7 +747,8 @@ class SugiyamaLayout:
         self.is_aligned = True
 
     def has_larger_crossings(self, start_cluster, until_rank, connection_size):
-        """Checks for crossing of at least a certain size until it is found or a certain rank is reached
+        """
+        Checks for crossing of at least a certain size until it is found or a certain rank is reached
 
         :param start_cluster: First cluster to check connections from. Should have a lower rank than until_rank
         :param until_rank: Continue up to and including the cluster of this rank.
@@ -709,7 +762,8 @@ class SugiyamaLayout:
         return False
 
     def remove_alignments(self, start_cluster: SugiyamaCluster, until_rank: int):
-        """Removes all alignments of clusters from start_cluster until a certain rank is reached
+        """
+        Removes all alignments of clusters from start_cluster until a certain rank is reached
 
         :param start_cluster: first cluster to remove alignment from. Should have a lower rank than until_rank
         :param until_rank: continue up to and including the cluster of this rank.
@@ -722,7 +776,8 @@ class SugiyamaLayout:
             cluster = self.succ(cluster)
 
     def adjacent_alignments(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
-        """Checks whether two aligments are entirely adjacent or that there exists an alignment in between
+        """
+        Checks whether two aligments are entirely adjacent or that there exists an alignment in between
 
         :param upper: cluster in the upper (lower rank) alignment
         :param lower: Cluster in the lower (higher rank) alignment
@@ -754,7 +809,8 @@ class SugiyamaLayout:
         return True
 
     def crossing_diff_if_swapped_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
-        """Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
+        """
+        Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
 
         Function works by swapping each element and summing the individual differences in crossings
 
@@ -774,10 +830,11 @@ class SugiyamaLayout:
             cluster = cluster.align
             if cluster == lroot:
                 break
-        return crossing_diff - 2*(length-1)
+        return crossing_diff - 2 * (length - 1)
 
     def swap_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
-        """Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
+        """
+        Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
 
         Function works by swapping each element and summing the individual differences in crossings
 
@@ -797,7 +854,8 @@ class SugiyamaLayout:
                 break
 
     def collapse_stairs_iteration(self, minimum_want=3, allowed_extra_crossings=0):
-        """Mitigates the staircase effect on connected parts of the graph
+        """
+        Mitigates the staircase effect on connected parts of the graph
 
         The goal is to move shorter chains closer to their desired position. Shorter chains have a better chance to
         fit tightly as opposed to longer chains.
@@ -843,10 +901,9 @@ class SugiyamaLayout:
 
             # Case 2
             while (cluster.wanted_direction >= minimum_want
-                    and successor is not None and successor.root.chain_length > cluster.chain_length
-                    and self.adjacent_alignments(cluster, successor)
-                    and self.crossing_diff_if_swapped_align(cluster, successor) <= allowed_extra_crossings):
-
+                   and successor is not None and successor.root.chain_length > cluster.chain_length
+                   and self.adjacent_alignments(cluster, successor)
+                   and self.crossing_diff_if_swapped_align(cluster, successor) <= allowed_extra_crossings):
                 self.swap_align(cluster, successor)
                 successor.root.update_wanted_direction()
                 cluster.update_wanted_direction()
@@ -857,7 +914,6 @@ class SugiyamaLayout:
                    and successor.root.wanted_direction < -minimum_want
                    and self.adjacent_alignments(cluster, successor)
                    and self.crossing_diff_if_swapped_align(cluster, successor) <= allowed_extra_crossings):
-
                 self.swap_align(cluster, successor)
                 successor.root.update_wanted_direction()
                 cluster.update_wanted_direction()
@@ -865,10 +921,9 @@ class SugiyamaLayout:
 
             # Case 4
             while (predecessor is not None and predecessor.root.chain_length < cluster.chain_length
-                    and predecessor.root.wanted_direction >= minimum_want
-                    and self.adjacent_alignments(predecessor, cluster)
-                    and self.crossing_diff_if_swapped_align(predecessor, cluster) <= allowed_extra_crossings):
-
+                   and predecessor.root.wanted_direction >= minimum_want
+                   and self.adjacent_alignments(predecessor, cluster)
+                   and self.crossing_diff_if_swapped_align(predecessor, cluster) <= allowed_extra_crossings):
                 self.swap_align(predecessor, cluster)
                 predecessor.root.update_wanted_direction()
                 cluster.update_wanted_direction()
@@ -878,8 +933,18 @@ class SugiyamaLayout:
     # ------------------------------------------- Location Functions ------------------------------------------------- #
     ####################################################################################################################
 
-    def set_locations(self, averaging_iterations=5):
+    def set_locations(self, averaging_iterations=5) -> None:
+        """
+        Place the chains that have been identified and ordered.
 
+        Chains are placed as compactly and high as possible initially. This can introduce unneccessary distances,
+        so this value is treated as an upper bound. After the bounds have been established, chains will try to move as
+        close to the average position of its connections outside itself below that bound, without moving past the
+        chain below.
+
+        :param averaging_iterations: The amount of times the averaging should be performed, as each iteration changes
+        how low a cluster w.r.t. the position change of its successor.
+        """
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
         # if not, it is called with the default parameters
         if not self.is_aligned:
@@ -907,18 +972,26 @@ class SugiyamaLayout:
         self.is_located = True
 
     def check_locations(self, excepting=True):
+        """
+        Check whether the determined locations are consistent with the determined ordering
+
+        :param excepting: Whether to raise an exception if the locations are inconsistent
+        :return:
+        """
         for order in self.ordered:
             prev = -1
             for cluster in order:
                 if cluster.y <= prev:
                     if excepting:
-                        raise UnorderedException(f"Locations are not in order of ranks: {cluster} is higher than {self.pred(cluster)}")
+                        raise UnorderedException(
+                            f"Locations are not in order of ranks: {cluster} is higher than {self.pred(cluster)}")
                     else:
                         print(f"{cluster} is higher than {self.pred(cluster)}")
                 prev = cluster.y
 
     def center_distance(self, u: SugiyamaCluster, v: SugiyamaCluster, non_connectedness_factor=1.):
-        """Calculate the distance between the centers of two cluster if they were to be adjacent
+        """
+        Calculate the distance between the centers of two cluster if they were to be adjacent
 
         :param u: Cluster
         :param v: Cluster
@@ -929,7 +1002,8 @@ class SugiyamaLayout:
         return self.yseparation + (u.draw_size + v.draw_size) / 2.
 
     def place_block(self, root):
-        """Place an aligned section by placing all blocks above it and then fitting it as high as possible
+        """
+        Place an aligned section by placing all blocks above it and then fitting it as high as possible
 
         :param root: Root of the alignment to place
         """
@@ -951,7 +1025,8 @@ class SugiyamaLayout:
                     break
 
     def avg_block(self, root):
-        """Place an aligned section by taking the average position
+        """
+        Place an aligned section by taking the average position
 
         place_block() puts all sections as high as they will go from top to bottom. This creates an upper bound on the
         alignment. Now from bottom to top we take the position this alignment would be placed based on average,
@@ -993,11 +1068,17 @@ class SugiyamaLayout:
                 root._y = max(upper_bound, min(lower_bound, total / ctr))
 
     def set_x_positions(self):
+        """
+        Update all x positions of all the clusters, as determined by their layer
+        """
         for cluster in self.clusters:
             cluster.x = self.xmargin + self.xseparation * cluster.tc.layer
-        self.width = 2*self.xmargin + self.xseparation * self.num_layers
+        self.width = 2 * self.xmargin + self.xseparation * self.num_layers
 
-    def set_y_positions(self):
+    def set_y_positions(self) -> None:
+        """
+        Update all y positions of all the clusters, as determined by the algorithm. Also trim possible top margin.
+        """
         min_y = min(map(lambda x: x.root._y - x.draw_size / 2., self.clusters))
         for cluster in self.clusters:
             cluster.y = cluster.root._y + self.ymargin - min_y
@@ -1008,7 +1089,14 @@ class SugiyamaLayout:
     # ------------------------------------------ Statistics Functions ------------------------------------------------ #
     ####################################################################################################################
 
-    def streak_below(self, data, num):
+    def streak_below(self, data: List[Number], num: Number) -> int:
+        """
+        Returns the longest streak that the data points are below some threshold.
+
+        :param data: Data to analyse
+        :param num: Threshold value
+        :return: Largest count of consecutive points below the threshold
+        """
         longest = 0
         current = 0
         for d in data:
@@ -1020,12 +1108,20 @@ class SugiyamaLayout:
                 current = 0
         return longest
 
-    def streak_no_cross(self, data, num):
+    def streak_no_cross(self, data: List[Number], num: Number) -> Tuple[int, int]:
+        """
+        Returns the longest streak of the datapoints not crossing the threshold in either direction and the total
+        number of times the datapoints cross the threshold.
+
+        :param data: Data to analyse
+        :param num: Threshold value
+        :return: Tuple of the longest streak and total amount of crossings
+        """
         longest = 1
         current = 1
         crossings = 0
-        for i in range(len(data)-1):
-            if (data[i] < num) == (data[i+1] < num):
+        for i in range(len(data) - 1):
+            if (data[i] < num) == (data[i + 1] < num):
                 current += 1
                 if current > longest:
                     longest = current
@@ -1034,12 +1130,23 @@ class SugiyamaLayout:
                 crossings += 1
         return longest, crossings
 
-    def stat_surface(self, data):
+    def stat_surface(self, data: Collection[str], maxheight: int = 200) -> cairo.RecordingSurface:
+        """
+        Returns a recording surface to be played back with statistics about the graph.
+
+        Currently accepted statistic strings are "in_out_difference", "layer_num_clusters", "layer_num_members",
+        "homogeneity", "homogeneity_diff". See for explanations the respective functions in TimeGraph.
+        Per statistic the height of the drawing is one third of the graph height or maxheight, whichever is lower.
+
+        :param maxheight: Maximum height in points of per statistic
+        :param data: Iterable of strings of the statistics to show (in order)
+        :return: cairo recording of statistics
+        """
         h = min(self.height / 3, 200)
-        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, (0, 0, self.width, h*len(data)))
+        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, (0, 0, self.width, h * len(data)))
         context = cairo.Context(surface)
 
-        marg = 0.1
+        marg = 0.1  # Margin around the drawing and in between different stats, in percent of h.
 
         for i, name in enumerate(data):
 
@@ -1054,45 +1161,50 @@ class SugiyamaLayout:
             elif name == "homogeneity_diff":
                 d = self.g.homogeneity_diff()
             else:
-                return
+                print(f"Name {name} not found!")
+                continue
 
             maxval = max(d)
-            scale = (h * (1. - 2*marg)) / maxval
+            scale = (h * (1. - 2 * marg)) / maxval  # Scale of the graph.
 
+            # Draw base axes
             context.set_source_rgba(0, 0, 0, 1)
-            context.move_to(self.xmargin*0.95, (i + marg)*h)
-            context.line_to(self.xmargin*0.9,  (i + marg)*h)
-            context.line_to(self.xmargin*0.9, (i + 1. - marg)*h)
-            context.line_to(self.width - self.xmargin, (i + 1. - marg)*h)
+            context.move_to(self.xmargin * 0.95, (i + marg) * h)
+            context.line_to(self.xmargin * 0.9, (i + marg) * h)
+            context.line_to(self.xmargin * 0.9, (i + 1. - marg) * h)
+            context.line_to(self.width - self.xmargin, (i + 1. - marg) * h)
             context.stroke()
 
+            # Show top value (bottom is always 0)
             text_to_show = f"{maxval:.2f}"
             context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            context.set_font_size(min(self.font_size*0.4, h/10))
+            context.set_font_size(min(self.font_size * 0.4, h / 10))
             _, _, tw, th, _, _ = context.text_extents(text_to_show)
-            context.move_to(self.xmargin*0.85 - tw, (i + marg)*h + th)
+            context.move_to(self.xmargin * 0.85 - tw, (i + marg) * h + th)
             context.show_text(text_to_show)
 
-            avg = sum(d)/len(d)
+            # Draw line of average
+            avg = sum(d) / len(d)
             context.set_source_rgba(0, 1, 0, 1)
-            context.move_to(self.xmargin, (i+marg)*h + (maxval - avg)*scale)
+            context.move_to(self.xmargin, (i + marg) * h + (maxval - avg) * scale)
             context.line_to(self.width - self.xmargin, (i + marg) * h + (maxval - avg) * scale)
             context.stroke()
 
+            # Draw data
             context.set_source_rgba(0, 0, 1, 1)
-
-            context.move_to(self.xmargin, (i + marg)*h + (maxval - d[0])*scale)
+            context.move_to(self.xmargin, (i + marg) * h + (maxval - d[0]) * scale)
             for j in range(1, len(d)):
-                context.line_to(self.xmargin + j*self.xseparation, (i + marg)*h + (maxval - d[j])*scale)
+                context.line_to(self.xmargin + j * self.xseparation, (i + marg) * h + (maxval - d[j]) * scale)
 
             context.stroke()
 
+            # Show additional information in text
             streak, crossings = self.streak_no_cross(d, avg)
-            text_to_show = f"{name}: avg ({avg:.3f}), streak ({streak}), crossings ({crossings}), cross_percent ({(crossings/len(d)):2f})"
+            text_to_show = f"{name}: avg ({avg:.3f}), streak ({streak}), crossings ({crossings}), cross_percent ({(crossings / len(d)):2f})"
 
-            context.set_font_size(min(self.font_size*0.5, h/8))
+            context.set_font_size(min(self.font_size * 0.5, h / 8))
             _, _, tw, th, _, _ = context.text_extents(text_to_show)
-            context.move_to(0.3 * self.xseparation + self.xmargin, (i + marg)*h + th)
+            context.move_to(0.3 * self.xseparation + self.xmargin, (i + marg) * h + th)
             context.show_text(text_to_show)
 
         surface.flush()
@@ -1103,7 +1215,8 @@ class SugiyamaLayout:
     ####################################################################################################################
 
     def calculate_line_origins(self, source_cluster):
-        """Calculate the absolute origins for each line incident to this cluster
+        """
+        Calculate the absolute origins for each line incident to this cluster
 
         This is calculated by sorting the other endpoints and "empirically" set them
         one after the other around the center.
@@ -1146,7 +1259,8 @@ class SugiyamaLayout:
                   line_coordinates: dict, colormap: dict,
                   context: cairo.Context,
                   show_annotations=False):
-        """Draws the connection between source and target with label colors
+        """
+        Draws the connection between source and target with label colors
 
         The line is divided in sections according to the labels of the nodes in this connection.
         For each unique label a line is drawn in the associated color with exact offset as to seem one single cohesive
@@ -1160,11 +1274,12 @@ class SugiyamaLayout:
         """
         members = source.neighbours[target]
         num_members = len(members)
-        thickness = num_members*self.line_width
+        thickness = num_members * self.line_width
         half_thickness = len(members) * self.line_width / 2.
 
         labels = Counter(map(lambda x: x.name, members))
-        labels = [(colormap.get(lbl, self.default_line_color), cnt/num_members) for (lbl, cnt) in sorted(list(labels.items()))]
+        labels = [(colormap.get(lbl, self.default_line_color), cnt / num_members) for (lbl, cnt) in
+                  sorted(list(labels.items()))]
 
         y_source = line_coordinates[(source, target)]
         y_target = line_coordinates[(target, source)]
@@ -1191,13 +1306,13 @@ class SugiyamaLayout:
                             (target.x, y_target),
                             labels,
                             thickness,
-                            detail=min(100, max(4, int(abs(y_target-y_source)*self.line_width))))
+                            detail=min(100, max(4, int(abs(y_target - y_source) * self.line_width))))
 
         if show_annotations:
             # draw some annotatations of the bundle size
             context.set_source_rgb(0, 0, 0)
             context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            context.set_font_size(min(self.line_width * len(members), self.xseparation*0.7))  # in user space units
+            context.set_font_size(min(self.line_width * len(members), self.xseparation * 0.7))  # in user space units
 
             if len(members) >= 1.5 * max(map(len, source.incoming.values()), default=0.):
                 to_print = str(len(members))
@@ -1209,14 +1324,23 @@ class SugiyamaLayout:
         context.restore()
 
     def fade_cluster(self, ctx: cairo.Context, cluster: SugiyamaCluster, colormap: Dict, direction):
-        colors = [(colormap.get(lbl, self.default_line_color), cnt/len(cluster)) for (lbl, cnt) in sorted(list(Counter(map(lambda x: x.name, cluster.members)).items()))]
+        """
+        Draw a fading line into or from a certain cluster.
+
+        :param ctx: cairo Context to draw on
+        :param cluster: Cluster to use as source
+        :param colormap: map of coloring for the names of the nodes in the cluster
+        :param direction: True for a fade in, False for a fade out
+        """
+        colors = [(colormap.get(lbl, self.default_line_color), cnt / len(cluster)) for (lbl, cnt) in
+                  sorted(list(Counter(map(lambda x: x.name, cluster.members)).items()))]
         if direction:
             coloured_bezier(ctx,
                             (cluster.x - self.xseparation / 3., cluster.y),
                             (cluster.x, cluster.y),
                             (cluster.x, cluster.y),
                             (cluster.x, cluster.y),
-                            colors=colors, width=self.line_width*len(cluster), detail=4, fade='in')
+                            colors=colors, width=self.line_width * len(cluster), detail=4, fade='in')
         else:
             coloured_bezier(ctx,
                             (cluster.x, cluster.y),
@@ -1225,7 +1349,13 @@ class SugiyamaLayout:
                             (cluster.x + self.xseparation / 3., cluster.y),
                             colors=colors, width=self.line_width * len(cluster), detail=4, fade='out')
 
-    def timestamp_surface(self, timestamp_translator):
+    def timestamp_surface(self, timestamp_translator) -> cairo.RecordingSurface:
+        """
+        Separate surface that the timestamps are drawn onto.
+
+        :param timestamp_translator: Object that converts a layer number to a layer identifier
+        :return: Surface with drawn timestamps in the same offsets as the layers.
+        """
         surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
         context = cairo.Context(surface)
         context.set_source_rgb(0, 0, 0)
@@ -1255,7 +1385,15 @@ class SugiyamaLayout:
         # print(surface.ink_extents())
         return surface
 
-    def connection_surface(self, colormap, show_annotations, fading):
+    def connection_surface(self, colormap: dict, show_annotations: bool, fading: bool) -> cairo.RecordingSurface:
+        """
+        Returns a cairo surface with just the connections drawn onto them.
+
+        :param colormap: dictionary that converts a node name to a color value
+        :param show_annotations: Flag to show additional information per connection
+        :param fading: Flag to also draw the fade in and out connections per cluster
+        :return: cairo surface with connections
+        """
         surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
         context = cairo.Context(surface)
         line_coordinates = dict()  # k: (source, target), v: y-coordinate of endpoint in source.
@@ -1286,7 +1424,11 @@ class SugiyamaLayout:
         # print(surface.ink_extents())
         return surface
 
-    def cluster_surface(self):
+    def cluster_surface(self) -> cairo.RecordingSurface:
+        """
+        Returns a surface with all cluster drawn on them to be overlaid on the connection surface
+        :return:
+        """
         surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
         context = cairo.Context(surface)
         (r, g, b, a) = self.default_cluster_color
@@ -1303,7 +1445,18 @@ class SugiyamaLayout:
         # print(surface.ink_extents())
         return surface
 
-    def debug_surface(self, debug_info: Set[str]):
+    def debug_surface(self, debug_info: Set[str]) -> cairo.RecordingSurface:
+        """
+        Surface that shows invasive debug information per connection or cluster.
+
+        Accepts:
+        'swap_above': the relative difference in crossings if a cluster was to be swapped with the cluster above it
+        'ranks': Show the in and out rank information as calculated by the barycenter procedure.
+        'id': Show the layer and id of a cluster.
+
+        :param debug_info: List of debug items to show.
+        :return: cairo Surface with debug information
+        """
         surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
         context = cairo.Context(surface)
 
@@ -1333,7 +1486,15 @@ class SugiyamaLayout:
         surface.flush()
         return surface
 
-    def paint_surface(self, context, to_draw, x=0., y=0.):
+    def paint_surface(self, context: cairo.Context, to_draw: cairo.RecordingSurface, x: float = 0., y: float = 0.):
+        """
+        Quick function that paints a surface at a given location without interfering in the context.
+
+        :param context: context to draw on.
+        :param to_draw: RecordingSurface to draw
+        :param x: horizontal offset
+        :param y: vertical offset
+        """
         context.save()
         context.set_source_surface(to_draw, x, y)
         context.paint()
@@ -1377,11 +1538,10 @@ class SugiyamaLayout:
             surfaces["stat"] = statsurf
 
         surface = cairo.SVGSurface(filename,
-                                       (self.width + 2*self.xmargin)*scale,
-                                       (self.height + offset + 2*self.ymargin)*scale)
+                                   (self.width + 2 * self.xmargin) * scale,
+                                   (self.height + offset + 2 * self.ymargin) * scale)
         context = cairo.Context(surface)
         context.scale(scale, scale)
-
 
         offset = self.height
         self.paint_surface(context, surfaces["conn"])
@@ -1394,7 +1554,7 @@ class SugiyamaLayout:
             offset += self.ymargin + h
             self.paint_surface(context, surfaces["time"], y=y)
         if stats_info is not None:
-            y = offset+self.ymargin
+            y = offset + self.ymargin
             _, _, _, h = surfaces["stat"].ink_extents()
             offset += self.ymargin + h
             self.paint_surface(context, surfaces["stat"], y=y)
@@ -1403,4 +1563,3 @@ class SugiyamaLayout:
         for s in surfaces.values():
             s.finish()
         print(offset)
-
