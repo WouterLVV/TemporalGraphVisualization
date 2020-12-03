@@ -7,6 +7,10 @@ Changelog TemporalGraphVisualization
 
  - Moved certain statistics to TimeGraph, because they do not depend on the drawing
 
+ - Moved scale parameter to draw_graph
+
+ - Reduced unnecessary output
+
 = Documentation =
 
  - Added missing documentation to all SugiyamaCluster methods
