@@ -269,6 +269,53 @@ class TimeGraph:
                 head.add_connection(tail, n)
                 tail.add_connection(head, n)
 
+    # Global (time graph) statistics
+
+    def num_clusters(self):
+        return len(self.clusters)
+
+    def avg_num_clusters_per_time_step(self):
+        return len(self.clusters) / self.num_steps
+
+    def num_events(self):
+        """ Counts events: splits, merges, starts, ends.
+
+        A start/end = 1. A split/merge = #neighbour_clusters - 1.
+        A chain of clusters excl. the ends = 0.
+        """
+
+        event_count = 0
+
+        for cluster in self.clusters:
+            if len(cluster) < self.min_clust_size:
+                continue
+
+            # count starts and merges
+            num_incoming = 0
+            for k, v in cluster.incoming.items():
+                if len(k) < self.min_clust_size or len(v) < self.min_conn_size:
+                    continue
+                num_incoming += 1
+            if num_incoming == 0:
+                event_count += 1
+            else:
+                event_count += num_incoming - 1
+
+            # count ends and splits
+            num_outgoing = 0
+            for k, v in cluster.outgoing.items():
+                if len(k) < self.min_clust_size or len(v) < self.min_conn_size:
+                    continue
+                num_outgoing += 1
+            if num_outgoing == 0:
+                event_count += 1
+            else:
+                event_count += num_outgoing - 1
+
+        return event_count
+
+    def num_events_per_time_step(self):
+        return self.num_events() / self.num_steps
 
     def average_neighbours(self, minimum_cluster_size=1, minimum_connection_size=1):
         num_connections = 0
@@ -290,6 +337,8 @@ class TimeGraph:
                 num_connections += cluster_connections
 
         return num_connections / num_clusters
+
+    # Local (time step) statistics
 
     def layer_in_out_diff(self):
         return [abs(sum(map(lambda x: x.insize, layer)) - sum(map(lambda x: x.outsize, layer))) for layer in self.layers]

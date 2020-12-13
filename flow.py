@@ -33,14 +33,13 @@ mname = None
 # aggregate_time_to, strength = 120, 0.5
 
 # Primary school, 2 days
-fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
-mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
-timestamp_first = True
-period, time_label = 20, 's'
-start_timestamp, end_timestamp, add_missing = 120800, 151960, True
-aggregate_time_to, strength = 2000, 0.5
-min_cluster = 2
-
+# fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
+# mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
+# timestamp_first = True
+# period, time_label = 20, 's'
+# start_timestamp, end_timestamp, add_missing = 120800, 151960, True
+# aggregate_time_to, strength = 3500, 0.5
+# min_cluster = 2
 
 # High school, 5 days x 8am-6pm
 # fname = "tnet_sources/sociopatterns/co-presence/tij_pres_Thiers13.dat"
@@ -58,14 +57,13 @@ min_cluster = 2
 # aggregate_time_to, strength = 120, 0.5
 # colormap = {}
 
-
-#Email EU, 500+ days in 45 mil. seconds
-# fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
-# timestamp_first = False
-# period, time_label = 1, 'd'
-# start_timestamp, end_timestamp, add_missing = -1, -1, False
-# aggregate_time_to, strength = 86400, 0 # day, weak aggregation
-# min_cluster = 2
+# Email EU, 500+ days in 45 mil. seconds
+fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
+timestamp_first = False
+period, time_label = 1, 'd'
+start_timestamp, end_timestamp, add_missing = -1, -1, False
+aggregate_time_to, strength = 86400, 0 # day, weak aggregation
+min_cluster = 2
 
 # College msg, 193 days
 # fname = "tnet_sources/college-msg/CollegeMsg.txt"
@@ -84,13 +82,13 @@ min_cluster = 2
 # aggregate_time_to, strength = 3600, 0
 # min_cluster = 1
 
-
 if __name__ == '__main__':
 
     net_name = (fname.split("/")[-1]).split(".")[0]
-    suffix = ""
+
+    suffix = "-min_" + str(min_cluster) + "-aggr_to_" + str(aggregate_time_to)
     if start_timestamp >= 0 and end_timestamp >= 0:
-        suffix = "-from_" + str(start_timestamp) + "_to_" + str(end_timestamp)
+        suffix += "-from_" + str(start_timestamp) + "_to_" + str(end_timestamp)
 
     pair_contacts = read_pair_contacts_from_file(fname, separator=separator, grain_t=period,
                                                         start_timestamp=start_timestamp, end_timestamp=end_timestamp,
@@ -112,7 +110,9 @@ if __name__ == '__main__':
         node_list = num_nodeids
 
     g = TimeGraph(normalised_list_pair_contacts, node_list, num_timestamps, minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster)
+    print(g.num_clusters(), g.avg_num_clusters_per_time_step(), g.num_events(), g.num_events_per_time_step())
     # print(g.average_neighbours(minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster))
+
     sg = SugiyamaLayout(g, line_width=1,
                            cluster_height_method='linear',
                            horizontal_density=1,
