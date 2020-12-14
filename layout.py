@@ -1157,9 +1157,9 @@ class SugiyamaLayout:
             elif name == "layer_num_members":
                 d = self.g.layer_num_members()
             elif name == "homogeneity":
-                d = self.g.homogeneity()
+                d = self.g.relative_continuity()
             elif name == "homogeneity_diff":
-                d = self.g.homogeneity_diff()
+                d = self.g.relative_continuity_diff()
             else:
                 print(f"Name {name} not found!")
                 continue

@@ -316,27 +316,24 @@ class TimeGraph:
 
     def num_events_per_time_step(self):
         return self.num_events() / self.num_steps
+    
+    def average_relative_continuity(self):
+        return sum(self.relative_continuity()) / self.num_steps
+    
+    def average_absolute_continuity(self):
+        return sum(self.absolute_continuity()) / self.num_steps
 
-    def average_neighbours(self, minimum_cluster_size=1, minimum_connection_size=1):
-        num_connections = 0
-        num_clusters = 0
-        for cluster in self.clusters:
-            if len(cluster) < minimum_cluster_size:
-                continue
-            cluster_connections = 0
-            for k, v in cluster.outgoing.items():
-                if len(k) < minimum_cluster_size or len(v) < minimum_connection_size:
-                    continue
-                cluster_connections += 1
-            for k, v in cluster.incoming.items():
-                if len(k) < minimum_cluster_size or len(v) < minimum_connection_size:
-                    continue
-                cluster_connections += 1
-            if cluster_connections > 0:
-                num_clusters += 1
-                num_connections += cluster_connections
+    def average_relative_continuity_diff(self):
+        return sum(self.relative_continuity_diff()) / self.num_steps
 
-        return num_connections / num_clusters
+    def average_absolute_continuity_diff(self):
+        return sum(self.absolute_continuity_diff()) / self.num_steps
+
+    def normalized_absolute_continuity(self):
+        return sum(self.absolute_continuity()) / sum(self.layer_num_members())
+
+    def normalized_absolute_continuity_diff(self):
+        return sum(self.absolute_continuity_diff()) / sum(self.layer_num_members())
 
     # Local (time step) statistics
 
@@ -349,7 +346,7 @@ class TimeGraph:
     def layer_num_members(self):
         return list(map(sum, map(lambda x: map(len, x), self.layers)))
 
-    def homogeneity(self):
+    def relative_continuity(self):
         res = []
         for layer in self.layers:
             if len(layer) == 0:
@@ -357,10 +354,26 @@ class TimeGraph:
             else:
                 res.append(sum(map(lambda c: max(map(len, c.outgoing.values()), default=1), layer))/sum(map(len, layer)))
         return res
+    
+    def absolute_continuity(self):
+        res = []
+        for layer in self.layers:
+            if len(layer) == 0:
+                res.append(0.)
+            else:
+                res.append(sum(map(lambda c: max(map(len, c.outgoing.values()), default=1), layer)))
+        return res
 
-    def homogeneity_diff(self):
-        hom = self.homogeneity()
+    def relative_continuity_diff(self):
+        hom = self.relative_continuity()
         res = [0.]
         for i in range(len(hom)-1):
             res.append(abs(hom[i] - hom[i+1]))
+        return res
+    
+    def absolute_continuity_diff(self):
+        con = self.absolute_continuity()
+        res = [0.]
+        for i in range(len(con) - 1):
+            res.append(abs(con[i] - con[i + 1]))
         return res
