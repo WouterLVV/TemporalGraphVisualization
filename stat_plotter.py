@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from TimeGraph import TimeGraph
 from layout import SugiyamaLayout
+import numpy as np
 
 from io_operations import *
 
@@ -70,8 +71,12 @@ if __name__ == "__main__":
         # ylabel = "Normalized absolute continuity"
         # results.append(g.normalized_absolute_continuity())
 
-        # ylabel = "Normalized absolute continuity difference"
-        # results.append(g.normalized_absolute_continuity_diff())
+        ylabel = "Normalized absolute continuity difference"
+        results.append(g.normalized_absolute_continuity_diff())
+
+        # ylabel = "Variance of absolute continuity difference"
+        # results.append(np.var(g.absolute_continuity_diff()))
+
 
     xlabel = "Aggregation"
     plt.figure()
