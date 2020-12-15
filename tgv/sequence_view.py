@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from collections import deque
-import io_operations
+from tgv import io_operations
+
 
 def make_node_order_random(pair_contacts):
 	""" For the numerical node IDs seen in the contact data, creates a

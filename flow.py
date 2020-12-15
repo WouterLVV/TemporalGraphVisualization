@@ -1,9 +1,8 @@
-from TimeGraph import TimeGraph
-from layout import SugiyamaLayout
-import csv
+from tgv.timegraph import TimeGraph
+from tgv.layout import SizedConnectionLayout
 
-from io_operations import *
-from colours import *
+from tgv.io_operations import *
+from tgv.colours import *
 
 start_timestamp, end_timestamp = -1, -1
 separator = ' '
@@ -113,10 +112,10 @@ if __name__ == '__main__':
     print(g.num_clusters(), g.avg_num_clusters_per_time_step(), g.num_events(), g.num_events_per_time_step())
     # print(g.average_neighbours(minimum_cluster_size=min_cluster, minimum_connection_size=min_cluster))
 
-    sg = SugiyamaLayout(g, line_width=1,
-                           cluster_height_method='linear',
-                           horizontal_density=1,
-                           vertical_density=0.6)
+    sg = SizedConnectionLayout(g, line_width=1,
+                               cluster_height_method='linear',
+                               horizontal_density=1,
+                               vertical_density=0.6)
 
     sg.set_order(barycenter_passes=10)
     sg.set_alignment(stairs_iterations=5)
