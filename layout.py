@@ -3,12 +3,15 @@ from __future__ import annotations
 import math
 from collections import Counter, deque
 from numbers import Number
-from typing import List, Set, Dict, Optional, Tuple, Collection
+from typing import List, Set, Dict, Optional, Tuple, Iterable, Sized, Collection
 
 import cairocffi as cairo
 
-from tgv.timegraph import TimeGraph, TimeCluster
-from tgv.drawing_utils import coloured_bezier
+from TimeGraph import TimeGraph, TimeCluster
+from drawing_utils import coloured_bezier
+
+# from sklearn.preprocessing import normalize
+# import cairo
 
 INCOMING = FORWARD = True
 OUTGOING = BACKWARD = False
@@ -26,7 +29,7 @@ class NotEndpointException(Exception):
     pass
 
 
-class SizedConnectionCluster:
+class SugiyamaCluster:
     def __init__(self, tc: TimeCluster, height_method):
         # Link to original TimeCluster and vice versa
         self.tc = tc
@@ -138,7 +141,7 @@ class SizedConnectionCluster:
         return self.inrank, self.outrank
 
     @staticmethod
-    def weighted_median_rank(nbs: List[(SizedConnectionCluster, Set)]) -> float:
+    def weighted_median_rank(nbs: List[(SugiyamaCluster, Set)]) -> float:
         """
         Of a list of neighbours, return the median ranked neighbour adjusted for integer weighted connections
 
@@ -180,7 +183,7 @@ class SizedConnectionCluster:
         self.align = self.root
         self.root.chain_length = max(1, self.root.chain_length - 1)
 
-    def largest_median_connection(self, lower=True, direction=INCOMING) -> (SizedConnectionCluster, int):
+    def largest_median_connection(self, lower=True, direction=INCOMING) -> (SugiyamaCluster, int):
         """
         Returns the cluster with the largest connection to this one.
 
@@ -209,7 +212,7 @@ class SizedConnectionCluster:
         connsize = len(connections[0][1])
         return brother, connsize
 
-    def align_with(self, next_cluster: SizedConnectionCluster) -> None:
+    def align_with(self, next_cluster: SugiyamaCluster) -> None:
         """
         puts next_cluster as the next link in this chain, if self is an endpoint
 
@@ -285,7 +288,7 @@ class SizedConnectionCluster:
         return len(self.members)
 
 
-class SizedConnectionLayout:
+class SugiyamaLayout:
 
     ####################################################################################################################
     # -------------------------------------------- init Functions ---------------------------------------------------- #
@@ -377,7 +380,7 @@ class SizedConnectionLayout:
         """
         return self.xseparation * 0.05
 
-    def build_clusters(self, height_method: str) -> Tuple[List[SizedConnectionCluster], List[List[SizedConnectionCluster]]]:
+    def build_clusters(self, height_method: str) -> Tuple[List[SugiyamaCluster], List[List[SugiyamaCluster]]]:
         """
         Create Sugiyamaclusters from the underlying graph
 
@@ -386,7 +389,7 @@ class SizedConnectionLayout:
         :rtype: str
         """
         layers = [
-            [SizedConnectionCluster(self.g.layers[t][i], height_method)
+            [SugiyamaCluster(self.g.layers[t][i], height_method)
              for i in range(len(self.g.layers[t]))
              ]
             for t in range(self.g.num_steps)
@@ -404,7 +407,7 @@ class SizedConnectionLayout:
     # -------------------------------------------- Helper Functions -------------------------------------------------- #
     ####################################################################################################################
 
-    def pred(self, c: SizedConnectionCluster) -> Optional[SizedConnectionCluster]:
+    def pred(self, c: SugiyamaCluster) -> Optional[SugiyamaCluster]:
         """
         Returns the predecessor of this cluster (e.g. the cluster with rank-1)
         
@@ -415,7 +418,7 @@ class SizedConnectionLayout:
             return None
         return self.ordered[c.tc.layer][c.rank - 1]
 
-    def succ(self, c: SizedConnectionCluster) -> Optional[SizedConnectionCluster]:
+    def succ(self, c: SugiyamaCluster) -> Optional[SugiyamaCluster]:
         """
         Returns the successor of this cluster (e.g. the cluster with rank+1)
 
@@ -506,12 +509,12 @@ class SizedConnectionLayout:
 
         # Keep doing passes until the maximum number has been reached or the order does no longer change
         for i in range(barycenter_passes):
-            # print(f"Pass #{i}")
+            print(f"Pass #{i}")
             self._barycenter()
             # self._barycenter()
 
             if orders_tmp == self.ordered:
-                # print("Order stabilized")
+                print("Order stabilized")
                 break
 
             orders_tmp = [order.copy() for order in self.ordered]
@@ -519,7 +522,7 @@ class SizedConnectionLayout:
         self.is_ordered = True
 
     @staticmethod
-    def _bary_rank_layer(layer: List[SizedConnectionCluster], max_inrank: int, max_outrank: int, alpha: float = 0.5) -> None:
+    def _bary_rank_layer(layer: List[SugiyamaCluster], max_inrank: int, max_outrank: int, alpha: float = 0.5) -> None:
         """
         Perform a barycenter sorting on this layer.
 
@@ -596,7 +599,7 @@ class SizedConnectionLayout:
 
             self._bary_rank_layer(layer, prev_layer_size, next_layer_size, alpha=0.001)
 
-    def swap_clusters(self, cluster1: SizedConnectionCluster, cluster2: SizedConnectionCluster) -> None:
+    def swap_clusters(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster) -> None:
         """
         Swaps the ordered position/rank of two clusters clusters within the same layer
 
@@ -640,7 +643,7 @@ class SizedConnectionLayout:
         return crossings
 
     @classmethod
-    def get_num_crossings(cls, cluster1: SizedConnectionCluster, cluster2: SizedConnectionCluster):
+    def get_num_crossings(cls, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster):
         """
         Count the number of crossings these 2 cluster have with each other.
 
@@ -657,7 +660,7 @@ class SizedConnectionLayout:
         return (cls._compare_ranked_lists(sins_upper, sins_lower)
                 + cls._compare_ranked_lists(souts_upper, souts_lower))
 
-    def crossing_diff_if_swapped(self, cluster1: SizedConnectionCluster, cluster2: SizedConnectionCluster) -> int:
+    def crossing_diff_if_swapped(self, cluster1: SugiyamaCluster, cluster2: SugiyamaCluster) -> int:
         """
         Determine the relative difference in crossings if we were to swap the rank of these clusters.
 
@@ -758,7 +761,7 @@ class SizedConnectionLayout:
             cluster = self.succ(cluster)
         return False
 
-    def remove_alignments(self, start_cluster: SizedConnectionCluster, until_rank: int):
+    def remove_alignments(self, start_cluster: SugiyamaCluster, until_rank: int):
         """
         Removes all alignments of clusters from start_cluster until a certain rank is reached
 
@@ -772,7 +775,7 @@ class SizedConnectionLayout:
                 cluster.reset_endpoint()
             cluster = self.succ(cluster)
 
-    def adjacent_alignments(self, upper: SizedConnectionCluster, lower: SizedConnectionCluster):
+    def adjacent_alignments(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
         """
         Checks whether two aligments are entirely adjacent or that there exists an alignment in between
 
@@ -805,7 +808,7 @@ class SizedConnectionLayout:
 
         return True
 
-    def crossing_diff_if_swapped_align(self, upper: SizedConnectionCluster, lower: SizedConnectionCluster):
+    def crossing_diff_if_swapped_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
         """
         Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
 
@@ -829,7 +832,7 @@ class SizedConnectionLayout:
                 break
         return crossing_diff - 2 * (length - 1)
 
-    def swap_align(self, upper: SizedConnectionCluster, lower: SizedConnectionCluster):
+    def swap_align(self, upper: SugiyamaCluster, lower: SugiyamaCluster):
         """
         Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments
 
@@ -986,7 +989,7 @@ class SizedConnectionLayout:
                         print(f"{cluster} is higher than {self.pred(cluster)}")
                 prev = cluster.y
 
-    def center_distance(self, u: SizedConnectionCluster, v: SizedConnectionCluster, non_connectedness_factor=1.):
+    def center_distance(self, u: SugiyamaCluster, v: SugiyamaCluster, non_connectedness_factor=1.):
         """
         Calculate the distance between the centers of two cluster if they were to be adjacent
 
@@ -1252,7 +1255,7 @@ class SizedConnectionLayout:
 
         return pairs
 
-    def draw_line(self, source: SizedConnectionCluster, target: SizedConnectionCluster,
+    def draw_line(self, source: SugiyamaCluster, target: SugiyamaCluster,
                   line_coordinates: dict, colormap: dict,
                   context: cairo.Context,
                   show_annotations=False):
@@ -1320,7 +1323,7 @@ class SizedConnectionLayout:
                 context.stroke()
         context.restore()
 
-    def fade_cluster(self, ctx: cairo.Context, cluster: SizedConnectionCluster, colormap: Dict, direction):
+    def fade_cluster(self, ctx: cairo.Context, cluster: SugiyamaCluster, colormap: Dict, direction):
         """
         Draw a fading line into or from a certain cluster.
 
@@ -1559,4 +1562,4 @@ class SizedConnectionLayout:
         surface.finish()
         for s in surfaces.values():
             s.finish()
-        # print(offset)
+        print(offset)

@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
-from tgv.timegraph import TimeGraph
+from TimeGraph import TimeGraph
+from layout import SugiyamaLayout
 import numpy as np
 
-from tgv.io_operations import *
+from io_operations import *
 
 start_timestamp, end_timestamp = -1, -1
 separator = ' '
