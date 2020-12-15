@@ -1,5 +1,23 @@
 Changelog TemporalGraphVisualization
 
+=== 2020-12-15 ===
+= Features =
+
+ - updated stat_plotter.py
+
+ - Restuctured folder structure to reduce clutter
+
+= Documentation =
+
+ - Renamed Sugiyama things to SizedConnection things
+
+ - Regenerated documentation
+
+=== 2020-12-14 ===
+= Features =
+
+ - Added a statistics plotter and various statistics
+
 === 2020-12-03 ===
 = Documentation =
 
