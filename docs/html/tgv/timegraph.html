@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.9.3" />
 <title>tgv.timegraph API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -425,14 +425,27 @@ class TimeGraph:
 <p>A TimeCluster in practice contains a single connected component at a single time step.
 It should keep track of incoming and outgoing connections and the nodes that belong to each connection
 Each node in members should appear in both the incoming and outgoing values, excepting the first and final layer</p>
-<p>:ivar id: Timecluster identifier, should be unique within the layer
-:ivar incoming: Incoming connections from the previous layer
-:ivar outgoing: Outgoing connections to the following layer
-:ivar members: Set containing all node ids that belong to this cluster
-:ivar layer: The graph layer this cluster belongs to</p>
+<h2 id="vars">Vars:</h2>
+<dl>
+<dt><strong><code>id</code></strong></dt>
+<dd><p>Timecluster identifier, should be unique within the layer</p></dd>
+<dt><strong><code>incoming</code></strong></dt>
+<dd><p>Incoming connections from the previous layer</p></dd>
+<dt><strong><code>outgoing</code></strong></dt>
+<dd><p>Outgoing connections to the following layer</p></dd>
+<dt><strong><code>members</code></strong></dt>
+<dd><p>Set containing all node ids that belong to this cluster</p></dd>
+<dt><strong><code>layer</code></strong></dt>
+<dd><p>The graph layer this cluster belongs to</p></dd>
+</dl>
 <p>Initializes a TimeCluster object</p>
-<p>:param layer: Layer number this cluster exists in
-:param id: identifier of this cluster, unique within layer</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>layer</code></strong></dt>
+<dd><p>Layer number this cluster exists in</p></dd>
+<dt><strong><code>id</code></strong></dt>
+<dd><p>identifier of this cluster, unique within layer</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -567,8 +580,15 @@ Each node in members should appear in both the incoming and outgoing values, exc
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a single node to this cluster</p>
-<p>:param node: identifier of the node added to this cluster
-:return:</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>node</code></strong></dt>
+<dd><p>identifier of the node added to this cluster</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -589,9 +609,19 @@ Each node in members should appear in both the incoming and outgoing values, exc
 <dd>
 <div class="desc"><p>Adds a connection from or to the target timecluster for members</p>
 <p>If the connection already exists, the new member(s) is/are added to the existing connection.</p>
-<p>:param TimeCluster target: The TimeCluster to connect to. Should exist in either layer+1 or layer-1.
-:param TimeNode or set members: id or set of ids that belong to this connection.
-:return: None</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>target</code></strong> :&ensp;<code><a title="tgv.timegraph.TimeCluster" href="#tgv.timegraph.TimeCluster">TimeCluster</a></code></dt>
+<dd><p>The TimeCluster to connect to. Should exist in either layer+1 or layer-1.</p></dd>
+<dd>
+<dl>
+<dt><p>id or set of ids that belong to this connection.</p></dt>
+<dt>Returns:</dt>
+<dt>-----=</dt>
+<dd><p>None</p></dd>
+</dl>
+</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -663,8 +693,15 @@ Each node in members should appear in both the incoming and outgoing values, exc
 </code></dt>
 <dd>
 <div class="desc"><p>Trim connections according to some minimum connection size</p>
-<p>:param min_conn_size: minimum size of connection to not be removed
-:return: Whether this cluster is alive or is orphaned and has destroyed itself</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>min_conn_size</code></strong></dt>
+<dd><p>minimum size of connection to not be removed</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>Whether this cluster is alive or is orphaned and has destroyed itself</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -704,14 +741,27 @@ Each node in members should appear in both the incoming and outgoing values, exc
 <div class="desc"><p>Initializes a TimeGraph object</p>
 <p>A Timegraph object holds information about a graph that changes in discrete steps.
 Each step independently contains the full state of the graph in that step and also the clustering in that step.</p>
-<p>:ivar int num_steps: The number of steps in this graph
-:ivar int num_nodes: The number of nodes (not clusters) total
-:ivar nodes: List of nodes
-:ivar clusters: List of list of clusters</p>
+<h2 id="vars">Vars:</h2>
+<dl>
+<dt><strong><code>num_steps</code></strong> :&ensp;<code>int</code></dt>
+<dd><p>The number of steps in this graph</p></dd>
+<dt><strong><code>num_nodes</code></strong> :&ensp;<code>int</code></dt>
+<dd><p>The number of nodes (not clusters) total</p></dd>
+<dt><strong><code>nodes</code></strong></dt>
+<dd><p>List of nodes</p></dd>
+<dt><strong><code>clusters</code></strong></dt>
+<dd><p>List of list of clusters</p></dd>
+</dl>
 <p>Initializes a TimeGraph</p>
-<p>:param conns: Iterable of undirected connections in the form of (head, tail, timestep)
-:param nodes: Either an int (#nodes) or a list [ node_name, &hellip; ]
-:param num_steps: Total number of steps</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>conns</code></strong></dt>
+<dd><p>Iterable of undirected connections in the form of (head, tail, timestep)</p></dd>
+<dt><strong><code>nodes</code></strong></dt>
+<dd><p>Either an int (#nodes) or a list [ node_name, &hellip; ]</p></dd>
+<dt><strong><code>num_steps</code></strong></dt>
+<dd><p>Total number of steps</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1039,7 +1089,10 @@ Each step independently contains the full state of the graph in that step and al
 <dd>
 <div class="desc"><p>Function that takes the clustering per layer and interconnects clusters</p>
 <p>A connection between two clusters is made if they are in adjacent layers and share the same node as member.</p>
-<p>:return: None</p></div>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>None</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1071,8 +1124,15 @@ Each step independently contains the full state of the graph in that step and al
 <dd>
 <div class="desc"><p>Function that creates connected components in each layer</p>
 <p>For a layer the connected components are built by progressively flood-filling any node that is not yet in a cluster</p>
-<p>:param t: Time step of this layer
-:return: List of clusters in this layer</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>t</code></strong></dt>
+<dd><p>Time step of this layer</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>List of clusters in this layer</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1314,10 +1374,17 @@ A chain of clusters excl. the ends = 0.</p></div>
 <dd>
 <div class="desc"><p>Simple data structure for nodes than can belong to different groups over time</p>
 <p>Initializes a TimeNode structure</p>
-<p>:param conns: a set of connections this node has in tuple form (neighbour, time step)
-:param max_step: The maximum number of steps in the total graph
-:param id: Node identifier, should be unique over the graph this TimeNode belongs to
-:param name: (Optional) Human readable name of this node</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>conns</code></strong></dt>
+<dd><p>a set of connections this node has in tuple form (neighbour, time step)</p></dd>
+<dt><strong><code>max_step</code></strong></dt>
+<dd><p>The maximum number of steps in the total graph</p></dd>
+<dt><strong><code>id</code></strong></dt>
+<dd><p>Node identifier, should be unique over the graph this TimeNode belongs to</p></dd>
+<dt><strong><code>name</code></strong></dt>
+<dd><p>(Optional) Human readable name of this node</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1359,9 +1426,17 @@ A chain of clusters excl. the ends = 0.</p></div>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds a connection to this node</p>
-<p>:param n: node id of the neighbouring node
-:param t: time step in which this connection exists
-:return: None</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>n</code></strong></dt>
+<dd><p>node id of the neighbouring node</p></dd>
+<dt><strong><code>t</code></strong></dt>
+<dd><p>time step in which this connection exists</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>None</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1440,7 +1515,7 @@ A chain of clusters excl. the ends = 0.</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.3</a>.</p>
 </footer>
 </body>
 </html>

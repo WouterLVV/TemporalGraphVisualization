@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.9.3" />
 <title>tgv.layout API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
@@ -1953,7 +1953,11 @@ def weighted_median_rank(nbs: List[(SizedConnectionCluster, Set)]) -&gt; float:
 </code></dt>
 <dd>
 <div class="desc"><p>puts next_cluster as the next link in this chain, if self is an endpoint</p>
-<p>:param next_cluster: The cluster to align with current chain</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>next_cluster</code></strong></dt>
+<dd><p>The cluster to align with current chain</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2005,8 +2009,15 @@ def weighted_median_rank(nbs: List[(SizedConnectionCluster, Set)]) -&gt; float:
 </code></dt>
 <dd>
 <div class="desc"><p>Determine vertical size of this cluster depending on its size</p>
-<p>:param method: The function to apply to the member size. Accepts 'linear', 'sqrt', 'log' or 'constant'
-:return: Size of this cluster</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>method</code></strong></dt>
+<dd><p>The function to apply to the member size. Accepts 'linear', 'sqrt', 'log' or 'constant'</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>Size of this cluster</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2036,10 +2047,19 @@ def weighted_median_rank(nbs: List[(SizedConnectionCluster, Set)]) -&gt; float:
 <dd>
 <div class="desc"><p>Returns the cluster with the largest connection to this one.</p>
 <p>If multiple candidates with equal connection weight exist, returns the lower median in ordering</p>
-<p>:param self: Cluster to find the median median of
-:param lower: Flag to take either the upper or lower median if even amount
-:param direction: Flag for direction. True is incoming, False is outgoing
-:return: The cluster and the weight of the connection</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>self</code></strong></dt>
+<dd><p>Cluster to find the median median of</p></dd>
+<dt><strong><code>lower</code></strong></dt>
+<dd><p>Flag to take either the upper or lower median if even amount</p></dd>
+<dt><strong><code>direction</code></strong></dt>
+<dd><p>Flag for direction. True is incoming, False is outgoing</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The cluster and the weight of the connection</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2079,7 +2099,10 @@ def weighted_median_rank(nbs: List[(SizedConnectionCluster, Set)]) -&gt; float:
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the current x and y coordinate of this cluster. This should be treated as the center of this cluster.</p>
-<p>:return: tuple of x and y coordinate</p></div>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>tuple of x and y coordinate</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2139,7 +2162,10 @@ The cluster removed from the chain should be reset separately</p></div>
 <div class="desc"><p>Update the rank information of this cluster</p>
 <p>Rank information is determined by the average rank of the incoming and outgoing connections. Since ranks can
 vary wildly between layers, inrank and outrank can not be compared to each other or this clusters own rank.</p>
-<p>:return: The average incoming rank and the average outgoing rank, or -1 for either if it has none on that side</p></div>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The average incoming rank and the average outgoing rank, or -1 for either if it has none on that side</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2175,7 +2201,10 @@ vary wildly between layers, inrank and outrank can not be compared to each other
 <div class="desc"><p>Update the rank information of this cluster using median instead of average</p>
 <p>Rank information is determined by the median rank of the incoming and outgoing connections. Since ranks can
 vary wildly between layers, inrank and outrank can not be compared to each other or this clusters own rank.</p>
-<p>:return: The median incoming rank and the median outgoing rank</p></div>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The median incoming rank and the median outgoing rank</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2201,7 +2230,10 @@ vary wildly between layers, inrank and outrank can not be compared to each other
 </code></dt>
 <dd>
 <div class="desc"><p>Function to calculate which direction an alignment would like to move in depending on the ranks of its connections</p>
-<p>:return: The direction (positive is downwards, negative is upwards) and strength of the direction</p></div>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The direction (positive is downwards, negative is upwards) and strength of the direction</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3550,8 +3582,13 @@ vary wildly between layers, inrank and outrank can not be compared to each other
 <div class="desc"><p>Count the number of crossings these 2 cluster have with each other.</p>
 <p>If cluster1 is upper (lower rank) than cluster2, it will return the current number of crossings.
 If cluster2 is upper, it will return the number of crossings as if they were swapped.</p>
-<p>:param cluster1: cluster that is assumed to be the upper cluster
-:param cluster2: cluster that is assumed to be the lower cluster</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>cluster1</code></strong></dt>
+<dd><p>cluster that is assumed to be the upper cluster</p></dd>
+<dt><strong><code>cluster2</code></strong></dt>
+<dd><p>cluster that is assumed to be the lower cluster</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3598,9 +3635,17 @@ def num_shared_neighbours(u, v):
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether two aligments are entirely adjacent or that there exists an alignment in between</p>
-<p>:param upper: cluster in the upper (lower rank) alignment
-:param lower: Cluster in the lower (higher rank) alignment
-:return: True if adjacent, False if there exists an alignment in between</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>upper</code></strong></dt>
+<dd><p>cluster in the upper (lower rank) alignment</p></dd>
+<dt><strong><code>lower</code></strong></dt>
+<dd><p>Cluster in the lower (higher rank) alignment</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>True if adjacent, False if there exists an alignment in between</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3644,7 +3689,10 @@ def num_shared_neighbours(u, v):
 </code></dt>
 <dd>
 <div class="desc"><p>Simple default cluster width</p>
-<p>:return: width that is 5% of the xseparation</p></div>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>width that is 5% of the xseparation</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3663,9 +3711,18 @@ def num_shared_neighbours(u, v):
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates automatically the largest possible line width.</p>
-<p>The line width is calculated such that the outgoing or incoming connection can only be as big as the cluster.
-Assumes that the connection width is linear.</p>
-<p>:return: The maximum reasonable line width</p></div>
+<blockquote>
+<p>The line width is calculated such that the outgoing or incoming connection can only be as big as the cluster.</p>
+</blockquote>
+<div class="system-message">
+<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">&lt;string&gt;</span>, line 4)</p>
+<p>Block quote ends without a blank line; unexpected unindent.</p>
+</div>
+<p>Assumes that the connection width is linear.</p>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The maximum reasonable line width</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3751,9 +3808,16 @@ bounded by the upper bound already calculated and the lower bound by the average
 </code></dt>
 <dd>
 <div class="desc"><p>Create Sugiyamaclusters from the underlying graph</p>
-<p>:param height_method: the string to pass to the cluster for it to determine its vertical size
-:return: List of all clusters, first flattened, second in layers
-:rtype: str</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>height_method</code></strong></dt>
+<dd><p>the string to pass to the cluster for it to determine its vertical size</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd><p>List of all clusters, first flattened, second in layers</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3840,9 +3904,15 @@ one after the other around the center.</p></div>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the distance between the centers of two cluster if they were to be adjacent</p>
-<p>:param u: Cluster
-:param v: Cluster
-:param non_connectedness_factor: Factor by which to increase the distance if the clusters do not share neighbors</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>u</code></strong></dt>
+<dd><p>Cluster</p></dd>
+<dt><strong><code>v</code></strong></dt>
+<dd><p>Cluster</p></dd>
+<dt><strong><code>non_connectedness_factor</code></strong></dt>
+<dd><p>Factor by which to increase the distance if the clusters do not share neighbors</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -3865,8 +3935,15 @@ one after the other around the center.</p></div>
 </code></dt>
 <dd>
 <div class="desc"><p>Check whether the determined locations are consistent with the determined ordering</p>
-<p>:param excepting: Whether to raise an exception if the locations are inconsistent
-:return:</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>excepting</code></strong></dt>
+<dd><p>Whether to raise an exception if the locations are inconsistent</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4032,10 +4109,19 @@ d. the swap may not increase the amount of crossings in the graph more than a ce
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a cairo surface with just the connections drawn onto them.</p>
-<p>:param colormap: dictionary that converts a node name to a color value
-:param show_annotations: Flag to show additional information per connection
-:param fading: Flag to also draw the fade in and out connections per cluster
-:return: cairo surface with connections</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>colormap</code></strong></dt>
+<dd><p>dictionary that converts a node name to a color value</p></dd>
+<dt><strong><code>show_annotations</code></strong></dt>
+<dd><p>Flag to show additional information per connection</p></dd>
+<dt><strong><code>fading</code></strong></dt>
+<dd><p>Flag to also draw the fade in and out connections per cluster</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>cairo surface with connections</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4086,9 +4172,17 @@ d. the swap may not increase the amount of crossings in the graph more than a ce
 <dd>
 <div class="desc"><p>Determine the relative difference in crossings if we were to swap the rank of these clusters.</p>
 <p>The clusters should be of the same layer.</p>
-<p>:param cluster1: One cluster
-:param cluster2: The other cluster
-:return: The relative difference. Negative indicates a decrease in crossings</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>cluster1</code></strong></dt>
+<dd><p>One cluster</p></dd>
+<dt><strong><code>cluster2</code></strong></dt>
+<dd><p>The other cluster</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The relative difference. Negative indicates a decrease in crossings</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4116,8 +4210,13 @@ d. the swap may not increase the amount of crossings in the graph more than a ce
 <dd>
 <div class="desc"><p>Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments</p>
 <p>Function works by swapping each element and summing the individual differences in crossings</p>
-<p>:param upper: cluster in the upper (lower rank) alignment
-:param lower: Cluster in the lower (higher rank) alignment</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>upper</code></strong></dt>
+<dd><p>cluster in the upper (lower rank) alignment</p></dd>
+<dt><strong><code>lower</code></strong></dt>
+<dd><p>Cluster in the lower (higher rank) alignment</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4156,8 +4255,15 @@ d. the swap may not increase the amount of crossings in the graph more than a ce
 'swap_above': the relative difference in crossings if a cluster was to be swapped with the cluster above it
 'ranks': Show the in and out rank information as calculated by the barycenter procedure.
 'id': Show the layer and id of a cluster.</p>
-<p>:param debug_info: List of debug items to show.
-:return: cairo Surface with debug information</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>debug_info</code></strong></dt>
+<dd><p>List of debug items to show.</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>cairo Surface with debug information</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4284,12 +4390,21 @@ d. the swap may not increase the amount of crossings in the graph more than a ce
 <div class="desc"><p>Draws the connection between source and target with label colors</p>
 <p>The line is divided in sections according to the labels of the nodes in this connection.
 For each unique label a line is drawn in the associated color with exact offset as to seem one single cohesive</p>
-<p>:param source: One endpoint of the line
-:param target: The other endpoint of the line
-:param line_coordinates: Dictionary with absolute coordinates of the endpoints
-:param colormap: Dictionary with label names and associated colors
-:param context: cairo context to draw this line on
-:param show_annotations: provides annotations when a line changes size significantly</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>source</code></strong></dt>
+<dd><p>One endpoint of the line</p></dd>
+<dt><strong><code>target</code></strong></dt>
+<dd><p>The other endpoint of the line</p></dd>
+<dt><strong><code>line_coordinates</code></strong></dt>
+<dd><p>Dictionary with absolute coordinates of the endpoints</p></dd>
+<dt><strong><code>colormap</code></strong></dt>
+<dd><p>Dictionary with label names and associated colors</p></dd>
+<dt><strong><code>context</code></strong></dt>
+<dd><p>cairo context to draw this line on</p></dd>
+<dt><strong><code>show_annotations</code></strong></dt>
+<dd><p>provides annotations when a line changes size significantly</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4368,10 +4483,17 @@ For each unique label a line is drawn in the associated color with exact offset 
 </code></dt>
 <dd>
 <div class="desc"><p>Draw a fading line into or from a certain cluster.</p>
-<p>:param ctx: cairo Context to draw on
-:param cluster: Cluster to use as source
-:param colormap: map of coloring for the names of the nodes in the cluster
-:param direction: True for a fade in, False for a fade out</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>ctx</code></strong></dt>
+<dd><p>cairo Context to draw on</p></dd>
+<dt><strong><code>cluster</code></strong></dt>
+<dd><p>Cluster to use as source</p></dd>
+<dt><strong><code>colormap</code></strong></dt>
+<dd><p>map of coloring for the names of the nodes in the cluster</p></dd>
+<dt><strong><code>direction</code></strong></dt>
+<dd><p>True for a fade in, False for a fade out</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4408,9 +4530,15 @@ For each unique label a line is drawn in the associated color with exact offset 
 </code></dt>
 <dd>
 <div class="desc"><p>Checks for crossing of at least a certain size until it is found or a certain rank is reached</p>
-<p>:param start_cluster: First cluster to check connections from. Should have a lower rank than until_rank
-:param until_rank: Continue up to and including the cluster of this rank.
-:param connection_size: Threshold for which to check.</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>start_cluster</code></strong></dt>
+<dd><p>First cluster to check connections from. Should have a lower rank than until_rank</p></dd>
+<dt><strong><code>until_rank</code></strong></dt>
+<dd><p>Continue up to and including the cluster of this rank.</p></dd>
+<dt><strong><code>connection_size</code></strong></dt>
+<dd><p>Threshold for which to check.</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4436,10 +4564,17 @@ For each unique label a line is drawn in the associated color with exact offset 
 </code></dt>
 <dd>
 <div class="desc"><p>Quick function that paints a surface at a given location without interfering in the context.</p>
-<p>:param context: context to draw on.
-:param to_draw: RecordingSurface to draw
-:param x: horizontal offset
-:param y: vertical offset</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>context</code></strong></dt>
+<dd><p>context to draw on.</p></dd>
+<dt><strong><code>to_draw</code></strong></dt>
+<dd><p>RecordingSurface to draw</p></dd>
+<dt><strong><code>x</code></strong></dt>
+<dd><p>horizontal offset</p></dd>
+<dt><strong><code>y</code></strong></dt>
+<dd><p>vertical offset</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4464,7 +4599,11 @@ For each unique label a line is drawn in the associated color with exact offset 
 </code></dt>
 <dd>
 <div class="desc"><p>Place an aligned section by placing all blocks above it and then fitting it as high as possible</p>
-<p>:param root: Root of the alignment to place</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>root</code></strong></dt>
+<dd><p>Root of the alignment to place</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4498,8 +4637,15 @@ For each unique label a line is drawn in the associated color with exact offset 
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the predecessor of this cluster (e.g. the cluster with rank-1)</p>
-<p>:param c: Cluster to find the predecessor of
-:return: SugiyamaCluster or None if no predecessor exists</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>c</code></strong></dt>
+<dd><p>Cluster to find the predecessor of</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>SugiyamaCluster or None if no predecessor exists</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4521,8 +4667,13 @@ For each unique label a line is drawn in the associated color with exact offset 
 </code></dt>
 <dd>
 <div class="desc"><p>Removes all alignments of clusters from start_cluster until a certain rank is reached</p>
-<p>:param start_cluster: first cluster to remove alignment from. Should have a lower rank than until_rank
-:param until_rank: continue up to and including the cluster of this rank.</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>start_cluster</code></strong></dt>
+<dd><p>first cluster to remove alignment from. Should have a lower rank than until_rank</p></dd>
+<dt><strong><code>until_rank</code></strong></dt>
+<dd><p>continue up to and including the cluster of this rank.</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4597,10 +4748,20 @@ in successive layers that will all be placed at the same vertical coordinate. If
 at a point, the largest connection is given priority and the other chain is broken. If a cluster cannot
 align with its median largest cluster it will not try for other options.
 After chains are formed, the function will try to reduce staircasing by swapping clusters around.</p>
-<p>:param direction_flag: switch between aligning from left to right (forward) or right to left (backward)
-:param max_chain: Maximum length a chain is allowed, or -1 if a chain can be arbitrarily long
-:param max_inout_diff: Factor to prevent chains from forming when the difference between the largest incoming
-and largest outgoing connection is too big. A factor of two will prevent aligning the cluster if the largest
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>direction_flag</code></strong></dt>
+<dd><p>switch between aligning from left to right (forward) or right to left (backward)</p></dd>
+<dt><strong><code>max_chain</code></strong></dt>
+<dd><p>Maximum length a chain is allowed, or -1 if a chain can be arbitrarily long</p></dd>
+<dt><strong><code>max_inout_diff</code></strong></dt>
+<dd><p>Factor to prevent chains from forming when the difference between the largest incoming</p></dd>
+</dl>
+<div class="system-message">
+<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">&lt;string&gt;</span>, line 12)</p>
+<p>Field list ends without a blank line; unexpected unindent.</p>
+</div>
+<p>and largest outgoing connection is too big. A factor of two will prevent aligning the cluster if the largest
 outgoing connection is more than twice as large as its largest incoming. This prevents overenthousiastic
 alignments that make little sense. -1 for no limit
 :param stairs_iterations: The amount of iterations for the anti-staircase function.</p></div>
@@ -4675,8 +4836,16 @@ alignments that make little sense. -1 for no limit
 so this value is treated as an upper bound. After the bounds have been established, chains will try to move as
 close to the average position of its connections outside itself below that bound, without moving past the
 chain below.</p>
-<p>:param averaging_iterations: The amount of times the averaging should be performed, as each iteration changes
-how low a cluster w.r.t. the position change of its successor.</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>averaging_iterations</code></strong></dt>
+<dd><p>The amount of times the averaging should be performed, as each iteration changes</p></dd>
+</dl>
+<div class="system-message">
+<p class="system-message-title">System Message: WARNING/2 (<span class="docutils literal">&lt;string&gt;</span>, line 9)</p>
+<p>Field list ends without a blank line; unexpected unindent.</p>
+</div>
+<p>how low a cluster w.r.t. the position change of its successor.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4728,7 +4897,11 @@ how low a cluster w.r.t. the position change of its successor.</p></div>
 <p>For each pass of the ordering, the barycenter method is applied once forward and once backward.
 After each pass the ordering is checked whether it changed w.r.t. the previous. All passes are independent
 So we can abort if they are the same.</p>
-<p>:param barycenter_passes: The maximum number of times to repeat the barycenter procedure</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>barycenter_passes</code></strong></dt>
+<dd><p>The maximum number of times to repeat the barycenter procedure</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4857,12 +5030,20 @@ highest unplaced cluster, instead of the leftmost one, because this balances muc
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a recording surface to be played back with statistics about the graph.</p>
-<p>Currently accepted statistic strings are "in_out_difference", "layer_num_clusters", "layer_num_members",
-"homogeneity", "homogeneity_diff". See for explanations the respective functions in TimeGraph.
+<p>Currently accepted statistic strings are &quot;in_out_difference&quot;, &quot;layer_num_clusters&quot;, &quot;layer_num_members&quot;,
+&quot;homogeneity&quot;, &quot;homogeneity_diff&quot;. See for explanations the respective functions in TimeGraph.
 Per statistic the height of the drawing is one third of the graph height or maxheight, whichever is lower.</p>
-<p>:param maxheight: Maximum height in points of per statistic
-:param data: Iterable of strings of the statistics to show (in order)
-:return: cairo recording of statistics</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>maxheight</code></strong></dt>
+<dd><p>Maximum height in points of per statistic</p></dd>
+<dt><strong><code>data</code></strong></dt>
+<dd><p>Iterable of strings of the statistics to show (in order)</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>cairo recording of statistics</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4953,9 +5134,17 @@ Per statistic the height of the drawing is one third of the graph height or maxh
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the longest streak that the data points are below some threshold.</p>
-<p>:param data: Data to analyse
-:param num: Threshold value
-:return: Largest count of consecutive points below the threshold</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>data</code></strong></dt>
+<dd><p>Data to analyse</p></dd>
+<dt><strong><code>num</code></strong></dt>
+<dd><p>Threshold value</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>Largest count of consecutive points below the threshold</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -4986,9 +5175,17 @@ Per statistic the height of the drawing is one third of the graph height or maxh
 <dd>
 <div class="desc"><p>Returns the longest streak of the datapoints not crossing the threshold in either direction and the total
 number of times the datapoints cross the threshold.</p>
-<p>:param data: Data to analyse
-:param num: Threshold value
-:return: Tuple of the longest streak and total amount of crossings</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>data</code></strong></dt>
+<dd><p>Data to analyse</p></dd>
+<dt><strong><code>num</code></strong></dt>
+<dd><p>Threshold value</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>Tuple of the longest streak and total amount of crossings</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5021,8 +5218,15 @@ number of times the datapoints cross the threshold.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the successor of this cluster (e.g. the cluster with rank+1)</p>
-<p>:param c: Cluster to find the successor of
-:return: SugiyamaCluster or None if no successor exists</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>c</code></strong></dt>
+<dd><p>Cluster to find the successor of</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>SugiyamaCluster or None if no successor exists</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5045,8 +5249,13 @@ number of times the datapoints cross the threshold.</p>
 <dd>
 <div class="desc"><p>Count the amount of extra crossings this swap would cause. upper and lower should be in adjacent alignments</p>
 <p>Function works by swapping each element and summing the individual differences in crossings</p>
-<p>:param upper: cluster in the upper (lower rank) alignment
-:param lower: Cluster in the lower (higher rank) alignment</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>upper</code></strong></dt>
+<dd><p>cluster in the upper (lower rank) alignment</p></dd>
+<dt><strong><code>lower</code></strong></dt>
+<dd><p>Cluster in the lower (higher rank) alignment</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5078,8 +5287,13 @@ number of times the datapoints cross the threshold.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Swaps the ordered position/rank of two clusters clusters within the same layer</p>
-<p>:param cluster1:
-:param cluster2:</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>cluster1</code></strong></dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>cluster2</code></strong></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5101,8 +5315,15 @@ number of times the datapoints cross the threshold.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Separate surface that the timestamps are drawn onto.</p>
-<p>:param timestamp_translator: Object that converts a layer number to a layer identifier
-:return: Surface with drawn timestamps in the same offsets as the layers.</p></div>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>timestamp_translator</code></strong></dt>
+<dd><p>Object that converts a layer number to a layer identifier</p></dd>
+</dl>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>Surface with drawn timestamps in the same offsets as the layers.</p></dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5256,7 +5477,7 @@ number of times the datapoints cross the threshold.</p>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.3</a>.</p>
 </footer>
 </body>
 </html>
