@@ -17,7 +17,7 @@ period, time_label = 20, 's'
 start_timestamp, end_timestamp, add_missing = 120800, 151960, True
 strength = 0.5
 min_cluster = 2
-evaluate_at = [i for i in range(20, 2000, 40)]
+evaluate_at = [i for i in range(20, 2000, 80)]
 
 # Email EU, 500+ days in 45 mil. seconds
 # fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
@@ -36,7 +36,8 @@ if __name__ == "__main__":
                                                  start_timestamp=start_timestamp, end_timestamp=end_timestamp,
                                                  timestamp_first=timestamp_first, add_missing=add_missing,
                                                  verbose=False)
-    results = []
+    tgraphs = []
+    sgraphs = []
     ylabel = ""
     for aggregate_time_to in evaluate_at:
 
@@ -49,40 +50,54 @@ if __name__ == "__main__":
 
         node_list = num_nodeids
 
-        g = TimeGraph(normalised_list_pair_contacts, node_list, num_timestamps, minimum_cluster_size=min_cluster,
+        tg = TimeGraph(normalised_list_pair_contacts, node_list, num_timestamps, minimum_cluster_size=min_cluster,
                       minimum_connection_size=min_cluster)
+        tgraphs.append(tg)
 
-
-        # ylabel = "number of clusters"
-        # results.append(g.num_clusters())
-
-        # ylabel = "Average relative continuity"
-        # results.append(g.average_relative_continuity())
-
-        # ylabel = "Average absolute continuity"
-        # results.append(g.average_absolute_continuity())
-
-        # ylabel = "Average relative continuity difference"
-        # results.append(g.average_relative_continuity_diff())
-
-        # ylabel = "Average absolute continuity difference"
-        # results.append(g.average_absolute_continuity_diff())
-
-        # ylabel = "Normalized absolute continuity"
-        # results.append(g.normalized_absolute_continuity())
-
-        ylabel = "Normalized absolute continuity difference"
-        results.append(g.normalized_absolute_continuity_diff())
-
-        # ylabel = "Variance of absolute continuity difference"
-        # results.append(np.var(g.absolute_continuity_diff()))
-
+        # Uncomment the following lines when plotting layout statistics (currently none yet)
+        # sg = SugiyamaLayout(tg)
+        # sg.set_locations()
+        # sgraphs.append(sg)
 
     xlabel = "Aggregation"
-    plt.figure()
-    plt.plot(evaluate_at, results)
-    plt.scatter(evaluate_at, results)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+
+    def plot(ylab, res):
+        plt.figure()
+        plt.plot(evaluate_at, res)
+        plt.scatter(evaluate_at, res)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylab)
+
+    ylabel = "number of clusters"
+    results = list(map(lambda tg: tg.num_clusters(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Average relative continuity"
+    results = list(map(lambda tg: tg.average_relative_continuity(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Average absolute continuity"
+    results = list(map(lambda tg: tg.average_absolute_continuity(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Average relative continuity difference"
+    results = list(map(lambda tg: tg.average_relative_continuity_diff(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Average absolute continuity difference"
+    results = list(map(lambda tg: tg.average_absolute_continuity_diff(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Normalized absolute continuity"
+    results = list(map(lambda tg: tg.normalized_absolute_continuity(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Normalized absolute continuity difference"
+    results = list(map(lambda tg: tg.normalized_absolute_continuity_diff(), tgraphs))
+    plot(ylabel, results)
+
+    ylabel = "Variance of absolute continuity difference"
+    results = list(map(lambda tg: np.var(tg.absolute_continuity_diff()), tgraphs))
+    plot(ylabel, results)
 
     plt.show()
