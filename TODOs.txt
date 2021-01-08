@@ -26,17 +26,20 @@ Method
 
 ++ aggregate time as unconditional union of contacts (weak aggregation)
 ++ aggregate time only over significant, reoccurring links (strong aggregation)
+-- aggregate time to variable periods (GMM as in 15-BES-Psorakis)
 ++ respect absolute time, all sensed time blocks shown
 ++ annotate time on the x axis
 >> annotate bundle sizes (at changepoints)
+-- skip drawing the cluster (vertical bars) when community stable (remains the same); it's superfluous and clogs the picture
 
 ++ metadata as colour
 
--- complexity metric: temporal motifs (split+merge, stable comm.)
+-- informative statistic for the visualisation: length of stable comm., density
 -- emphasise stable communities on the plot
 -- automatically set parameters (strength, new_period, minimum_connections_size) to discover communities
-      plot complexity metric vs. parameters (multi-objective), then choose
--- summarise stable community statistics _in time_: any emerging pattern?
+      plot informative statistic vs. parameters (multi-objective), then optimise
+      fitness: max. difference to null model (15-BES-Psorakis)
+      add boostrapping (repetition, looking for stability)
 -- map community events (merge, split) to story events; have the narrative write itself
    evaluate it with synthetic data w. ground truth!
 
@@ -44,9 +47,9 @@ Network types
 
 ++ visualise (largely) contiguous, fine-grained proximity data (human, animal contact)
    RFID contacts encode space-time contiguous locations (visualised knowing the time, not the space interval)
-++ visualise sparse tempnets, e.g. emails, messages, bill sponsorship (regularised w. time aggregation)
+++ visualise sparse tempnets/contact sequences, e.g. emails, messages, bill sponsorship (regularised w. time aggregation)
 -- visualise hypergraphs (straightforward)
--- visualise tempnets with edge duration, e.g. calls, badgers (straightforward)
+-- visualise tempnets with edge duration/interval graphs, e.g. calls, badgers (straightforward)
 -- visualise bipartite networks, e.g. bee-flower
 -- visualise infection dynamics (SIR; follow all individuals)
 
@@ -106,4 +109,5 @@ Evaluation
    #time frames
    #agents
 -- community-detection metrics (tbd)
-   bundle crossings
+   ground truth (synthetic)
+   recover baboon storyline from movie/GPS positions

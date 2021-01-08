@@ -95,19 +95,11 @@ def initialise_aggregation(pair_contacts, old_period, new_period):
 
     return aggregate_pair_contacts
 
-# def weakly_aggregate_time(pair_contacts, old_period, new_period):
-# 	aggregate_pair_contacts = initialise_aggregation(pair_contacts, old_period, new_period)
-
-# 	# removes any duplicate contacts
-# 	for t in aggregate_pair_contacts:
-# 		aggregate_pair_contacts[t] = list(set(aggregate_pair_contacts[t]))
-
-# 	return aggregate_pair_contacts
-
 def strongly_aggregate_time(pair_contacts, old_period, new_period, strength=0.5):
     aggregate_pair_contacts = initialise_aggregation(pair_contacts, old_period, new_period)
 
-    # removes all contacts from an aggregated timestamp which occur too infrequently
+    # removes all contacts from an aggregated timestamp which occur too infrequently;
+    # the output contains only unique contact pairs in the new period 
     from collections import Counter
     min_count_wanted = strength * (new_period / old_period)
 
@@ -170,39 +162,90 @@ def normalise_list_pair_contacts(pair_contacts, node_metadata=None, time_label='
     return normalised_list_pair_contacts, len(timestamps), len(nodeids), \
            timestamp_reverse_translator, nodeid_translator, node_metadata_list
 
+def null_model(aggregate_pair_contacts):
+    """ Null model: degree-preserving rewiring of the unweighted contact graph of each timestamp.
+
+    Maintains key characteristics of the data set:
+      #contacts per node and per timestamp
+      (so also amount of activity per timestamp, of node)
+    Breaks all temporal social structure.
+    """
+
+    import igraph
+    null_pair_contacts = {} # { timestamp: [pair contacts] }
+
+    for t in aggregate_pair_contacts:
+
+        # create the contact graph for this timestamp
+        contact_list = aggregate_pair_contacts[t]
+        edge_list = list(map(lambda c: (str(c[0]), str(c[1])), contact_list)) # strings needed as 'name' attributes
+        vertex_set = set()
+        for e in edge_list:
+            vertex_set.add(e[0])
+            vertex_set.add(e[1])
+
+        if len(contact_list) < 2 or len(vertex_set) < 4:
+            null_pair_contacts[t] = aggregate_pair_contacts[t]
+
+        # try rewiring randomly, in place
+        else:
+            G = igraph.Graph()
+            G.add_vertices(list(vertex_set))
+            G.add_edges(edge_list)
+            rewired = False
+
+            try:
+                G.rewire()
+                rewired = True
+            except:
+                pass
+
+            # save the rewired edges
+            if rewired:
+                rewired_edge_list = []
+                for e in G.es:
+                    u, v = e.tuple # these are 0-indices though, not the original node id, now in the 'name' attribute
+                    rewired_edge_list.append((int(G.vs[u]["name"]), int(G.vs[v]["name"])))
+                null_pair_contacts[t] = rewired_edge_list
+            else:
+                null_pair_contacts[t] = aggregate_pair_contacts[t]
+
+    return null_pair_contacts
+
 if __name__ == '__main__':
     start_timestamp, end_timestamp = -1, -1
-    period = 1
-    node_metadata = None
-    timestamp_first = True
-
-    # fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat"
-    # fname = "tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt"
-
-    # Primary school, 2 days
-    # fname = "tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
-    # mname = "tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
-    # period = 20
-    # start_timestamp, end_timestamp = 120800, 130000 #151960
-    # aggregate_time_to, strength = 600, 0.5
+    separator = ' '
+    mname = None
 
     # Email EU, 500+ days in 45 mil. seconds
-    fname = "tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
+    fname = "../tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
     timestamp_first = False
-    period = 1
-    start_timestamp, end_timestamp = 30281, 10000000
-    aggregate_time_to, strength = 86400, 0 # one day, weak aggregation
+    period, time_label = 1, 'd'
+    start_timestamp, end_timestamp, add_missing = -1, -1, False
+    aggregate_time_to, strength = 86400, 0 # day, weak aggregation
+    min_cluster = 2
 
-    pair_contacts = read_pair_contacts_from_file(fname, separator=' ', grain_t=period, start_timestamp=start_timestamp, end_timestamp=end_timestamp, 
-                                                                timestamp_first=timestamp_first, add_missing=False, verbose=False)
-    # node_metadata = read_node_metadata_from_file(mname)
-    # print(node_metadata)
+    # Primary school, 2 days
+    # fname = "../tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
+    # mname = "../tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
+    # timestamp_first = True
+    # period, time_label = 20, 's'
+    # start_timestamp, end_timestamp, add_missing = 120800, 151960, True
+    # aggregate_time_to, strength = 900, 0.5
+    # min_cluster = 2
 
+    # strings needed to name the output files
+    net_name = (fname.split("/")[-1]).split(".")[0]
+    suffix = "-min_" + str(min_cluster) + "-aggr_to_" + str(aggregate_time_to) + "-strength_" + str(strength)
+    if start_timestamp >= 0 and end_timestamp >= 0:
+        suffix += "-from_" + str(start_timestamp) + "_to_" + str(end_timestamp)
+
+    # the input data
+    pair_contacts = read_pair_contacts_from_file(fname, separator=separator, grain_t=period,
+                                                        start_timestamp=start_timestamp, end_timestamp=end_timestamp,
+                                                        timestamp_first=timestamp_first, add_missing=add_missing, verbose=False)
     aggregate_pair_contacts = strongly_aggregate_time(pair_contacts,
-                                                      old_period=period, new_period=aggregate_time_to,
-                                                      strength=strength)
-    print(aggregate_pair_contacts)
+                                                        old_period=period, new_period=aggregate_time_to,
+                                                        strength=strength)
+    null_pair_contacts = null_model(aggregate_pair_contacts)
 
-    # normalised_list_pair_contacts, num_timestamps, num_nodeids, timestamp_reverse_translator, nodeid_translator, node_metadata_list = \
-    #     normalise_list_pair_contacts(aggregate_pair_contacts, node_metadata)
-    # print(node_metadata_list)

@@ -271,6 +271,20 @@ class TimeGraph:
 
     # Global (time graph) statistics
 
+    def density(self):
+        """ How much data would be visualised in this temporal graph, relative to the graph dimensions?
+        """
+
+        presence_count = 0
+
+        for cluster in self.clusters:
+            if len(cluster.members) >= self.min_clust_size:
+                presence_count += max(cluster.insize, cluster.outsize)
+
+        if len(self.nodes) * len(self.layers) > 0:
+            return presence_count / len(self.nodes) / len(self.layers)
+        return 0
+
     def num_clusters(self):
         return len(self.clusters)
 
@@ -278,16 +292,13 @@ class TimeGraph:
         return len(self.clusters) / self.num_steps
 
     def num_events(self):
-        """ Counts events: splits, merges, starts, ends.
-
-        A start/end = 1. A split/merge = #neighbour_clusters - 1.
-        A chain of clusters excl. the ends = 0.
+        """ Counts events: splits, merges, starts, ends, stables.
         """
 
-        event_count = 0
+        start_count, end_count, merge_count, split_count, stable_count = 0, 0, 0, 0, 0
 
         for cluster in self.clusters:
-            if len(cluster) < self.min_clust_size:
+            if max(cluster.insize, cluster.outsize) < self.min_clust_size:
                 continue
 
             # count starts and merges
@@ -297,9 +308,9 @@ class TimeGraph:
                     continue
                 num_incoming += 1
             if num_incoming == 0:
-                event_count += 1
+                start_count += 1
             else:
-                event_count += num_incoming - 1
+                merge_count += num_incoming - 1
 
             # count ends and splits
             num_outgoing = 0
@@ -308,11 +319,15 @@ class TimeGraph:
                     continue
                 num_outgoing += 1
             if num_outgoing == 0:
-                event_count += 1
+                end_count += 1
             else:
-                event_count += num_outgoing - 1
+                split_count += num_outgoing - 1
 
-        return event_count
+            # count stables
+            if num_incoming == 1 and num_outgoing == 1:
+                stable_count += 1
+
+        return start_count, end_count, merge_count, split_count, stable_count
 
     def num_events_per_time_step(self):
         return self.num_events() / self.num_steps
