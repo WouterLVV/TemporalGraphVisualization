@@ -1080,7 +1080,7 @@ class SizedConnectionLayout:
         for cluster in self.clusters:
             cluster.y = cluster.root._y + self.ymargin - min_y
 
-        self.height = max(map(lambda x: x.root.y + x.draw_size / 2., self.clusters)) + self.ymargin
+        self.height = max(map(lambda x: x.root.y + x.draw_size / 2., self.clusters)) + 2*self.ymargin
 
     ####################################################################################################################
     # ------------------------------------------ Statistics Functions ------------------------------------------------ #
@@ -1126,86 +1126,6 @@ class SizedConnectionLayout:
                 current = 1
                 crossings += 1
         return longest, crossings
-
-    def stat_surface(self, data: Collection[str], maxheight: int = 200) -> cairo.RecordingSurface:
-        """
-        Returns a recording surface to be played back with statistics about the graph.
-
-        Currently accepted statistic strings are "in_out_difference", "layer_num_clusters", "layer_num_members",
-        "homogeneity", "homogeneity_diff". See for explanations the respective functions in TimeGraph.
-        Per statistic the height of the drawing is one third of the graph height or maxheight, whichever is lower.
-
-        :param maxheight: Maximum height in points of per statistic
-        :param data: Iterable of strings of the statistics to show (in order)
-        :return: cairo recording of statistics
-        """
-        h = min(self.height / 3, 200)
-        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, (0, 0, self.width, h * len(data)))
-        context = cairo.Context(surface)
-
-        marg = 0.1  # Margin around the drawing and in between different stats, in percent of h.
-
-        for i, name in enumerate(data):
-
-            if name == "in_out_difference":
-                d = self.g.layer_in_out_diff()
-            elif name == "layer_num_clusters":
-                d = self.g.layer_num_clusters()
-            elif name == "layer_num_members":
-                d = self.g.layer_num_members()
-            elif name == "homogeneity":
-                d = self.g.relative_continuity()
-            elif name == "homogeneity_diff":
-                d = self.g.relative_continuity_diff()
-            else:
-                print(f"Name {name} not found!")
-                continue
-
-            maxval = max(d)
-            scale = (h * (1. - 2 * marg)) / maxval  # Scale of the graph.
-
-            # Draw base axes
-            context.set_source_rgba(0, 0, 0, 1)
-            context.move_to(self.xmargin * 0.95, (i + marg) * h)
-            context.line_to(self.xmargin * 0.9, (i + marg) * h)
-            context.line_to(self.xmargin * 0.9, (i + 1. - marg) * h)
-            context.line_to(self.width - self.xmargin, (i + 1. - marg) * h)
-            context.stroke()
-
-            # Show top value (bottom is always 0)
-            text_to_show = f"{maxval:.2f}"
-            context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            context.set_font_size(min(self.font_size * 0.4, h / 10))
-            _, _, tw, th, _, _ = context.text_extents(text_to_show)
-            context.move_to(self.xmargin * 0.85 - tw, (i + marg) * h + th)
-            context.show_text(text_to_show)
-
-            # Draw line of average
-            avg = sum(d) / len(d)
-            context.set_source_rgba(0, 1, 0, 1)
-            context.move_to(self.xmargin, (i + marg) * h + (maxval - avg) * scale)
-            context.line_to(self.width - self.xmargin, (i + marg) * h + (maxval - avg) * scale)
-            context.stroke()
-
-            # Draw data
-            context.set_source_rgba(0, 0, 1, 1)
-            context.move_to(self.xmargin, (i + marg) * h + (maxval - d[0]) * scale)
-            for j in range(1, len(d)):
-                context.line_to(self.xmargin + j * self.xseparation, (i + marg) * h + (maxval - d[j]) * scale)
-
-            context.stroke()
-
-            # Show additional information in text
-            streak, crossings = self.streak_no_cross(d, avg)
-            text_to_show = f"{name}: avg ({avg:.3f}), streak ({streak}), crossings ({crossings}), cross_percent ({(crossings / len(d)):2f})"
-
-            context.set_font_size(min(self.font_size * 0.5, h / 8))
-            _, _, tw, th, _, _ = context.text_extents(text_to_show)
-            context.move_to(0.3 * self.xseparation + self.xmargin, (i + marg) * h + th)
-            context.show_text(text_to_show)
-
-        surface.flush()
-        return surface
 
     ####################################################################################################################
     # ------------------------------------------- Drawing Functions -------------------------------------------------- #
@@ -1320,11 +1240,11 @@ class SizedConnectionLayout:
                 context.stroke()
         context.restore()
 
-    def fade_cluster(self, ctx: cairo.Context, cluster: SizedConnectionCluster, colormap: Dict, direction):
+    def fade_cluster(self, context: cairo.Context, cluster: SizedConnectionCluster, colormap: Dict, direction):
         """
         Draw a fading line into or from a certain cluster.
 
-        :param ctx: cairo Context to draw on
+        :param context: cairo Context to draw on
         :param cluster: Cluster to use as source
         :param colormap: map of coloring for the names of the nodes in the cluster
         :param direction: True for a fade in, False for a fade out
@@ -1332,29 +1252,28 @@ class SizedConnectionLayout:
         colors = [(colormap.get(lbl, self.default_line_color), cnt / len(cluster)) for (lbl, cnt) in
                   sorted(list(Counter(map(lambda x: x.name, cluster.members)).items()))]
         if direction:
-            coloured_bezier(ctx,
+            coloured_bezier(context,
                             (cluster.x - self.xseparation / 3., cluster.y),
                             (cluster.x, cluster.y),
                             (cluster.x, cluster.y),
                             (cluster.x, cluster.y),
                             colors=colors, width=self.line_width * len(cluster), detail=4, fade='in')
         else:
-            coloured_bezier(ctx,
+            coloured_bezier(context,
                             (cluster.x, cluster.y),
                             (cluster.x, cluster.y),
                             (cluster.x, cluster.y),
                             (cluster.x + self.xseparation / 3., cluster.y),
                             colors=colors, width=self.line_width * len(cluster), detail=4, fade='out')
 
-    def timestamp_surface(self, timestamp_translator) -> cairo.RecordingSurface:
+    def draw_timestamps(self, context: cairo.Context, timestamp_translator) -> None:
         """
         Separate surface that the timestamps are drawn onto.
 
         :param timestamp_translator: Object that converts a layer number to a layer identifier
         :return: Surface with drawn timestamps in the same offsets as the layers.
         """
-        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
-        context = cairo.Context(surface)
+
         context.set_source_rgb(0, 0, 0)
         context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         context.set_font_size(self.font_size)  # in user space units # self.xseparation * 0.6
@@ -1378,11 +1297,8 @@ class SizedConnectionLayout:
             context.restore()
 
         context.stroke()
-        surface.flush()
-        # print(surface.ink_extents())
-        return surface
 
-    def connection_surface(self, colormap: dict, show_annotations: bool, fading: bool) -> cairo.RecordingSurface:
+    def draw_connections(self, context: cairo.Context, colormap: dict, show_annotations: bool, fading: bool) -> None:
         """
         Returns a cairo surface with just the connections drawn onto them.
 
@@ -1391,8 +1307,7 @@ class SizedConnectionLayout:
         :param fading: Flag to also draw the fade in and out connections per cluster
         :return: cairo surface with connections
         """
-        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
-        context = cairo.Context(surface)
+
         line_coordinates = dict()  # k: (source, target), v: y-coordinate of endpoint in source.
 
         for cluster in self.clusters:
@@ -1417,17 +1332,11 @@ class SizedConnectionLayout:
             already_drawn.add((source, target))
             already_drawn.add((target, source))
 
-        surface.flush()
-        # print(surface.ink_extents())
-        return surface
-
-    def cluster_surface(self) -> cairo.RecordingSurface:
+    def draw_clusters(self, context: cairo.Context) -> None:
         """
         Returns a surface with all cluster drawn on them to be overlaid on the connection surface
         :return:
         """
-        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
-        context = cairo.Context(surface)
         (r, g, b, a) = self.default_cluster_color
 
         context.set_line_width(self.cluster_width)
@@ -1438,11 +1347,8 @@ class SizedConnectionLayout:
             context.move_to(cx, cy - cluster.draw_size / 2.)
             context.line_to(cx, cy + cluster.draw_size / 2.)
             context.stroke()
-        surface.flush()
-        # print(surface.ink_extents())
-        return surface
 
-    def debug_surface(self, debug_info: Set[str]) -> cairo.RecordingSurface:
+    def draw_debug(self, context: cairo.Context, debug_info: Set[str]) -> None:
         """
         Surface that shows invasive debug information per connection or cluster.
 
@@ -1454,9 +1360,6 @@ class SizedConnectionLayout:
         :param debug_info: List of debug items to show.
         :return: cairo Surface with debug information
         """
-        surface = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
-        context = cairo.Context(surface)
-
         context.set_source_rgb(0.2, 0.2, 0.2)
         context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         context.set_font_size(self.font_size * 0.2)
@@ -1480,22 +1383,96 @@ class SizedConnectionLayout:
                 context.show_text(f"{cluster.tc.id}")
                 context.move_to(cx - self.xseparation * 0.3, cy)
                 context.show_text(f"{cluster.tc.layer}")
-        surface.flush()
-        return surface
 
-    def paint_surface(self, context: cairo.Context, to_draw: cairo.RecordingSurface, x: float = 0., y: float = 0.):
+    def draw_stats(self, context: cairo.Context, data: Collection[str], maxheight: int = 200) -> None:
         """
-        Quick function that paints a surface at a given location without interfering in the context.
+        Returns a recording surface to be played back with statistics about the graph.
 
-        :param context: context to draw on.
-        :param to_draw: RecordingSurface to draw
-        :param x: horizontal offset
-        :param y: vertical offset
+        Currently accepted statistic strings are "in_out_difference", "layer_num_clusters", "layer_num_members",
+        "homogeneity", "homogeneity_diff". See for explanations the respective functions in TimeGraph.
+        Per statistic the height of the drawing is one third of the graph height or maxheight, whichever is lower.
+
+        :param maxheight: Maximum height in points of per statistic
+        :param data: Iterable of strings of the statistics to show (in order)
+        :return: cairo recording of statistics
         """
-        context.save()
-        context.set_source_surface(to_draw, x, y)
-        context.paint()
-        context.restore()
+        h = min(self.height / 3, maxheight)
+
+        marg = 0.1  # Margin around the drawing and in between different stats, in percent of h.
+
+        for i, name in enumerate(data):
+
+            if name == "in_out_difference":
+                d = self.g.layer_in_out_diff()
+            elif name == "layer_num_clusters":
+                d = self.g.layer_num_clusters()
+            elif name == "layer_num_members":
+                d = self.g.layer_num_members()
+            elif name == "homogeneity":
+                d = self.g.relative_continuity()
+            elif name == "homogeneity_diff":
+                d = self.g.relative_continuity_diff()
+            else:
+                print(f"Name {name} not found!")
+                continue
+
+            maxval = max(d)
+            scale = (h * (1. - 2 * marg)) / maxval  # Scale of the graph.
+
+            context.set_line_width(h/100)
+
+            # Draw base axes
+            context.set_source_rgba(0, 0, 0, 1)
+            context.move_to(self.xmargin * 0.95, (i + marg) * h)
+            context.line_to(self.xmargin * 0.9, (i + marg) * h)
+            context.line_to(self.xmargin * 0.9, (i + 1. - marg) * h)
+            context.line_to(self.width - self.xmargin, (i + 1. - marg) * h)
+            context.stroke()
+
+            # Show top value (bottom is always 0)
+            text_to_show = f"{maxval:.2f}"
+            context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+            context.set_font_size(min(self.font_size * 0.4, h / 10))
+            _, _, tw, th, _, _ = context.text_extents(text_to_show)
+            context.move_to(self.xmargin * 0.85 - tw, (i + marg) * h + th)
+            context.show_text(text_to_show)
+
+            # Draw line of average
+            avg = sum(d) / len(d)
+            context.set_source_rgba(0, 1, 0, 1)
+            context.move_to(self.xmargin, (i + marg) * h + (maxval - avg) * scale)
+            context.line_to(self.width - self.xmargin, (i + marg) * h + (maxval - avg) * scale)
+            context.stroke()
+
+            # Draw data
+            context.set_source_rgba(0, 0, 1, 1)
+            context.move_to(self.xmargin, (i + marg) * h + (maxval - d[0]) * scale)
+            for j in range(1, len(d)):
+                context.line_to(self.xmargin + j * self.xseparation, (i + marg) * h + (maxval - d[j]) * scale)
+
+            context.stroke()
+
+            # Show additional information in text
+            streak, crossings = self.streak_no_cross(d, avg)
+            text_to_show = f"{name}: avg ({avg:.3f}), streak ({streak}), crossings ({crossings}), cross_percent ({(crossings / len(d)):2f})"
+
+            context.set_font_size(min(self.font_size * 0.5, h / 8))
+            _, _, tw, th, _, _ = context.text_extents(text_to_show)
+            context.move_to(0.3 * self.xseparation + self.xmargin, (i + marg) * h + th)
+            context.show_text(text_to_show)
+
+    def get_timestamp_height(self, timestamp_translator):
+        tmpsurf = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, None)
+        context = cairo.Context(tmpsurf)
+        context.select_font_face("Helvetica", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        context.set_font_size(self.font_size)
+
+        h = max([context.text_extents(timestamp_translator.get(t, str(t)))[2] for t in range(self.num_layers)]) + 0.3*self.xseparation
+        tmpsurf.finish()
+        return h
+
+    def get_stat_height(self, stat_info, maxheight):
+        return min(self.height / 3, maxheight) * len(stat_info)
 
     def draw_graph(self, filename: str = "output/example.svg",
                    colormap=None,
@@ -1511,52 +1488,30 @@ class SizedConnectionLayout:
         if not self.is_located:
             self.set_locations()
 
-        surfaces = dict()
-
-        surfaces["conn"] = self.connection_surface(colormap, show_annotations=show_annotations, fading=fading)
-
-        surfaces["clus"] = self.cluster_surface()
-
-        if debug_info is not None:
-            surfaces["debu"] = self.debug_surface(debug_info=debug_info)
-
-        offset = 0
-
+        canvaswidth = self.width
+        canvasheight = self.height
         if show_timestamps:
-            timesurf = self.timestamp_surface(timestamp_translator)
-            _, _, _, timeheight = timesurf.ink_extents()
-            offset += self.ymargin + timeheight
-            surfaces["time"] = timesurf
+            timeheight = self.get_timestamp_height(timestamp_translator) + self.ymargin
+            canvasheight += timeheight
 
         if stats_info is not None:
-            statsurf = self.stat_surface(stats_info)
-            _, _, _, statheight = statsurf.ink_extents()
-            offset += self.ymargin + statheight
-            surfaces["stat"] = statsurf
+            canvasheight += self.get_stat_height(stats_info, 200) + self.ymargin
 
-        surface = cairo.SVGSurface(filename,
-                                   (self.width + 2 * self.xmargin) * scale,
-                                   (self.height + offset + 2 * self.ymargin) * scale)
+        surface = cairo.SVGSurface(filename, canvaswidth * scale, canvasheight * scale)
         context = cairo.Context(surface)
         context.scale(scale, scale)
 
-        offset = self.height
-        self.paint_surface(context, surfaces["conn"])
-        self.paint_surface(context, surfaces["clus"])
+        self.draw_connections(context, colormap, show_annotations, fading)
+        self.draw_clusters(context)
         if debug_info is not None:
-            self.paint_surface(context, surfaces["debu"])
+            self.draw_debug(context, debug_info)
+        context.translate(0, self.height)
+        # offset = self.height + 2*self.ymargin
         if show_timestamps:
-            y = offset + self.ymargin
-            _, _, _, h = surfaces["time"].ink_extents()
-            offset += self.ymargin + h
-            self.paint_surface(context, surfaces["time"], y=y)
+            self.draw_timestamps(context, timestamp_translator)
+            context.translate(0, timeheight)
         if stats_info is not None:
-            y = offset + self.ymargin
-            _, _, _, h = surfaces["stat"].ink_extents()
-            offset += self.ymargin + h
-            self.paint_surface(context, surfaces["stat"], y=y)
+            self.draw_stats(context, stats_info)
+
         surface.flush()
         surface.finish()
-        for s in surfaces.values():
-            s.finish()
-        # print(offset)

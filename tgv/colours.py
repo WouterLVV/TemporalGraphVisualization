@@ -38,7 +38,7 @@ def convert_rgb_hexstring_to_tuple(rgb_string):
 	return r, g, b
 
 def assign_colours_rgba_tuple(items, alpha=1):
-	fname = "xkcd_colours.csv"
+	fname = "tgv/xkcd_colours.csv"
 	colour_dict = read_colours(fname)
 
 	colours_assigned = {} # {'2BIO1': (1,0,0,1), ...}
