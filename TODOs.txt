@@ -11,8 +11,8 @@ Bugs
 ++ draw each cluster centered on its row (rather than top-aligned)
 ++ layout suboptimal vertically
 ++ draw a bundle incoming into root clusters
--- Drawing artifacts on wide lines (because it is secretly going backwards first and then forwards, probably)
--- In TimeGraph: the clusters/bundles below min_cluster_size to be removed from the TimeGraph as early as possible
+++ Drawing artifacts on wide lines (because it is secretly going backwards first and then forwards, probably)
+++ In TimeGraph: the clusters/bundles below min_cluster_size to be removed from the TimeGraph as early as possible
 
 Method
 
