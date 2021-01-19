@@ -1,4 +1,4 @@
-def read_pair_contacts_from_file(fin_name, separator=' ', grain_t=20, start_timestamp=-1, end_timestamp=-1, timestamp_first=True, add_missing=True, verbose=False):
+def read_pair_contacts_from_file(fin_name, separator=' ', start_timestamp=-1, end_timestamp=-1, timestamp_first=True, verbose=False):
     """ Reads a temporal networks from a text file.
 
     Parameters
@@ -19,36 +19,32 @@ def read_pair_contacts_from_file(fin_name, separator=' ', grain_t=20, start_time
             key timestamp, value list of pair contacts
     """
 
-    pair_contacts = {} # {timestamp : list of tuples (pair in contact)}
-    timestamps = []
+    pair_contacts = {}  # {timestamp : list of tuples (pair in contact)}
 
     with open(fin_name, 'r') as fin:
         for l in fin:
             if l[0] == '#':
                 continue
             if timestamp_first:
-                t, u, v = map(int, l.split(separator))
+                t, u, v = l.split(separator)
             else:
-                u, v, t = map(int, l.split(separator))
+                u, v, t = l.split(separator)
 
-            if (start_timestamp >= 0 and end_timestamp >= 0 and t >= start_timestamp and t <= end_timestamp) or \
-                    (start_timestamp < 0 and end_timestamp < 0):
-                timestamps.append(t)
-                lc = pair_contacts.get(t, [])
-                lc.append(tuple(sorted([u, v]))) # ensures contacts are saved in a unique form
-                pair_contacts[t] = lc
-            elif end_timestamp >= 0 and t > end_timestamp:
+            t = int(t)
+
+            if (start_timestamp < 0 or t >= start_timestamp) and (end_timestamp < 0 or t <= end_timestamp):
+                if t not in pair_contacts.keys():
+                    pair_contacts[t] = []
+                lc = pair_contacts[t]
+                u = u.strip()
+                v = v.strip()
+
+                u, v = int(u), int(v)  # not technically needed but ints work slightly faster than strings
+                if u > v:
+                    u, v = v, u
+                lc.append((u, v))  # ensures contacts are saved in a unique form
+            elif t > end_timestamp and end_timestamp >= 0:
                 break
-
-    # add missing timestamps (without contacts)
-    if add_missing:
-        timestamps = sorted(timestamps)
-        for i in range(1, len(timestamps)):
-            this_t = timestamps[i]
-            prev_t = timestamps[i-1]
-            if this_t > prev_t + grain_t:
-                for missing_t in range(prev_t+grain_t, this_t, grain_t):
-                    pair_contacts[missing_t] = []
 
     if verbose:
         print("*** Pair contacts in", fin_name)
@@ -58,22 +54,50 @@ def read_pair_contacts_from_file(fin_name, separator=' ', grain_t=20, start_time
 
     return pair_contacts
 
+
+def add_missing_timestamps(pair_contacts, grain_t=20, start_timestamp=-1, end_timestamp=-1, verbose=False):
+    # Missing timestamps are timestamp in which there were no connections
+    timestamps = sorted(list(pair_contacts.keys()))
+
+    # Extend range if timestamps are missing at the beginning or end
+    if start_timestamp >= 0 and start_timestamp < timestamps[0]:
+        timestamps = [start_timestamp] + timestamps
+    if end_timestamp >= 0 and end_timestamp > timestamps[-1]:
+        timestamps = timestamps + [end_timestamp]
+
+    for i in range(1, len(timestamps)):
+        this_t = timestamps[i]
+        prev_t = timestamps[i-1]
+        if this_t > prev_t + grain_t:
+            for missing_t in range(prev_t+grain_t, this_t, grain_t):
+                pair_contacts[missing_t] = []
+
+    if verbose:
+        print("*** Pair contacts after filling in missing")
+        tt = sorted(pair_contacts.keys())
+        for t in tt:
+            print("\t", t, pair_contacts[t])
+
+    return pair_contacts
+
+
 def read_node_metadata_from_file(fin_name, verbose=False):
     node_metadata = {} # {node id: metadata/category as string}
-    categories = []
+    categories = set()
 
     with open(fin_name, 'r') as fin:
         for l in fin:
             node, metadata = l.split()
             node = int(node)
             node_metadata[node] = metadata
-            categories.append(metadata)
+            categories.add(metadata)
 
-    categories = list(set(categories))
+    categories = list(categories)
     if verbose:
         print("*** Categories of nodes in metadata:\n\t", ' '.join(sorted(categories)))
 
     return node_metadata, sorted(categories)
+
 
 def initialise_aggregation(pair_contacts, old_period, new_period):
     old_timestamps = sorted(list(pair_contacts.keys()))
@@ -162,6 +186,40 @@ def normalise_list_pair_contacts(pair_contacts, node_metadata=None, time_label='
     return normalised_list_pair_contacts, len(timestamps), len(nodeids), \
            timestamp_reverse_translator, nodeid_translator, node_metadata_list
 
+def node_ids_from_pair_contacts(pair_contacts):
+    nodeids = set()
+    for t in pair_contacts:
+        nodeids |= set([node for contact in pair_contacts[t] for node in contact])
+    return nodeids
+
+def normalise_timestamps(pair_contacts, time_label='s'):
+
+    # collect the original node ids and timestamps
+    timestamps = sorted(list(pair_contacts.keys()))
+
+    # timestamp translators: from original t to a 0-index, and back from 0-index to a pretty-printed t
+    timestamp_translator = dict([(old, new) for (new, old) in enumerate(timestamps)])
+    timestamp_reverse_translator = dict(enumerate(timestamps))
+
+    from time import gmtime, strftime
+    if len(str(timestamps[0])) == 10:  # timestamps are Unix seconds? convert to string in my local time zone
+        for i in timestamp_reverse_translator:
+            t = timestamp_reverse_translator[i]
+            timestamp_reverse_translator[i] = strftime("%H:%M", gmtime(t))
+    elif time_label == 's':  # timestamps are seconds? convert to hour:minute
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t / 3600) % 24) + ":" + str(int((t % 3600) / 60)).zfill(2)
+    elif time_label == 'd':  # timestamps are days? convert to day number
+        for i in timestamp_reverse_translator:
+            t = int(timestamp_reverse_translator[i])
+            timestamp_reverse_translator[i] = str(int(t / 3600 / 24) + 1)
+
+    # the normalised pair contacts
+    time_normalised_pair_contacts = {timestamp_translator[t]: l for t, l in pair_contacts.items()}
+
+    return time_normalised_pair_contacts, timestamp_reverse_translator
+
 def null_model(aggregate_pair_contacts):
     """ Null model: degree-preserving rewiring of the unweighted contact graph of each timestamp.
 
@@ -212,40 +270,40 @@ def null_model(aggregate_pair_contacts):
 
     return null_pair_contacts
 
-if __name__ == '__main__':
-    start_timestamp, end_timestamp = -1, -1
-    separator = ' '
-    mname = None
-
-    # Email EU, 500+ days in 45 mil. seconds
-    fname = "../tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
-    timestamp_first = False
-    period, time_label = 1, 'd'
-    start_timestamp, end_timestamp, add_missing = -1, -1, False
-    aggregate_time_to, strength = 86400, 0 # day, weak aggregation
-    min_cluster = 2
-
-    # Primary school, 2 days
-    # fname = "../tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
-    # mname = "../tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
-    # timestamp_first = True
-    # period, time_label = 20, 's'
-    # start_timestamp, end_timestamp, add_missing = 120800, 151960, True
-    # aggregate_time_to, strength = 900, 0.5
-    # min_cluster = 2
-
-    # strings needed to name the output files
-    net_name = (fname.split("/")[-1]).split(".")[0]
-    suffix = "-min_" + str(min_cluster) + "-aggr_to_" + str(aggregate_time_to) + "-strength_" + str(strength)
-    if start_timestamp >= 0 and end_timestamp >= 0:
-        suffix += "-from_" + str(start_timestamp) + "_to_" + str(end_timestamp)
-
-    # the input data
-    pair_contacts = read_pair_contacts_from_file(fname, separator=separator, grain_t=period,
-                                                        start_timestamp=start_timestamp, end_timestamp=end_timestamp,
-                                                        timestamp_first=timestamp_first, add_missing=add_missing, verbose=False)
-    aggregate_pair_contacts = strongly_aggregate_time(pair_contacts,
-                                                        old_period=period, new_period=aggregate_time_to,
-                                                        strength=strength)
-    null_pair_contacts = null_model(aggregate_pair_contacts)
+# if __name__ == '__main__':
+#     start_timestamp, end_timestamp = -1, -1
+#     separator = ' '
+#     mname = None
+#
+#     # Email EU, 500+ days in 45 mil. seconds
+#     fname = "../tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt"
+#     timestamp_first = False
+#     period, time_label = 1, 'd'
+#     start_timestamp, end_timestamp, add_missing = -1, -1, False
+#     aggregate_time_to, strength = 86400, 0 # day, weak aggregation
+#     min_cluster = 2
+#
+#     # Primary school, 2 days
+#     # fname = "../tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat"
+#     # mname = "../tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat"
+#     # timestamp_first = True
+#     # period, time_label = 20, 's'
+#     # start_timestamp, end_timestamp, add_missing = 120800, 151960, True
+#     # aggregate_time_to, strength = 900, 0.5
+#     # min_cluster = 2
+#
+#     # strings needed to name the output files
+#     net_name = (fname.split("/")[-1]).split(".")[0]
+#     suffix = "-min_" + str(min_cluster) + "-aggr_to_" + str(aggregate_time_to) + "-strength_" + str(strength)
+#     if start_timestamp >= 0 and end_timestamp >= 0:
+#         suffix += "-from_" + str(start_timestamp) + "_to_" + str(end_timestamp)
+#
+#     # the input data
+#     pair_contacts = read_pair_contacts_from_file(fname, separator=separator, grain_t=period,
+#                                                         start_timestamp=start_timestamp, end_timestamp=end_timestamp,
+#                                                         timestamp_first=timestamp_first, add_missing=add_missing, verbose=False)
+#     aggregate_pair_contacts = strongly_aggregate_time(pair_contacts,
+#                                                         old_period=period, new_period=aggregate_time_to,
+#                                                         strength=strength)
+#     null_pair_contacts = null_model(aggregate_pair_contacts)
 

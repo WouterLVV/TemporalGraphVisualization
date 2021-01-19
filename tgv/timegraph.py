@@ -1,5 +1,6 @@
 from collections import deque
-from typing import List
+from typing import List, Dict, Any
+import itertools
 
 
 # --------------------------------------------- #
@@ -172,10 +173,10 @@ class TimeGraph:
 
     :ivar int num_steps: The number of steps in this graph
     :ivar int num_nodes: The number of nodes (not clusters) total
-    :ivar nodes: List of nodes
+    :ivar nodes: if an int, generates 0-based ids for the nodes, if list or set interpreted as list of ids as used in the data, if dict interpreted as {node_id: metadata}
     :ivar clusters: List of list of clusters
     """
-    def __init__(self, conns, nodes: int or List[str], num_steps: int, minimum_cluster_size=1, minimum_connection_size=1):
+    def __init__(self, conns, nodes: int or List[str] or Dict[Any, str] or set[Any], num_steps: int, minimum_cluster_size=1, minimum_connection_size=1):
         """Initializes a TimeGraph
 
         :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
@@ -190,14 +191,37 @@ class TimeGraph:
         self.min_conn_size = minimum_connection_size
 
         if isinstance(nodes, int):
-            self.nodes = [TimeNode(None, num_steps, id) for id in range(nodes)]
+            self.nodes = {d: TimeNode(None, num_steps, d) for d in range(nodes)}
+        elif isinstance(nodes, list) or isinstance(nodes, set):
+            self.nodes = {d: TimeNode(max_step=num_steps, id=d) for d in nodes}
+        elif isinstance(nodes, dict):
+            self.nodes = {node_id: TimeNode(max_step=num_steps, id=node_id, name=node_meta) for node_id, node_meta in nodes.items()}
+
+        if isinstance(conns, dict):
+            for t, l in conns.items():
+                for (f, b) in l:
+                    self.nodes[f].add_connection(self.nodes[b], t)
+                    self.nodes[b].add_connection(self.nodes[f], t)
+        elif isinstance(conns, list):
+            list_of_list_of_pairs = False
+            try:
+                if len(conns[0]) == 2:
+                    list_of_list_of_pairs = True
+            except TypeError:
+                pass
+            if list_of_list_of_pairs:
+                for t, l in enumerate(conns):
+                    for (f, b) in l:
+                        self.nodes[f].add_connection(self.nodes[b], t)
+                        self.nodes[b].add_connection(self.nodes[f], t)
+            else:
+                for (f, b, t) in conns:
+                    self.nodes[f].add_connection(self.nodes[b], t)
+                    self.nodes[b].add_connection(self.nodes[f], t)
         else:
-            self.nodes = [TimeNode(max_step=num_steps, id=i, name=d) for i, d in enumerate(nodes)]
-
-
-        for (f, b, t) in conns:
-            self.nodes[f].add_connection(self.nodes[b], t)
-            self.nodes[b].add_connection(self.nodes[f], t)
+            for (f, b, t) in conns:
+                self.nodes[f].add_connection(self.nodes[b], t)
+                self.nodes[b].add_connection(self.nodes[f], t)
 
         self.layers = [self.create_layer_components(t) for t in range(self.num_steps)]
         self.connect_clusters()
@@ -222,7 +246,7 @@ class TimeGraph:
         clusts = []
         seen = set()
         ctr = 0
-        for node in self.nodes:
+        for node in self.nodes.values():
             if node.id in seen:
                 continue
 
@@ -257,7 +281,7 @@ class TimeGraph:
         :return: None
         """
 
-        for n in self.nodes:
+        for n in self.nodes.values():
 
             for t in range(self.num_steps - 1):
                 head = n.clusters[t]
