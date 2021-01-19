@@ -13,19 +13,19 @@ class ImportSettings:
                  period=-1, agg_strength=0.5):
 
         self.filename = filename
-        self.metafilename = metafilename
+        self.metafilename = metafilename  # Can be None for no metadata
         self.separator = separator
         self.timestamp_first = timestamp_first
-        self.file_period = file_period  # The period of the data in the file
+        self.file_period = file_period  # The period of the data in the file, by default it will be automatically detected in DataContainer
         self.timelabel = time_label
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
         self.add_missing = add_missing
-        self.colormap = colormap
+        self.colormap = colormap  # if None will generate automatically
         self.minimum_connection_size = minimum_connection_size
         self.minimum_cluster_size = max(minimum_cluster_size, minimum_connection_size)
         self.period = period  # The period to aggregate data to (-1 to not aggregate)
-        self.agg_strength = agg_strength
+        self.agg_strength = agg_strength  # strength to use in aggregation
 
         self.hasmeta = self.metafilename is not None
 
