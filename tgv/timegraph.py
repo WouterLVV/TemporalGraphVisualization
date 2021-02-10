@@ -37,10 +37,6 @@ class TimeNode:
         """
         self.nbs[t].add(n)
 
-    def __str__(self):
-        return str(self.id) + ((": " + self.name) if self.name is not None else "")
-
-
 class TimeCluster:
     """Data structure that holds a cluster of connected nodes
 
@@ -180,7 +176,7 @@ class TimeGraph:
     :ivar nodes: if an int, generates 0-based ids for the nodes, if list or set interpreted as list of ids as used in the data, if dict interpreted as {node_id: metadata}
     :ivar clusters: List of list of clusters
     """
-    def __init__(self, conns, nodes: None or int or List[str] or Dict[Any, str] or set[Any] = None, num_steps: int = -1, minimum_cluster_size=1, minimum_connection_size=1):
+    def __init__(self, conns, nodes: int or List[str] or Dict[Any, str] or set[Any], num_steps: int, minimum_cluster_size=1, minimum_connection_size=1):
         """Initializes a TimeGraph
 
         :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
@@ -189,18 +185,19 @@ class TimeGraph:
         """
 
         self.num_steps = num_steps
+        self.num_nodes = nodes
 
         self.min_clust_size = minimum_cluster_size
         self.min_conn_size = minimum_connection_size
 
+        if isinstance(nodes, int):
+            self.nodes = {d: TimeNode(None, num_steps, d) for d in range(nodes)}
+        elif isinstance(nodes, list) or isinstance(nodes, set):
+            self.nodes = {d: TimeNode(max_step=num_steps, id=d) for d in nodes}
+        elif isinstance(nodes, dict):
+            self.nodes = {node_id: TimeNode(max_step=num_steps, id=node_id, name=node_meta) for node_id, node_meta in nodes.items()}
 
         if isinstance(conns, dict):
-            if self.num_steps < 0:
-                self.num_steps = max(conns.keys()) + 1
-            if nodes is None:
-                nodes = set([x for pair in conns.values() for x in pair])
-            self._make_nodes(nodes)
-
             for t, l in conns.items():
                 for (f, b) in l:
                     self.nodes[f].add_connection(self.nodes[b], t)
@@ -208,38 +205,20 @@ class TimeGraph:
         elif isinstance(conns, list):
             list_of_list_of_pairs = False
             try:
-                if len(conns[0][0]) == 2:
+                if len(conns[0]) == 2:
                     list_of_list_of_pairs = True
             except TypeError:
                 pass
             if list_of_list_of_pairs:
-                if self.num_steps < 0:
-                    self.num_steps = len(conns)
-                if nodes is None:
-                    nodes = set([x for step in conns for pair in step for x in pair])
-                self._make_nodes(nodes)
-
                 for t, l in enumerate(conns):
                     for (f, b) in l:
                         self.nodes[f].add_connection(self.nodes[b], t)
                         self.nodes[b].add_connection(self.nodes[f], t)
             else:
-                if self.num_steps < 0:
-                    self.num_steps = max([x[2] for x in conns]) + 1
-                if nodes is None:
-                    nodes = set([x for (a, b, _) in conns for x in (a, b)])
-                self._make_nodes(nodes)
-
                 for (f, b, t) in conns:
                     self.nodes[f].add_connection(self.nodes[b], t)
                     self.nodes[b].add_connection(self.nodes[f], t)
         else:
-            if self.num_steps < 0:
-                self.num_steps = max([x[2] for x in conns]) + 1
-            if nodes is None:
-                nodes = set([x for (a, b, _) in conns for x in (a, b)])
-            self._make_nodes(nodes)
-
             for (f, b, t) in conns:
                 self.nodes[f].add_connection(self.nodes[b], t)
                 self.nodes[b].add_connection(self.nodes[f], t)
@@ -252,15 +231,6 @@ class TimeGraph:
         ]
 
         self.clusters = [x for t in range(self.num_steps) for x in self.layers[t]]
-
-    def _make_nodes(self, nodes):
-        num_steps = self.num_steps
-        if isinstance(nodes, int):
-            self.nodes = {d: TimeNode(None, num_steps, d) for d in range(nodes)}
-        elif isinstance(nodes, list) or isinstance(nodes, set):
-            self.nodes = {d: TimeNode(max_step=num_steps, id=d) for d in nodes}
-        elif isinstance(nodes, dict):
-            self.nodes = {node_id: TimeNode(max_step=num_steps, id=node_id, name=node_meta) for node_id, node_meta in nodes.items()}
 
     def get_cluster(self, t, id):
         return self.layers[t][id]

@@ -1483,9 +1483,6 @@ class SizedConnectionLayout:
         if colormap is None:
             colormap = dict()
 
-        if timestamp_translator is None:
-            timestamp_translator = dict()
-
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
         # if not, it is called with the default parameters
         if not self.is_located:
