@@ -1,33 +1,52 @@
 import os
 from copy import copy
+from typing import Dict, Tuple
 
 from tgv.layout import SizedConnectionLayout
 from tgv.timegraph import TimeGraph
 from tgv.io_operations import read_pair_contacts_from_file, read_node_metadata_from_file, add_missing_timestamps, strongly_aggregate_time, node_ids_from_pair_contacts, normalise_timestamps
 
+
 class ImportSettings:
-    def __init__(self, filename, metafilename=None, separator=' ',
-                 timestamp_first=True, file_period=-1, time_label='s',
-                 start_timestamp=-1, end_timestamp=-1, add_missing=True,
-                 colormap=None, minimum_cluster_size=2, minimum_connection_size=2,
-                 period=-1, agg_strength=0.5):
+    def __init__(self, filename: str, metafilename: str or None = None, separator: str = ' ',
+                 timestamp_first: bool = True, file_period: int = -1, time_label: str = 's',
+                 start_timestamp: int = -1, end_timestamp: int = -1, add_missing: bool = True,
+                 colormap: Dict[object, Tuple[float, float, float, float]] or None = None,
+                 minimum_cluster_size: int = 2, minimum_connection_size: int = 2,
+                 period: int = -1, agg_strength: float = 0.5) -> None:
+        """
 
-        self.filename = filename
-        self.metafilename = metafilename  # Can be None for no metadata
-        self.separator = separator
-        self.timestamp_first = timestamp_first
-        self.file_period = file_period  # The period of the data in the file, by default it will be automatically detected in DataContainer
-        self.timelabel = time_label
-        self.start_timestamp = start_timestamp
-        self.end_timestamp = end_timestamp
-        self.add_missing = add_missing
-        self.colormap = colormap  # if None will generate automatically
-        self.minimum_connection_size = minimum_connection_size
-        self.minimum_cluster_size = max(minimum_cluster_size, minimum_connection_size)
-        self.period = period  # The period to aggregate data to (-1 to not aggregate)
-        self.agg_strength = agg_strength  # strength to use in aggregation
+        :param filename:
+        :param metafilename:
+        :param separator:
+        :param timestamp_first:
+        :param file_period:
+        :param time_label:
+        :param start_timestamp:
+        :param end_timestamp:
+        :param add_missing:
+        :param colormap:
+        :param minimum_cluster_size:
+        :param minimum_connection_size:
+        :param period:
+        :param agg_strength:
+        """
+        self.filename = filename                # String, File location of contact data
+        self.metafilename = metafilename        # String, File location of metadata, can be None for no metadata
+        self.separator = separator              # String, separator used in both main and meta file
+        self.timestamp_first = timestamp_first  # Bool,   Whether the timestamp is the first value in each triplet (True) or the last (False)
+        self.file_period = file_period          # int,    The period of the data in the file, by default it will be automatically detected in DataContainer
+        self.timelabel = time_label             # String, 's' for seconds, 'd' for days
+        self.start_timestamp = start_timestamp  # int,    The value of the first timestamp to consider. -1 to not set a lower limit and let the code autofill this value
+        self.end_timestamp = end_timestamp      # int,    The value of the last timestamp to consider. -1 to not set an upper limit and let the code autofill this value
+        self.add_missing = add_missing          # bool,   Toggle whether to add timestamps that do not exist in the data because there were no connections at that time
+        self.colormap = colormap                # dict,   Dictionary with {"meta name": (r,g,b,a)} color value. If None will generate automatically
+        self.minimum_connection_size = minimum_connection_size  # See TimeGraph
+        self.minimum_cluster_size = max(minimum_cluster_size, minimum_connection_size)  # See TimeGraph
+        self.period = period                    # int,    The period to aggregate the data to if desired (-1 to not aggregate)
+        self.agg_strength = agg_strength        # float,  Strength to use in aggregation, between 0. and 1.
 
-        self.hasmeta = self.metafilename is not None
+        self.hasmeta = self.metafilename is not None  # Bool toggle to see if metadata exists. Can be toggled by add_metadata()
 
 
 class DataContainer:
