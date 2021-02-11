@@ -8,7 +8,7 @@ if __name__ == '__main__':
     tg = dc.get_timegraph()
 
     sg = SizedConnectionLayout(tg, line_width=1,
-                               cluster_heigsht_method='linear',
+                               cluster_height_method='linear',
                                horizontal_density=1,
                                vertical_density=0.5)
 

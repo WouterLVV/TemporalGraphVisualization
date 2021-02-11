@@ -1,5 +1,6 @@
 import os
 from copy import copy
+from typing import Dict, Tuple
 
 from tgv.layout import SizedConnectionLayout
 from tgv.timegraph import TimeGraph
@@ -237,7 +238,7 @@ def copy_and_change_period_to(settings, newperiod):
 
 
 LYONSCHOOL_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat",
+    filename="tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat",
     metafilename="tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat",
     start_timestamp=120800, end_timestamp=151960,
     minimum_connection_size=5
@@ -255,7 +256,7 @@ LYONSCHOOL_EVALUATE_RANGE = range(20, 2000, 80)
 
 
 EMAILEU_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt",
+    filename="tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt",
     timestamp_first=False,
     add_missing=False,
     agg_strength=1/86400,  # 1 email per day
@@ -272,7 +273,7 @@ EMAILEU_SETTINGS_DEFAULT = EMAILEU_SETTINGS_DAY
 
 
 HYPERTEXTCONFERENCE_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns-hypertext09/ht09_contact_list.dat",
+    filename="tnet_sources/sociopatterns-hypertext09/ht09_contact_list.dat",
     separator='\t',
     agg_strength=0
 )
@@ -283,7 +284,7 @@ HYPERTEXTCONFERENCE_SETTINGS_DEFAULT = HYPERTEXTCONFERENCE_SETTINGS_AGG120
 
 
 SFHHCONFERENCE_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns/co-presence/tij_pres_SFHH.dat",
+    filename="tnet_sources/sociopatterns/co-presence/tij_pres_SFHH.dat",
 )
 
 SFHHCONFERENCE_SETTINGS_AGG300 = copy_and_change_period_to(SFHHCONFERENCE_SETTINGS_BASE, 300)
@@ -292,7 +293,7 @@ SFHHCONFERENCE_SETTINGS_DEFAULT = SFHHCONFERENCE_SETTINGS_AGG300
 
 
 HOSPITALWARD_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat"
+    filename="tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat"
 )
 
 HOSPITALWARD_SETTINGS_AGG600 = copy_and_change_period_to(HOSPITALWARD_SETTINGS_BASE, 600)
@@ -301,7 +302,7 @@ HOSPITALWARD_SETTINGS_DEFAULT = HOSPITALWARD_SETTINGS_AGG600
 
 
 WORKPLACE13_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns/co-presence/tij_pres_InVS13.dat"
+    filename="tnet_sources/sociopatterns/co-presence/tij_pres_InVS13.dat"
 )
 
 WORKPLACE13_SETTINGS_AGG3600 = copy_and_change_period_to(WORKPLACE13_SETTINGS_BASE, 3600)
@@ -310,7 +311,7 @@ WORKPLACE13_SETTINGS_DEFAULT = WORKPLACE13_SETTINGS_AGG3600
 
 
 WORKPLACE15_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns/co-presence/tij_pres_InVS15.dat"
+    filename="tnet_sources/sociopatterns/co-presence/tij_pres_InVS15.dat"
 )
 
 WORKPLACE15_SETTINGS_AGG3600 = copy_and_change_period_to(WORKPLACE15_SETTINGS_BASE, 3600)
@@ -319,7 +320,7 @@ WORKPLACE15_SETTINGS_DEFAULT = WORKPLACE15_SETTINGS_AGG3600
 
 
 SCIENCEGALLERY0428_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns-infectious/listcontacts_2009_04_28.txt",
+    filename="tnet_sources/sociopatterns-infectious/listcontacts_2009_04_28.txt",
     separator='\t'
 )
 
@@ -329,7 +330,7 @@ SCIENCEGALLERY0428_SETTINGS_DEFAULT = SCIENCEGALLERY0428_SETTINGS_AGG120
 
 
 SCIENCEGALLERY0429_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns-infectious/listcontacts_2009_04_29.txt",
+    filename="tnet_sources/sociopatterns-infectious/listcontacts_2009_04_29.txt",
     separator='\t'
 )
 
@@ -339,7 +340,7 @@ SCIENCEGALLERY0429_SETTINGS_DEFAULT = SCIENCEGALLERY0429_SETTINGS_AGG120
 
 
 SCIENCEGALLERY0717_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt",
+    filename="tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt",
     separator='\t'
 )
 
@@ -351,7 +352,7 @@ SCIENCEGALLERY_EVALUATE_RANGE = range(60, 1200, 20)
 
 
 THIERSSCHOOL_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/sociopatterns/co-presence/tij_pres_Thiers13.dat",
+    filename="tnet_sources/sociopatterns/co-presence/tij_pres_Thiers13.dat",
     metafilename="tnet_sources/sociopatterns/metadata/metadata_Thiers13.dat",
     start_timestamp=29960, end_timestamp=64780,
     minimum_connection_size=5
@@ -363,7 +364,7 @@ THIERSSCHOOL_SETTINGS_DEFAULT = THIERSSCHOOL_SETTINGS_AGG600
 
 
 COLLEGEMSG_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/college-msg/CollegeMsg.txt",
+    filename="tnet_sources/college-msg/CollegeMsg.txt",
     timestamp_first=False,
     agg_strength=0,
     minimum_connection_size=4
@@ -379,7 +380,7 @@ COLLEGEMSG_SETTINGS_DEFAULT = COLLEGEMSG_SETTINGS_DAY
 
 
 COPENHAGENSMS_SETTINGS_BASE = ImportSettings(
-    filename="../tnet_sources/copenhagen-study/sms.csv",
+    filename="tnet_sources/copenhagen-study/sms.csv",
     separator=',',
     agg_strength=0.
 )
@@ -402,6 +403,7 @@ TESTSUITE_DEFAULTS = [
 
 
 if __name__ == "__main__":
+    os.chdir("..")
     # Example pair_contacts
     dc = DataContainer(EMAILEU_SETTINGS_DAY)
     print("Example pair_contacts:", len(dc.pair_contacts))

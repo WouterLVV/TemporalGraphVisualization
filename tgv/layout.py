@@ -640,7 +640,7 @@ class SizedConnectionLayout:
         return crossings
 
     @classmethod
-    def get_num_crossings(cls, cluster1: SizedConnectionCluster, cluster2: SizedConnectionCluster):
+    def get_num_crossings_between_clusters(cls, cluster1: SizedConnectionCluster, cluster2: SizedConnectionCluster):
         """
         Count the number of crossings these 2 cluster have with each other.
 
@@ -671,7 +671,7 @@ class SizedConnectionLayout:
             upper, lower = cluster2, cluster1
         else:
             upper, lower = cluster1, cluster2
-        return self.get_num_crossings(lower, upper) - self.get_num_crossings(upper, lower)
+        return self.get_num_crossings_between_clusters(lower, upper) - self.get_num_crossings_between_clusters(upper, lower)
 
     ####################################################################################################################
     # ------------------------------------------- Alignment Functions ------------------------------------------------ #
@@ -1085,6 +1085,17 @@ class SizedConnectionLayout:
     ####################################################################################################################
     # ------------------------------------------ Statistics Functions ------------------------------------------------ #
     ####################################################################################################################
+
+    def number_of_crossings(self) -> int:
+        if not self.is_located:
+            self.set_locations()
+
+        total = 0
+        for layer in self.ordered:
+            for i in range(len(layer)):
+                for j in range(i+1, len(layer)):
+                    total += self.get_num_crossings_between_clusters(layer[i], layer[j])
+        return total
 
     def streak_below(self, data: List[Number], num: Number) -> int:
         """
