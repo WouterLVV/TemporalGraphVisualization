@@ -1,6 +1,17 @@
 Changelog TemporalGraphVisualization
 
 === 2021-02-11 ===
+= Features =
+
+ - Added total graph crossing count
+
+ - Added some chain (community) statistics
+
+ - Changed the chain break condition. If a connection is smaller than the cluster size it connects to times
+     a parameter (default 0.4) it cannot align the two clusters. Replaces the maximum in/out difference.
+
+ - Added the emphasize_communities flag to draw_graph(), which will darken connections that are not part of a chain.
+
 = Documentation =
 
  - Documentation updated and added for changes made in last update.

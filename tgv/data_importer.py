@@ -231,7 +231,7 @@ class DataContainer:
 
 
 # Quick function that saves me from having to copy or retype a lot of data.
-def copy_and_change_period_to(settings, newperiod):
+def copy_and_change_period_to(settings: ImportSettings, newperiod: int) -> ImportSettings:
     c = copy(settings)
     c.period = newperiod
     return c

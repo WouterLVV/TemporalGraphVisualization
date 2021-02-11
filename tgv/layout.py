@@ -686,7 +686,7 @@ class SizedConnectionLayout:
         self.is_aligned = False
         self.is_located = False
 
-    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, max_inout_diff=2., stairs_iterations=2) -> None:
+    def set_alignment(self, direction_flag=FORWARD, max_chain=-1, min_conn_strength=0.4, stairs_iterations=2) -> None:
         """
         Align clusters to be of the same chain to improved readability of the Graph.
 
@@ -698,10 +698,9 @@ class SizedConnectionLayout:
 
         :param direction_flag: switch between aligning from left to right (forward) or right to left (backward)
         :param max_chain: Maximum length a chain is allowed, or -1 if a chain can be arbitrarily long
-        :param max_inout_diff: Factor to prevent chains from forming when the difference between the largest incoming
-        and largest outgoing connection is too big. A factor of two will prevent aligning the cluster if the largest
-        outgoing connection is more than twice as large as its largest incoming. This prevents overenthousiastic
-        alignments that make little sense. -1 for no limit
+        :param min_conn_strength: Factor to prevent chains from forming when the connection is not large enough.
+        Checks if the connection is large enough that it is part of a continuous community by checking it against the
+        sizes of the cluster it connects to.
         :param stairs_iterations: The amount of iterations for the anti-staircase function.
         """
         # Instead of passing on dozens of parameters, this checks if the user has already called the necessary functions
@@ -718,15 +717,19 @@ class SizedConnectionLayout:
             r = -1
 
             for cluster in self.ordered[layer]:
-                if (cluster.insize == 0 or
-                        (
-                                max_inout_diff >= 0. and cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff)):
+                if (cluster.insize == 0):
+                    # or (max_inout_diff >= 0. and cluster.largest_outgoing / cluster.largest_incoming > max_inout_diff)):
                     continue
 
                 # Find cluster in previous layer this one wants to connect to and the weight of the connection
                 wanted, connsize = cluster.largest_median_connection(direction=direction_flag)
 
                 if wanted is not None and (max_chain < 0 or wanted.root.chain_length <= max_chain):
+
+                    # Check if the connection is large enough that it is part of a continuous community by checking it
+                    # against the sizes of the cluster it connects to.
+                    if len(wanted) * min_conn_strength > connsize or len(cluster) * min_conn_strength > connsize:
+                        continue
 
                     # Check if this connection contradicts another alignment
                     # priority to the new connection is only given if the weight is higher than all crossings
@@ -1087,15 +1090,33 @@ class SizedConnectionLayout:
     ####################################################################################################################
 
     def number_of_crossings(self) -> int:
+        """
+        Counts the total number of crossings in the drawn graph. Does not take into account fading that might cross
+        a line.
+        :return: The number of crossings in the graph
+        """
         if not self.is_located:
             self.set_locations()
-
         total = 0
-        for layer in self.ordered:
-            for i in range(len(layer)):
-                for j in range(i+1, len(layer)):
-                    total += self.get_num_crossings_between_clusters(layer[i], layer[j])
+        for i in range(0, len(self.ordered), 2):
+            layer = self.ordered[i]
+            for j in range(len(layer)):
+                for k in range(j+1, len(layer)):
+                    total += self.get_num_crossings_between_clusters(layer[j], layer[k])
         return total
+
+    def longest_chain_length(self) -> int:
+        if not self.is_aligned:
+            self.set_alignment()
+        return max(map(lambda c: c.chain_length if c.root == c else 0, self.clusters))
+
+    def average_chain_length(self):
+        if not self.is_aligned:
+            self.set_alignment()
+        return sum(map(lambda c: c.chain_length if c.root == c else 0, self.clusters)) / sum(map(lambda c: 1 if c.root == c else 0, self.clusters))
+
+    def sorted_chain_lengths(self, reverse=False):
+        return sorted([c.chain_length for c in self.clusters if c.root == c], reverse=reverse)
 
     def streak_below(self, data: List[Number], num: Number) -> int:
         """
@@ -1309,7 +1330,7 @@ class SizedConnectionLayout:
 
         context.stroke()
 
-    def draw_connections(self, context: cairo.Context, colormap: dict, show_annotations: bool, fading: bool) -> None:
+    def draw_connections(self, context: cairo.Context, colormap: dict, show_annotations: bool, fading: bool, emphasize_communities: bool) -> None:
         """
         Returns a cairo surface with just the connections drawn onto them.
 
@@ -1324,6 +1345,11 @@ class SizedConnectionLayout:
         for cluster in self.clusters:
             line_coordinates.update(self.calculate_line_origins(cluster))
 
+        if emphasize_communities:
+            shadow_colormap = {k: (r*0.3, g*0.3, b*0.3, a*0.5) for k, (r, g, b, a) in colormap.items()}
+            true_colormap = colormap
+            colormap = shadow_colormap
+
         if fading:
             for cluster in self.clusters:
                 if cluster.insize == 0:
@@ -1336,6 +1362,12 @@ class SizedConnectionLayout:
         for (source, target) in line_coordinates.keys():
             if (target, source) in already_drawn:
                 continue
+
+            if emphasize_communities:
+                if source.root == target.root:
+                    colormap = true_colormap
+                else:
+                    colormap = shadow_colormap
 
             self.draw_line(source, target, line_coordinates, colormap, context, show_annotations=show_annotations)
             # self.draw_line_monochrome(source, target, line_coordinates, context)
@@ -1488,7 +1520,7 @@ class SizedConnectionLayout:
     def draw_graph(self, filename: str = "output/example.svg",
                    colormap=None,
                    show_timestamps=True, timestamp_translator=None,
-                   show_annotations=False, debug_info=None, stats_info=None,
+                   show_annotations=False, debug_info=None, stats_info=None, emphasize_communities=False,
                    fading=False, scale=1.):
 
         if colormap is None:
@@ -1512,7 +1544,7 @@ class SizedConnectionLayout:
         context = cairo.Context(surface)
         context.scale(scale, scale)
 
-        self.draw_connections(context, colormap, show_annotations, fading)
+        self.draw_connections(context, colormap, show_annotations, fading, emphasize_communities)
         self.draw_clusters(context)
         if debug_info is not None:
             self.draw_debug(context, debug_info)
