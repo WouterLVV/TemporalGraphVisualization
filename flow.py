@@ -1,7 +1,6 @@
-from tgv.timegraph import TimeGraph
 from tgv.layout import SizedConnectionLayout
 
-from importer import DataContainer, LYONSCHOOL_SETTINGS_DEFAULT
+from tgv.data_importer import DataContainer, LYONSCHOOL_SETTINGS_DEFAULT
 
 if __name__ == '__main__':
 
@@ -9,7 +8,7 @@ if __name__ == '__main__':
     tg = dc.get_timegraph()
 
     sg = SizedConnectionLayout(tg, line_width=1,
-                               cluster_height_method='linear',
+                               cluster_heigsht_method='linear',
                                horizontal_density=1,
                                vertical_density=0.5)
 

@@ -1,0 +1,1216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.3" />
+<title>tgv.data_importer API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>tgv.data_importer</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import os
+from copy import copy
+from typing import Dict, Tuple
+
+from tgv.layout import SizedConnectionLayout
+from tgv.timegraph import TimeGraph
+from tgv.io_operations import read_pair_contacts_from_file, read_node_metadata_from_file, add_missing_timestamps, strongly_aggregate_time, node_ids_from_pair_contacts, normalise_timestamps
+
+
+class ImportSettings:
+    def __init__(self, filename: str, metafilename: str or None = None, separator: str = &#39; &#39;,
+                 timestamp_first: bool = True, file_period: int = -1, time_label: str = &#39;s&#39;,
+                 start_timestamp: int = -1, end_timestamp: int = -1, add_missing: bool = True,
+                 colormap: Dict[object, Tuple[float, float, float, float]] or None = None,
+                 minimum_cluster_size: int = 2, minimum_connection_size: int = 2,
+                 period: int = -1, agg_strength: float = 0.5) -&gt; None:
+        &#34;&#34;&#34;
+        A Collection of settings that a DataContainer can use to prepare data. It is a separate object so that the
+        data will not be actually loaded upon importing.
+
+        :param filename: String, File location of contact data
+        :param metafilename: String, File location of metadata, can be None for no metadata
+        :param separator: String, separator used in both main and meta file
+        :param timestamp_first: Bool, Whether the timestamp is the first value in each triplet (True) or the last (False)
+        :param file_period: int, The period of the data in the file, by default it will be automatically detected in DataContainer
+        :param time_label: String, &#39;s&#39; for seconds, &#39;d&#39; for days
+        :param start_timestamp: int, The value of the first timestamp to consider. -1 to not set a lower limit and let the code autofill this value
+        :param end_timestamp: int, The value of the last timestamp to consider. -1 to not set an upper limit and let the code autofill this value
+        :param add_missing: bool, Toggle whether to add timestamps that do not exist in the data because there were no connections at that time
+        :param colormap: dict, Dictionary with {&#34;meta name&#34;: (r,g,b,a)} color value. If None will generate automatically
+        :param minimum_cluster_size: Described in tgv/Timegraph.py
+        :param minimum_connection_size: Described in tgv/Timegraph.py
+        :param period: int, The period to aggregate the data to if desired (-1 to not aggregate)
+        :param agg_strength: float, Strength to use in aggregation, between 0. and 1.
+        &#34;&#34;&#34;
+        self.filename = filename                # String, File location of contact data
+        self.metafilename = metafilename        # String, File location of metadata, can be None for no metadata
+        self.separator = separator              # String, separator used in both main and meta file
+        self.timestamp_first = timestamp_first  # Bool,   Whether the timestamp is the first value in each triplet (True) or the last (False)
+        self.file_period = file_period          # int,    The period of the data in the file, by default it will be automatically detected in DataContainer
+        self.timelabel = time_label             # String, &#39;s&#39; for seconds, &#39;d&#39; for days
+        self.start_timestamp = start_timestamp  # int,    The value of the first timestamp to consider. -1 to not set a lower limit and let the code autofill this value
+        self.end_timestamp = end_timestamp      # int,    The value of the last timestamp to consider. -1 to not set an upper limit and let the code autofill this value
+        self.add_missing = add_missing          # bool,   Toggle whether to add timestamps that do not exist in the data because there were no connections at that time
+        self.colormap = colormap                # dict,   Dictionary with {&#34;meta name&#34;: (r,g,b,a)} color value. If None will generate automatically
+        self.minimum_connection_size = minimum_connection_size  # See TimeGraph
+        self.minimum_cluster_size = max(minimum_cluster_size, minimum_connection_size)  # See TimeGraph
+        self.period = period                    # int,    The period to aggregate the data to if desired (-1 to not aggregate)
+        self.agg_strength = agg_strength        # float,  Strength to use in aggregation, between 0. and 1.
+
+        self.hasmeta = self.metafilename is not None  # Bool toggle to see if metadata exists. Can be toggled by add_metadata()
+
+
+class DataContainer:
+    def __init__(self, settings: ImportSettings):
+        self.settings = settings
+        self.pair_contacts = read_pair_contacts_from_file(self.settings.filename, self.settings.separator,
+                                                          self.settings.start_timestamp, self.settings.end_timestamp,
+                                                          self.settings.timestamp_first, verbose=False)
+
+        self.node_metadata, self.node_categories = None, None
+        if self.settings.hasmeta:
+            self.node_metadata, self.node_categories = read_node_metadata_from_file(self.settings.metafilename)
+
+        if settings.file_period &lt;= 0:
+            settings.file_period = self.infer_period()
+
+        if settings.start_timestamp &lt; 0:
+            settings.start_timestamp = min(self.pair_contacts.keys())
+
+        if settings.end_timestamp &lt; 0:
+            settings.end_timestamp = max(self.pair_contacts.keys())
+
+        if settings.period &gt; settings.file_period:
+            agg_to = settings.period  # Newly wanted period
+            settings.period = settings.file_period  # Function expects current period in settings.period
+            self.aggregate_to(agg_to, settings.agg_strength)
+        else:
+            settings.period = settings.file_period
+
+        if self.settings.add_missing:
+            add_missing_timestamps(self.pair_contacts, self.settings.period,
+                                   self.settings.start_timestamp, self.settings.end_timestamp, verbose=False)
+
+        if self.settings.hasmeta:
+            if self.settings.colormap is None:
+                self.auto_color()
+
+        self.net_name = (settings.filename.split(os.sep)[-1]).split(&#34;.&#34;)[0]
+        self.net_suffix = &#34;-min_&#34; + str(self.settings.minimum_cluster_size) \
+                          + &#34;-aggr_to_&#34; + str(self.settings.period) \
+                          + &#34;-strength_&#34; + str(self.settings.agg_strength)
+
+        self.timestamp_reverse_translator = None  # Generated when get_timegraph is called
+
+    def infer_period(self) -&gt; int:
+        &#34;&#34;&#34;
+        Finds the largest possible period that will match all timestamps by taking the gcd of all differences.
+
+        :return: The largest possible period of the data.
+        &#34;&#34;&#34;
+        from math import gcd
+        tt = list(self.pair_contacts.keys())
+        if len(tt) &lt; 2:
+            return 1
+        x = tt[1] - tt[0]
+        for i in range(2, len(tt)):
+            x = gcd(x, tt[i] - tt[i-1])
+            if x == 1:
+                break
+        return x
+
+    def add_metadata(self, node_metadata, update_colormap=True):
+        &#34;&#34;&#34;
+        Gives the possibility to add metadata from other sources than file, if the metadata is generated somewhere.
+        :param node_metadata: dict of {node_id: &#34;metadata_string&#34;}
+        :param update_colormap: True if you want to automatically generate colors for all categories.
+        &#34;&#34;&#34;
+        self.settings.hasmeta = True
+        self.node_metadata = node_metadata
+        self.node_categories = sorted(list(set(node_metadata.values())))
+        if update_colormap:
+            self.auto_color()
+
+    def auto_color(self):
+        &#34;&#34;&#34;
+        Automatically generates colors for all known metadata categories (unique metadata strings)
+        from the XKCD color list.
+        &#34;&#34;&#34;
+        from tgv.colours import assign_colours_rgba_tuple
+        self.settings.colormap = assign_colours_rgba_tuple(self.node_categories)
+
+    def duration(self):
+        &#34;&#34;&#34;
+        Get the duration between start and end of the data.
+        :return: the duration between start and end of the data
+        &#34;&#34;&#34;
+        return str(self.settings.end_timestamp - self.settings.start_timestamp) + self.settings.timelabel
+
+    def get_num_steps(self):
+        &#34;&#34;&#34;
+        Get the number of steps in the data that actually exist.
+        This is also the amount of layers the resulting graph will have.
+        :return: the number of steps in the data that actually exist
+        &#34;&#34;&#34;
+        return len(self.pair_contacts.keys())
+
+    def get_timegraph(self):
+        &#34;&#34;&#34;
+        Builds the TimeGraph based on the data and settings in this container.
+        Since this process needs to normalise the timestamps (make them consecutive 0-indexed) it also fills the
+        self.timestamp_reverse_translator, which can map a layer index to a timestamp (or other representations thereof,
+        based on self.time_label).
+        At this stage the minimum_cluster_size and minimum_connection_size will take effect.
+        :return:
+        &#34;&#34;&#34;
+        time_normalised_pair_contacts, timestamp_reverse_translator = normalise_timestamps(self.pair_contacts, self.settings.timelabel)
+        self.timestamp_reverse_translator = timestamp_reverse_translator  # saved for drawing purposes, see self.draw_graph()
+        node_ids = node_ids_from_pair_contacts(self.pair_contacts)
+
+        if self.settings.hasmeta:  # If metadata exists, it needs to be injected before being passed to TimeGraph
+            node_ids = {node_id: self.node_metadata.get(node_id, None) for node_id in node_ids}
+
+        tg = TimeGraph(time_normalised_pair_contacts, node_ids, self.get_num_steps(),
+                       self.settings.minimum_cluster_size, self.settings.minimum_connection_size)
+
+        return tg
+
+    def get_SCLayout(self):
+        &#34;&#34;&#34;
+        Quick function that generates a SizedConnectionLayout with the default settings. Does not do any ordering or
+        layout, but provides the base object to call those functions on. To see how you can use this, please see the
+        SizedConnectionLayout documentation.
+        :return: A SizedConnectionLayout based on the data in this container, with default SCL settings.
+        &#34;&#34;&#34;
+        tg = self.get_timegraph()
+        sc = SizedConnectionLayout(tg)
+        return sc
+
+    def draw_graph(self, output=&#34;&#34;):
+        &#34;&#34;&#34;
+        Quick function to draw a colored graph of this data with completely default settings.
+        :param output: filename of the resulting drawing. If ending on a directory separator, placed in that folder with
+        a generated name, or if an empty string it will put it in a default location with a generated name.
+        &#34;&#34;&#34;
+        if output == &#34;&#34;:
+            output = &#34;flow_output/&#34; + self.net_name + self.net_suffix + &#34;.svg&#34;
+        elif output[-1] == os.sep:  # If path is a directory location
+            output = output + self.net_name + self.net_suffix + &#34;.svg&#34;
+
+        sc = self.get_SCLayout()
+        sc.draw_graph(filename=output, colormap=self.settings.colormap,
+                      show_timestamps=True, timestamp_translator=self.timestamp_reverse_translator)
+
+    def aggregate_to(self, period, strength=-1., makecopy=False):
+        &#34;&#34;&#34;
+        Aggregate different timestamps to a new period. Works by adjusting the period and collecting all timestamps
+        which fall in the new interval. Then, each connection must appear at least strength percent of the timestamps
+        that were aggregated.
+        It is possible to toggle to make a copy of the original container so as to use multiple aggregations at the same
+        time. The copy extends to: immutable or base type attributes of both container and settings, and the keys of the
+        data dictionary. Hence, be careful. Definitely not thread-safe by default.
+        :param period: The new period to aggregate to. Will overwrite the value in settings.
+        :param strength: The threshold for how often a connection must exist. if not given, takes the value from settings, if given, overwrites the value in settings.
+        :param makecopy: Toggle to make a shallow copy of the data, such that the original can also be used.
+        :return: the container containing the aggregated data. (self, if makecopy is False)
+        &#34;&#34;&#34;
+        if makecopy:  # SHALLOW COPY! Is safe to generate different aggregations, since the Timegraph only reads.
+            container = copy(self)
+            container.settings = copy(self.settings)
+        else:
+            container = self
+
+        if strength &lt; 0:
+            strength = self.settings.agg_strength
+        else:
+            self.settings.agg_strength = strength
+
+        # Make aggregation
+        container.pair_contacts = strongly_aggregate_time(container.pair_contacts, container.settings.period, period, strength)
+        container.settings.period = period
+
+        if container.settings.add_missing:  # Adjust missing timestamps (not sure if needed, but can&#39;t hurt)
+            add_missing_timestamps(container.pair_contacts, container.settings.period,
+                                   container.settings.start_timestamp, container.settings.end_timestamp, verbose=False)
+
+        # Update suffix name
+        self.net_suffix = &#34;-min_&#34; + str(self.settings.minimum_cluster_size) \
+                          + &#34;-aggr_to_&#34; + str(self.settings.period) \
+                          + &#34;-strength_&#34; + str(self.settings.agg_strength)
+        return container
+
+
+# Quick function that saves me from having to copy or retype a lot of data.
+def copy_and_change_period_to(settings, newperiod):
+    c = copy(settings)
+    c.period = newperiod
+    return c
+
+
+LYONSCHOOL_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat&#34;,
+    metafilename=&#34;tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat&#34;,
+    start_timestamp=120800, end_timestamp=151960,
+    minimum_connection_size=5
+)
+
+LYONSCHOOL_SETTINGS_AGG60 = copy_and_change_period_to(LYONSCHOOL_SETTINGS_BASE, 60)  # 1 minute
+LYONSCHOOL_SETTINGS_AGG300 = copy_and_change_period_to(LYONSCHOOL_SETTINGS_BASE, 300)  # 5 minutes
+LYONSCHOOL_SETTINGS_AGG600 = copy_and_change_period_to(LYONSCHOOL_SETTINGS_BASE, 600)  # 10 minutes
+LYONSCHOOL_SETTINGS_AGG900 = copy_and_change_period_to(LYONSCHOOL_SETTINGS_BASE, 900)  # 15 minutes
+LYONSCHOOL_SETTINGS_AGG3600 = copy_and_change_period_to(LYONSCHOOL_SETTINGS_BASE, 3600)  # 1 hour
+
+LYONSCHOOL_SETTINGS_DEFAULT = LYONSCHOOL_SETTINGS_AGG600
+
+LYONSCHOOL_EVALUATE_RANGE = range(20, 2000, 80)
+
+
+EMAILEU_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt&#34;,
+    timestamp_first=False,
+    add_missing=False,
+    agg_strength=1/86400,  # 1 email per day
+    time_label=&#39;d&#39;
+)
+
+EMAILEU_SETTINGS_12HOUR = copy_and_change_period_to(EMAILEU_SETTINGS_BASE, 86400/2)
+EMAILEU_SETTINGS_DAY = copy_and_change_period_to(EMAILEU_SETTINGS_BASE, 86400)
+EMAILEU_SETTINGS_2DAYS = copy_and_change_period_to(EMAILEU_SETTINGS_BASE, 86400*2)
+EMAILEU_SETTINGS_4DAYS = copy_and_change_period_to(EMAILEU_SETTINGS_BASE, 86400*4)
+EMAILEU_SETTINGS_WEEK = copy_and_change_period_to(EMAILEU_SETTINGS_BASE, 86400*7)
+
+EMAILEU_SETTINGS_DEFAULT = EMAILEU_SETTINGS_DAY
+
+
+HYPERTEXTCONFERENCE_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns-hypertext09/ht09_contact_list.dat&#34;,
+    separator=&#39;\t&#39;,
+    agg_strength=0
+)
+
+HYPERTEXTCONFERENCE_SETTINGS_AGG120 = copy_and_change_period_to(HYPERTEXTCONFERENCE_SETTINGS_BASE, 120)
+
+HYPERTEXTCONFERENCE_SETTINGS_DEFAULT = HYPERTEXTCONFERENCE_SETTINGS_AGG120
+
+
+SFHHCONFERENCE_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns/co-presence/tij_pres_SFHH.dat&#34;,
+)
+
+SFHHCONFERENCE_SETTINGS_AGG300 = copy_and_change_period_to(SFHHCONFERENCE_SETTINGS_BASE, 300)
+
+SFHHCONFERENCE_SETTINGS_DEFAULT = SFHHCONFERENCE_SETTINGS_AGG300
+
+
+HOSPITALWARD_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat&#34;
+)
+
+HOSPITALWARD_SETTINGS_AGG600 = copy_and_change_period_to(HOSPITALWARD_SETTINGS_BASE, 600)
+
+HOSPITALWARD_SETTINGS_DEFAULT = HOSPITALWARD_SETTINGS_AGG600
+
+
+WORKPLACE13_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns/co-presence/tij_pres_InVS13.dat&#34;
+)
+
+WORKPLACE13_SETTINGS_AGG3600 = copy_and_change_period_to(WORKPLACE13_SETTINGS_BASE, 3600)
+
+WORKPLACE13_SETTINGS_DEFAULT = WORKPLACE13_SETTINGS_AGG3600
+
+
+WORKPLACE15_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns/co-presence/tij_pres_InVS15.dat&#34;
+)
+
+WORKPLACE15_SETTINGS_AGG3600 = copy_and_change_period_to(WORKPLACE15_SETTINGS_BASE, 3600)
+
+WORKPLACE15_SETTINGS_DEFAULT = WORKPLACE15_SETTINGS_AGG3600
+
+
+SCIENCEGALLERY0428_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns-infectious/listcontacts_2009_04_28.txt&#34;,
+    separator=&#39;\t&#39;
+)
+
+SCIENCEGALLERY0428_SETTINGS_AGG120 = copy_and_change_period_to(SCIENCEGALLERY0428_SETTINGS_BASE, 120)
+
+SCIENCEGALLERY0428_SETTINGS_DEFAULT = SCIENCEGALLERY0428_SETTINGS_AGG120
+
+
+SCIENCEGALLERY0429_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns-infectious/listcontacts_2009_04_29.txt&#34;,
+    separator=&#39;\t&#39;
+)
+
+SCIENCEGALLERY0429_SETTINGS_AGG120 = copy_and_change_period_to(SCIENCEGALLERY0429_SETTINGS_BASE, 120)
+
+SCIENCEGALLERY0429_SETTINGS_DEFAULT = SCIENCEGALLERY0429_SETTINGS_AGG120
+
+
+SCIENCEGALLERY0717_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt&#34;,
+    separator=&#39;\t&#39;
+)
+
+SCIENCEGALLERY0717_SETTINGS_AGG120 = copy_and_change_period_to(SCIENCEGALLERY0717_SETTINGS_BASE, 120)
+
+SCIENCEGALLERY0717_SETTINGS_DEFAULT = SCIENCEGALLERY0717_SETTINGS_AGG120
+
+SCIENCEGALLERY_EVALUATE_RANGE = range(60, 1200, 20)
+
+
+THIERSSCHOOL_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/sociopatterns/co-presence/tij_pres_Thiers13.dat&#34;,
+    metafilename=&#34;tnet_sources/sociopatterns/metadata/metadata_Thiers13.dat&#34;,
+    start_timestamp=29960, end_timestamp=64780,
+    minimum_connection_size=5
+)
+
+THIERSSCHOOL_SETTINGS_AGG600 = copy_and_change_period_to(THIERSSCHOOL_SETTINGS_BASE, 600)
+
+THIERSSCHOOL_SETTINGS_DEFAULT = THIERSSCHOOL_SETTINGS_AGG600
+
+
+COLLEGEMSG_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/college-msg/CollegeMsg.txt&#34;,
+    timestamp_first=False,
+    agg_strength=0,
+    minimum_connection_size=4
+)
+
+COLLEGEMSG_SETTINGS_12HOUR = copy_and_change_period_to(COLLEGEMSG_SETTINGS_BASE, 86400/2)
+COLLEGEMSG_SETTINGS_DAY = copy_and_change_period_to(COLLEGEMSG_SETTINGS_BASE, 86400)
+COLLEGEMSG_SETTINGS_2DAYS = copy_and_change_period_to(COLLEGEMSG_SETTINGS_BASE, 86400*2)
+COLLEGEMSG_SETTINGS_4DAYS = copy_and_change_period_to(COLLEGEMSG_SETTINGS_BASE, 86400*4)
+COLLEGEMSG_SETTINGS_WEEK = copy_and_change_period_to(COLLEGEMSG_SETTINGS_BASE, 86400*7)
+
+COLLEGEMSG_SETTINGS_DEFAULT = COLLEGEMSG_SETTINGS_DAY
+
+
+COPENHAGENSMS_SETTINGS_BASE = ImportSettings(
+    filename=&#34;../tnet_sources/copenhagen-study/sms.csv&#34;,
+    separator=&#39;,&#39;,
+    agg_strength=0.
+)
+
+COPENHAGENSMS_SETTINGS_AGG3600 = copy_and_change_period_to(COPENHAGENSMS_SETTINGS_BASE, 3600)
+
+COPENHAGENSMS_SETTINGS_DEFAULT = COPENHAGENSMS_SETTINGS_AGG3600
+
+
+TESTSUITE_DEFAULTS = [
+    LYONSCHOOL_SETTINGS_DEFAULT,
+    EMAILEU_SETTINGS_DEFAULT,
+    COPENHAGENSMS_SETTINGS_DEFAULT,
+    WORKPLACE13_SETTINGS_DEFAULT,
+    SCIENCEGALLERY0428_SETTINGS_DEFAULT,
+    HYPERTEXTCONFERENCE_SETTINGS_DEFAULT,
+    SFHHCONFERENCE_SETTINGS_DEFAULT,
+    HOSPITALWARD_SETTINGS_DEFAULT
+]
+
+
+if __name__ == &#34;__main__&#34;:
+    # Example pair_contacts
+    dc = DataContainer(EMAILEU_SETTINGS_DAY)
+    print(&#34;Example pair_contacts:&#34;, len(dc.pair_contacts))
+
+    # Example get timegraph
+    dc = DataContainer(HOSPITALWARD_SETTINGS_DEFAULT)
+    tg = dc.get_timegraph()
+    print(&#34;Example timegraph:&#34;, tg.num_events())
+
+    # Example get layout
+    dc = DataContainer(WORKPLACE13_SETTINGS_AGG3600)
+    sc = dc.get_SCLayout()
+    print(&#34;Example layout:&#34;, sc.max_bundle_size)
+
+    # example aggregate to arbitrary period
+    dc = DataContainer(LYONSCHOOL_SETTINGS_BASE)  # Base has no pre-aggregation applied to it
+    dc.aggregate_to(555)  # aggregate to this period size.
+    # If makecopy is not used, overwrites the current period and pair_contacts and can&#39;t be reversed.
+    print(&#34;Example aggregation:&#34;, dc.get_num_steps())
+
+    # Example aggregate to different periods
+    dc = DataContainer(LYONSCHOOL_SETTINGS_BASE)
+    # Use makecopy to create a new container.
+    # Be warned that it uses shallow copies for some variables,
+    # for example adding an element to the colormap will place it in all copies.
+    dc1 = dc.aggregate_to(111, makecopy=True)
+    dc2 = dc.aggregate_to(222, strength=0.75, makecopy=True)  # passing a strength argument will overwrite the old strength setting (in the copy)
+    dc3 = dc.aggregate_to(333, makecopy=True)
+    print(&#34;Example multi aggregation:&#34;, dc2.settings.agg_strength, dc3.settings.agg_strength)
+
+    # example testing a range of aggs
+    # I recommend using the aggregate_to function of datacontainer, because this avoids rereading and parsing from disk
+    dc = DataContainer(EMAILEU_SETTINGS_BASE)
+    # agg day to week with 1 day interval and take the TimeGraph of each
+    tgs = [dc.aggregate_to(x, makecopy=True).get_timegraph() for x in range(86400, 86400*7+1, 86400)]
+    print(&#34;Example range aggregation:&#34;, [tg.num_clusters() for tg in tgs])
+
+    # example generate graphs for entire testsuite with default setting along the entire chain
+    for settings in TESTSUITE_DEFAULTS:
+        DataContainer(settings).draw_graph()
+
+
+
+# Copenhagen smses, 27 days
+# fname = &#34;tnet_sources/copenhagen-study/sms.csv&#34;
+# separator = &#39;,&#39;
+# timestamp_first = True
+# period, time_label = 1, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 3600
+# aggregate_time_to_range = list(range(900, 43200, 900))
+# strength = 0
+# min_cluster = 2
+
+# College msg, 193 days
+# fname = &#34;tnet_sources/college-msg/CollegeMsg.txt&#34;
+# timestamp_first = False
+# period, time_label = 1, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, False
+# aggregate_time_to = 86400 # day
+# aggregate_time_to_range = list(range(4*3600, 14*86400, 4*3600))
+# strength = 0
+# min_cluster = 4
+
+
+# High school, 5 days x 8am-6pm
+# fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_Thiers13.dat&#34;
+# mname = &#34;tnet_sources/sociopatterns/metadata/metadata_Thiers13.dat&#34;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = 29960, 64780, True
+# aggregate_time_to = 600
+# aggregate_time_to_range = list(range(60, 3600, 20))
+# strength = 0.5
+# min_cluster = 5
+
+
+# Science Gallery
+# fname = &#34;tnet_sources/sociopatterns-infectious/listcontacts_2009_04_28.txt&#34;
+# fname = &#34;tnet_sources/sociopatterns-infectious/listcontacts_2009_04_29.txt&#34;
+# fname = &#34;tnet_sources/sociopatterns-infectious/listcontacts_2009_07_17.txt&#34;
+# separator = &#39;\t&#39;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 120
+# aggregate_time_to_range = list(range(60, 1200, 20))
+# strength = 0.5
+# min_cluster = 2
+
+# Workplace, 2 weeks x 8am-
+# fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_InVS13.dat&#34;
+# fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_InVS15.dat&#34;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 3600
+# aggregate_time_to_range = list(range(60, 3600, 60))
+# strength = 0.5
+# min_cluster = 2
+
+# Hospital ward, 3 days in a continuous block
+# fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_LH10.dat&#34;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 600
+# aggregate_time_to_range = list(range(60, 3000, 20))
+# strength = 0.5
+# min_cluster = 2
+
+# Conference, 2 days
+# fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_SFHH.dat&#34;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 300
+# aggregate_time_to_range = list(range(60, 3000, 20))
+# strength = 0.5
+# min_cluster = 2
+
+# Hypertext conference, 2.5 days
+# fname = &#34;tnet_sources/sociopatterns-hypertext09/ht09_contact_list.dat&#34;
+# separator = &#39;\t&#39;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 120
+# aggregate_time_to_range = list(range(60, 1800, 20))
+# strength = 0
+# min_cluster = 2
+
+# Email EU, 500+ days in 45 mil. seconds
+# fname = &#34;tnet_sources/email-EU/email-Eu-core-temporal-Dept1.txt&#34;
+# timestamp_first = False
+# period, time_label = 1, &#39;d&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, False
+# aggregate_time_to = 7*86400 # week
+# aggregate_time_to_range = list(range(3600, 10*86400, 3600))
+# strength = 1/86400
+# min_cluster = 2
+
+# Primary school, 2 days
+# fname = &#34;tnet_sources/sociopatterns/co-presence/tij_pres_LyonSchool.dat&#34;
+# mname = &#34;tnet_sources/sociopatterns/metadata/metadata_LyonSchool.dat&#34;
+# timestamp_first = True
+# period, time_label = 20, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = 120800, 151960, True
+# aggregate_time_to = 60
+# aggregate_time_to_range = list(range(60, 1800, 20))
+# strength = 0.5
+# min_cluster = 2
+
+# start_timestamp, end_timestamp = -1, -1
+# separator = &#39; &#39;
+# mname = None
+
+
+
+
+# Copenhagen smses, 27 days
+# fname = &#34;tnet_sources/copenhagen-study/sms.csv&#34;
+# separator = &#39;,&#39;
+# timestamp_first = True
+# period, time_label = 1, &#39;s&#39;
+# start_timestamp, end_timestamp, add_missing = -1, -1, True
+# aggregate_time_to = 3600
+# aggregate_time_to_range = list(range(900, 43200, 900))
+# strength = 0
+# min_cluster = 2</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="tgv.data_importer.copy_and_change_period_to"><code class="name flex">
+<span>def <span class="ident">copy_and_change_period_to</span></span>(<span>settings, newperiod)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def copy_and_change_period_to(settings, newperiod):
+    c = copy(settings)
+    c.period = newperiod
+    return c</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="tgv.data_importer.DataContainer"><code class="flex name class">
+<span>class <span class="ident">DataContainer</span></span>
+<span>(</span><span>settings: <a title="tgv.data_importer.ImportSettings" href="#tgv.data_importer.ImportSettings">ImportSettings</a>)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DataContainer:
+    def __init__(self, settings: ImportSettings):
+        self.settings = settings
+        self.pair_contacts = read_pair_contacts_from_file(self.settings.filename, self.settings.separator,
+                                                          self.settings.start_timestamp, self.settings.end_timestamp,
+                                                          self.settings.timestamp_first, verbose=False)
+
+        self.node_metadata, self.node_categories = None, None
+        if self.settings.hasmeta:
+            self.node_metadata, self.node_categories = read_node_metadata_from_file(self.settings.metafilename)
+
+        if settings.file_period &lt;= 0:
+            settings.file_period = self.infer_period()
+
+        if settings.start_timestamp &lt; 0:
+            settings.start_timestamp = min(self.pair_contacts.keys())
+
+        if settings.end_timestamp &lt; 0:
+            settings.end_timestamp = max(self.pair_contacts.keys())
+
+        if settings.period &gt; settings.file_period:
+            agg_to = settings.period  # Newly wanted period
+            settings.period = settings.file_period  # Function expects current period in settings.period
+            self.aggregate_to(agg_to, settings.agg_strength)
+        else:
+            settings.period = settings.file_period
+
+        if self.settings.add_missing:
+            add_missing_timestamps(self.pair_contacts, self.settings.period,
+                                   self.settings.start_timestamp, self.settings.end_timestamp, verbose=False)
+
+        if self.settings.hasmeta:
+            if self.settings.colormap is None:
+                self.auto_color()
+
+        self.net_name = (settings.filename.split(os.sep)[-1]).split(&#34;.&#34;)[0]
+        self.net_suffix = &#34;-min_&#34; + str(self.settings.minimum_cluster_size) \
+                          + &#34;-aggr_to_&#34; + str(self.settings.period) \
+                          + &#34;-strength_&#34; + str(self.settings.agg_strength)
+
+        self.timestamp_reverse_translator = None  # Generated when get_timegraph is called
+
+    def infer_period(self) -&gt; int:
+        &#34;&#34;&#34;
+        Finds the largest possible period that will match all timestamps by taking the gcd of all differences.
+
+        :return: The largest possible period of the data.
+        &#34;&#34;&#34;
+        from math import gcd
+        tt = list(self.pair_contacts.keys())
+        if len(tt) &lt; 2:
+            return 1
+        x = tt[1] - tt[0]
+        for i in range(2, len(tt)):
+            x = gcd(x, tt[i] - tt[i-1])
+            if x == 1:
+                break
+        return x
+
+    def add_metadata(self, node_metadata, update_colormap=True):
+        &#34;&#34;&#34;
+        Gives the possibility to add metadata from other sources than file, if the metadata is generated somewhere.
+        :param node_metadata: dict of {node_id: &#34;metadata_string&#34;}
+        :param update_colormap: True if you want to automatically generate colors for all categories.
+        &#34;&#34;&#34;
+        self.settings.hasmeta = True
+        self.node_metadata = node_metadata
+        self.node_categories = sorted(list(set(node_metadata.values())))
+        if update_colormap:
+            self.auto_color()
+
+    def auto_color(self):
+        &#34;&#34;&#34;
+        Automatically generates colors for all known metadata categories (unique metadata strings)
+        from the XKCD color list.
+        &#34;&#34;&#34;
+        from tgv.colours import assign_colours_rgba_tuple
+        self.settings.colormap = assign_colours_rgba_tuple(self.node_categories)
+
+    def duration(self):
+        &#34;&#34;&#34;
+        Get the duration between start and end of the data.
+        :return: the duration between start and end of the data
+        &#34;&#34;&#34;
+        return str(self.settings.end_timestamp - self.settings.start_timestamp) + self.settings.timelabel
+
+    def get_num_steps(self):
+        &#34;&#34;&#34;
+        Get the number of steps in the data that actually exist.
+        This is also the amount of layers the resulting graph will have.
+        :return: the number of steps in the data that actually exist
+        &#34;&#34;&#34;
+        return len(self.pair_contacts.keys())
+
+    def get_timegraph(self):
+        &#34;&#34;&#34;
+        Builds the TimeGraph based on the data and settings in this container.
+        Since this process needs to normalise the timestamps (make them consecutive 0-indexed) it also fills the
+        self.timestamp_reverse_translator, which can map a layer index to a timestamp (or other representations thereof,
+        based on self.time_label).
+        At this stage the minimum_cluster_size and minimum_connection_size will take effect.
+        :return:
+        &#34;&#34;&#34;
+        time_normalised_pair_contacts, timestamp_reverse_translator = normalise_timestamps(self.pair_contacts, self.settings.timelabel)
+        self.timestamp_reverse_translator = timestamp_reverse_translator  # saved for drawing purposes, see self.draw_graph()
+        node_ids = node_ids_from_pair_contacts(self.pair_contacts)
+
+        if self.settings.hasmeta:  # If metadata exists, it needs to be injected before being passed to TimeGraph
+            node_ids = {node_id: self.node_metadata.get(node_id, None) for node_id in node_ids}
+
+        tg = TimeGraph(time_normalised_pair_contacts, node_ids, self.get_num_steps(),
+                       self.settings.minimum_cluster_size, self.settings.minimum_connection_size)
+
+        return tg
+
+    def get_SCLayout(self):
+        &#34;&#34;&#34;
+        Quick function that generates a SizedConnectionLayout with the default settings. Does not do any ordering or
+        layout, but provides the base object to call those functions on. To see how you can use this, please see the
+        SizedConnectionLayout documentation.
+        :return: A SizedConnectionLayout based on the data in this container, with default SCL settings.
+        &#34;&#34;&#34;
+        tg = self.get_timegraph()
+        sc = SizedConnectionLayout(tg)
+        return sc
+
+    def draw_graph(self, output=&#34;&#34;):
+        &#34;&#34;&#34;
+        Quick function to draw a colored graph of this data with completely default settings.
+        :param output: filename of the resulting drawing. If ending on a directory separator, placed in that folder with
+        a generated name, or if an empty string it will put it in a default location with a generated name.
+        &#34;&#34;&#34;
+        if output == &#34;&#34;:
+            output = &#34;flow_output/&#34; + self.net_name + self.net_suffix + &#34;.svg&#34;
+        elif output[-1] == os.sep:  # If path is a directory location
+            output = output + self.net_name + self.net_suffix + &#34;.svg&#34;
+
+        sc = self.get_SCLayout()
+        sc.draw_graph(filename=output, colormap=self.settings.colormap,
+                      show_timestamps=True, timestamp_translator=self.timestamp_reverse_translator)
+
+    def aggregate_to(self, period, strength=-1., makecopy=False):
+        &#34;&#34;&#34;
+        Aggregate different timestamps to a new period. Works by adjusting the period and collecting all timestamps
+        which fall in the new interval. Then, each connection must appear at least strength percent of the timestamps
+        that were aggregated.
+        It is possible to toggle to make a copy of the original container so as to use multiple aggregations at the same
+        time. The copy extends to: immutable or base type attributes of both container and settings, and the keys of the
+        data dictionary. Hence, be careful. Definitely not thread-safe by default.
+        :param period: The new period to aggregate to. Will overwrite the value in settings.
+        :param strength: The threshold for how often a connection must exist. if not given, takes the value from settings, if given, overwrites the value in settings.
+        :param makecopy: Toggle to make a shallow copy of the data, such that the original can also be used.
+        :return: the container containing the aggregated data. (self, if makecopy is False)
+        &#34;&#34;&#34;
+        if makecopy:  # SHALLOW COPY! Is safe to generate different aggregations, since the Timegraph only reads.
+            container = copy(self)
+            container.settings = copy(self.settings)
+        else:
+            container = self
+
+        if strength &lt; 0:
+            strength = self.settings.agg_strength
+        else:
+            self.settings.agg_strength = strength
+
+        # Make aggregation
+        container.pair_contacts = strongly_aggregate_time(container.pair_contacts, container.settings.period, period, strength)
+        container.settings.period = period
+
+        if container.settings.add_missing:  # Adjust missing timestamps (not sure if needed, but can&#39;t hurt)
+            add_missing_timestamps(container.pair_contacts, container.settings.period,
+                                   container.settings.start_timestamp, container.settings.end_timestamp, verbose=False)
+
+        # Update suffix name
+        self.net_suffix = &#34;-min_&#34; + str(self.settings.minimum_cluster_size) \
+                          + &#34;-aggr_to_&#34; + str(self.settings.period) \
+                          + &#34;-strength_&#34; + str(self.settings.agg_strength)
+        return container</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="tgv.data_importer.DataContainer.add_metadata"><code class="name flex">
+<span>def <span class="ident">add_metadata</span></span>(<span>self, node_metadata, update_colormap=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Gives the possibility to add metadata from other sources than file, if the metadata is generated somewhere.
+:param node_metadata: dict of {node_id: &quot;metadata_string&quot;}
+:param update_colormap: True if you want to automatically generate colors for all categories.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_metadata(self, node_metadata, update_colormap=True):
+    &#34;&#34;&#34;
+    Gives the possibility to add metadata from other sources than file, if the metadata is generated somewhere.
+    :param node_metadata: dict of {node_id: &#34;metadata_string&#34;}
+    :param update_colormap: True if you want to automatically generate colors for all categories.
+    &#34;&#34;&#34;
+    self.settings.hasmeta = True
+    self.node_metadata = node_metadata
+    self.node_categories = sorted(list(set(node_metadata.values())))
+    if update_colormap:
+        self.auto_color()</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.aggregate_to"><code class="name flex">
+<span>def <span class="ident">aggregate_to</span></span>(<span>self, period, strength=-1.0, makecopy=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Aggregate different timestamps to a new period. Works by adjusting the period and collecting all timestamps
+which fall in the new interval. Then, each connection must appear at least strength percent of the timestamps
+that were aggregated.
+It is possible to toggle to make a copy of the original container so as to use multiple aggregations at the same
+time. The copy extends to: immutable or base type attributes of both container and settings, and the keys of the
+data dictionary. Hence, be careful. Definitely not thread-safe by default.
+:param period: The new period to aggregate to. Will overwrite the value in settings.
+:param strength: The threshold for how often a connection must exist. if not given, takes the value from settings, if given, overwrites the value in settings.
+:param makecopy: Toggle to make a shallow copy of the data, such that the original can also be used.
+:return: the container containing the aggregated data. (self, if makecopy is False)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def aggregate_to(self, period, strength=-1., makecopy=False):
+    &#34;&#34;&#34;
+    Aggregate different timestamps to a new period. Works by adjusting the period and collecting all timestamps
+    which fall in the new interval. Then, each connection must appear at least strength percent of the timestamps
+    that were aggregated.
+    It is possible to toggle to make a copy of the original container so as to use multiple aggregations at the same
+    time. The copy extends to: immutable or base type attributes of both container and settings, and the keys of the
+    data dictionary. Hence, be careful. Definitely not thread-safe by default.
+    :param period: The new period to aggregate to. Will overwrite the value in settings.
+    :param strength: The threshold for how often a connection must exist. if not given, takes the value from settings, if given, overwrites the value in settings.
+    :param makecopy: Toggle to make a shallow copy of the data, such that the original can also be used.
+    :return: the container containing the aggregated data. (self, if makecopy is False)
+    &#34;&#34;&#34;
+    if makecopy:  # SHALLOW COPY! Is safe to generate different aggregations, since the Timegraph only reads.
+        container = copy(self)
+        container.settings = copy(self.settings)
+    else:
+        container = self
+
+    if strength &lt; 0:
+        strength = self.settings.agg_strength
+    else:
+        self.settings.agg_strength = strength
+
+    # Make aggregation
+    container.pair_contacts = strongly_aggregate_time(container.pair_contacts, container.settings.period, period, strength)
+    container.settings.period = period
+
+    if container.settings.add_missing:  # Adjust missing timestamps (not sure if needed, but can&#39;t hurt)
+        add_missing_timestamps(container.pair_contacts, container.settings.period,
+                               container.settings.start_timestamp, container.settings.end_timestamp, verbose=False)
+
+    # Update suffix name
+    self.net_suffix = &#34;-min_&#34; + str(self.settings.minimum_cluster_size) \
+                      + &#34;-aggr_to_&#34; + str(self.settings.period) \
+                      + &#34;-strength_&#34; + str(self.settings.agg_strength)
+    return container</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.auto_color"><code class="name flex">
+<span>def <span class="ident">auto_color</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Automatically generates colors for all known metadata categories (unique metadata strings)
+from the XKCD color list.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def auto_color(self):
+    &#34;&#34;&#34;
+    Automatically generates colors for all known metadata categories (unique metadata strings)
+    from the XKCD color list.
+    &#34;&#34;&#34;
+    from tgv.colours import assign_colours_rgba_tuple
+    self.settings.colormap = assign_colours_rgba_tuple(self.node_categories)</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.draw_graph"><code class="name flex">
+<span>def <span class="ident">draw_graph</span></span>(<span>self, output='')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Quick function to draw a colored graph of this data with completely default settings.
+:param output: filename of the resulting drawing. If ending on a directory separator, placed in that folder with
+a generated name, or if an empty string it will put it in a default location with a generated name.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def draw_graph(self, output=&#34;&#34;):
+    &#34;&#34;&#34;
+    Quick function to draw a colored graph of this data with completely default settings.
+    :param output: filename of the resulting drawing. If ending on a directory separator, placed in that folder with
+    a generated name, or if an empty string it will put it in a default location with a generated name.
+    &#34;&#34;&#34;
+    if output == &#34;&#34;:
+        output = &#34;flow_output/&#34; + self.net_name + self.net_suffix + &#34;.svg&#34;
+    elif output[-1] == os.sep:  # If path is a directory location
+        output = output + self.net_name + self.net_suffix + &#34;.svg&#34;
+
+    sc = self.get_SCLayout()
+    sc.draw_graph(filename=output, colormap=self.settings.colormap,
+                  show_timestamps=True, timestamp_translator=self.timestamp_reverse_translator)</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.duration"><code class="name flex">
+<span>def <span class="ident">duration</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the duration between start and end of the data.
+:return: the duration between start and end of the data</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def duration(self):
+    &#34;&#34;&#34;
+    Get the duration between start and end of the data.
+    :return: the duration between start and end of the data
+    &#34;&#34;&#34;
+    return str(self.settings.end_timestamp - self.settings.start_timestamp) + self.settings.timelabel</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.get_SCLayout"><code class="name flex">
+<span>def <span class="ident">get_SCLayout</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Quick function that generates a SizedConnectionLayout with the default settings. Does not do any ordering or
+layout, but provides the base object to call those functions on. To see how you can use this, please see the
+SizedConnectionLayout documentation.
+:return: A SizedConnectionLayout based on the data in this container, with default SCL settings.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_SCLayout(self):
+    &#34;&#34;&#34;
+    Quick function that generates a SizedConnectionLayout with the default settings. Does not do any ordering or
+    layout, but provides the base object to call those functions on. To see how you can use this, please see the
+    SizedConnectionLayout documentation.
+    :return: A SizedConnectionLayout based on the data in this container, with default SCL settings.
+    &#34;&#34;&#34;
+    tg = self.get_timegraph()
+    sc = SizedConnectionLayout(tg)
+    return sc</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.get_num_steps"><code class="name flex">
+<span>def <span class="ident">get_num_steps</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the number of steps in the data that actually exist.
+This is also the amount of layers the resulting graph will have.
+:return: the number of steps in the data that actually exist</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_num_steps(self):
+    &#34;&#34;&#34;
+    Get the number of steps in the data that actually exist.
+    This is also the amount of layers the resulting graph will have.
+    :return: the number of steps in the data that actually exist
+    &#34;&#34;&#34;
+    return len(self.pair_contacts.keys())</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.get_timegraph"><code class="name flex">
+<span>def <span class="ident">get_timegraph</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Builds the TimeGraph based on the data and settings in this container.
+Since this process needs to normalise the timestamps (make them consecutive 0-indexed) it also fills the
+self.timestamp_reverse_translator, which can map a layer index to a timestamp (or other representations thereof,
+based on self.time_label).
+At this stage the minimum_cluster_size and minimum_connection_size will take effect.
+:return:</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_timegraph(self):
+    &#34;&#34;&#34;
+    Builds the TimeGraph based on the data and settings in this container.
+    Since this process needs to normalise the timestamps (make them consecutive 0-indexed) it also fills the
+    self.timestamp_reverse_translator, which can map a layer index to a timestamp (or other representations thereof,
+    based on self.time_label).
+    At this stage the minimum_cluster_size and minimum_connection_size will take effect.
+    :return:
+    &#34;&#34;&#34;
+    time_normalised_pair_contacts, timestamp_reverse_translator = normalise_timestamps(self.pair_contacts, self.settings.timelabel)
+    self.timestamp_reverse_translator = timestamp_reverse_translator  # saved for drawing purposes, see self.draw_graph()
+    node_ids = node_ids_from_pair_contacts(self.pair_contacts)
+
+    if self.settings.hasmeta:  # If metadata exists, it needs to be injected before being passed to TimeGraph
+        node_ids = {node_id: self.node_metadata.get(node_id, None) for node_id in node_ids}
+
+    tg = TimeGraph(time_normalised_pair_contacts, node_ids, self.get_num_steps(),
+                   self.settings.minimum_cluster_size, self.settings.minimum_connection_size)
+
+    return tg</code></pre>
+</details>
+</dd>
+<dt id="tgv.data_importer.DataContainer.infer_period"><code class="name flex">
+<span>def <span class="ident">infer_period</span></span>(<span>self) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Finds the largest possible period that will match all timestamps by taking the gcd of all differences.</p>
+<h2 id="returns">Returns:</h2>
+<dl>
+<dd><p>The largest possible period of the data.</p></dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def infer_period(self) -&gt; int:
+    &#34;&#34;&#34;
+    Finds the largest possible period that will match all timestamps by taking the gcd of all differences.
+
+    :return: The largest possible period of the data.
+    &#34;&#34;&#34;
+    from math import gcd
+    tt = list(self.pair_contacts.keys())
+    if len(tt) &lt; 2:
+        return 1
+    x = tt[1] - tt[0]
+    for i in range(2, len(tt)):
+        x = gcd(x, tt[i] - tt[i-1])
+        if x == 1:
+            break
+    return x</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="tgv.data_importer.ImportSettings"><code class="flex name class">
+<span>class <span class="ident">ImportSettings</span></span>
+<span>(</span><span>filename: str, metafilename: str = None, separator: str = ' ', timestamp_first: bool = True, file_period: int = -1, time_label: str = 's', start_timestamp: int = -1, end_timestamp: int = -1, add_missing: bool = True, colormap: Dict[object, Tuple[float, float, float, float]] = None, minimum_cluster_size: int = 2, minimum_connection_size: int = 2, period: int = -1, agg_strength: float = 0.5)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A Collection of settings that a DataContainer can use to prepare data. It is a separate object so that the
+data will not be actually loaded upon importing.</p>
+<h2 id="args">Args:</h2>
+<dl>
+<dt><strong><code>filename</code></strong></dt>
+<dd><p>String, File location of contact data</p></dd>
+<dt><strong><code>metafilename</code></strong></dt>
+<dd><p>String, File location of metadata, can be None for no metadata</p></dd>
+<dt><strong><code>separator</code></strong></dt>
+<dd><p>String, separator used in both main and meta file</p></dd>
+<dt><strong><code>timestamp_first</code></strong></dt>
+<dd><p>Bool, Whether the timestamp is the first value in each triplet (True) or the last (False)</p></dd>
+<dt><strong><code>file_period</code></strong></dt>
+<dd><p>int, The period of the data in the file, by default it will be automatically detected in DataContainer</p></dd>
+<dt><strong><code>time_label</code></strong></dt>
+<dd><p>String, 's' for seconds, 'd' for days</p></dd>
+<dt><strong><code>start_timestamp</code></strong></dt>
+<dd><p>int, The value of the first timestamp to consider. -1 to not set a lower limit and let the code autofill this value</p></dd>
+<dt><strong><code>end_timestamp</code></strong></dt>
+<dd><p>int, The value of the last timestamp to consider. -1 to not set an upper limit and let the code autofill this value</p></dd>
+<dt><strong><code>add_missing</code></strong></dt>
+<dd><p>bool, Toggle whether to add timestamps that do not exist in the data because there were no connections at that time</p></dd>
+<dt><strong><code>colormap</code></strong></dt>
+<dd><p>dict, Dictionary with {&quot;meta name&quot;: (r,g,b,a)} color value. If None will generate automatically</p></dd>
+<dt><strong><code>minimum_cluster_size</code></strong></dt>
+<dd><p>Described in tgv/Timegraph.py</p></dd>
+<dt><strong><code>minimum_connection_size</code></strong></dt>
+<dd><p>Described in tgv/Timegraph.py</p></dd>
+<dt><strong><code>period</code></strong></dt>
+<dd><p>int, The period to aggregate the data to if desired (-1 to not aggregate)</p></dd>
+<dt><strong><code>agg_strength</code></strong></dt>
+<dd><p>float, Strength to use in aggregation, between 0. and 1.</p></dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ImportSettings:
+    def __init__(self, filename: str, metafilename: str or None = None, separator: str = &#39; &#39;,
+                 timestamp_first: bool = True, file_period: int = -1, time_label: str = &#39;s&#39;,
+                 start_timestamp: int = -1, end_timestamp: int = -1, add_missing: bool = True,
+                 colormap: Dict[object, Tuple[float, float, float, float]] or None = None,
+                 minimum_cluster_size: int = 2, minimum_connection_size: int = 2,
+                 period: int = -1, agg_strength: float = 0.5) -&gt; None:
+        &#34;&#34;&#34;
+        A Collection of settings that a DataContainer can use to prepare data. It is a separate object so that the
+        data will not be actually loaded upon importing.
+
+        :param filename: String, File location of contact data
+        :param metafilename: String, File location of metadata, can be None for no metadata
+        :param separator: String, separator used in both main and meta file
+        :param timestamp_first: Bool, Whether the timestamp is the first value in each triplet (True) or the last (False)
+        :param file_period: int, The period of the data in the file, by default it will be automatically detected in DataContainer
+        :param time_label: String, &#39;s&#39; for seconds, &#39;d&#39; for days
+        :param start_timestamp: int, The value of the first timestamp to consider. -1 to not set a lower limit and let the code autofill this value
+        :param end_timestamp: int, The value of the last timestamp to consider. -1 to not set an upper limit and let the code autofill this value
+        :param add_missing: bool, Toggle whether to add timestamps that do not exist in the data because there were no connections at that time
+        :param colormap: dict, Dictionary with {&#34;meta name&#34;: (r,g,b,a)} color value. If None will generate automatically
+        :param minimum_cluster_size: Described in tgv/Timegraph.py
+        :param minimum_connection_size: Described in tgv/Timegraph.py
+        :param period: int, The period to aggregate the data to if desired (-1 to not aggregate)
+        :param agg_strength: float, Strength to use in aggregation, between 0. and 1.
+        &#34;&#34;&#34;
+        self.filename = filename                # String, File location of contact data
+        self.metafilename = metafilename        # String, File location of metadata, can be None for no metadata
+        self.separator = separator              # String, separator used in both main and meta file
+        self.timestamp_first = timestamp_first  # Bool,   Whether the timestamp is the first value in each triplet (True) or the last (False)
+        self.file_period = file_period          # int,    The period of the data in the file, by default it will be automatically detected in DataContainer
+        self.timelabel = time_label             # String, &#39;s&#39; for seconds, &#39;d&#39; for days
+        self.start_timestamp = start_timestamp  # int,    The value of the first timestamp to consider. -1 to not set a lower limit and let the code autofill this value
+        self.end_timestamp = end_timestamp      # int,    The value of the last timestamp to consider. -1 to not set an upper limit and let the code autofill this value
+        self.add_missing = add_missing          # bool,   Toggle whether to add timestamps that do not exist in the data because there were no connections at that time
+        self.colormap = colormap                # dict,   Dictionary with {&#34;meta name&#34;: (r,g,b,a)} color value. If None will generate automatically
+        self.minimum_connection_size = minimum_connection_size  # See TimeGraph
+        self.minimum_cluster_size = max(minimum_cluster_size, minimum_connection_size)  # See TimeGraph
+        self.period = period                    # int,    The period to aggregate the data to if desired (-1 to not aggregate)
+        self.agg_strength = agg_strength        # float,  Strength to use in aggregation, between 0. and 1.
+
+        self.hasmeta = self.metafilename is not None  # Bool toggle to see if metadata exists. Can be toggled by add_metadata()</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="tgv" href="index.html">tgv</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="tgv.data_importer.copy_and_change_period_to" href="#tgv.data_importer.copy_and_change_period_to">copy_and_change_period_to</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="tgv.data_importer.DataContainer" href="#tgv.data_importer.DataContainer">DataContainer</a></code></h4>
+<ul class="two-column">
+<li><code><a title="tgv.data_importer.DataContainer.add_metadata" href="#tgv.data_importer.DataContainer.add_metadata">add_metadata</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.aggregate_to" href="#tgv.data_importer.DataContainer.aggregate_to">aggregate_to</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.auto_color" href="#tgv.data_importer.DataContainer.auto_color">auto_color</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.draw_graph" href="#tgv.data_importer.DataContainer.draw_graph">draw_graph</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.duration" href="#tgv.data_importer.DataContainer.duration">duration</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.get_SCLayout" href="#tgv.data_importer.DataContainer.get_SCLayout">get_SCLayout</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.get_num_steps" href="#tgv.data_importer.DataContainer.get_num_steps">get_num_steps</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.get_timegraph" href="#tgv.data_importer.DataContainer.get_timegraph">get_timegraph</a></code></li>
+<li><code><a title="tgv.data_importer.DataContainer.infer_period" href="#tgv.data_importer.DataContainer.infer_period">infer_period</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="tgv.data_importer.ImportSettings" href="#tgv.data_importer.ImportSettings">ImportSettings</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.3</a>.</p>
+</footer>
+</body>
+</html>

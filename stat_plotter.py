@@ -3,7 +3,7 @@ import numpy as np
 
 
 if __name__ == "__main__":
-    from importer import DataContainer, LYONSCHOOL_SETTINGS_BASE, LYONSCHOOL_EVALUATE_RANGE
+    from tgv.data_importer import DataContainer, LYONSCHOOL_SETTINGS_BASE, LYONSCHOOL_EVALUATE_RANGE
     evaluate_at = list(LYONSCHOOL_EVALUATE_RANGE)
     dc = DataContainer(LYONSCHOOL_SETTINGS_BASE)
 

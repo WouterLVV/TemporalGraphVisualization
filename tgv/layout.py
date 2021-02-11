@@ -1194,7 +1194,7 @@ class SizedConnectionLayout:
         thickness = num_members * self.line_width
         half_thickness = len(members) * self.line_width / 2.
 
-        labels = Counter(map(lambda x: x.name, members))
+        labels = Counter(map(lambda x: x.meta_string, members))
         labels = [(colormap.get(lbl, self.default_line_color), cnt / num_members) for (lbl, cnt) in
                   sorted(list(labels.items()))]
 
@@ -1250,7 +1250,7 @@ class SizedConnectionLayout:
         :param direction: True for a fade in, False for a fade out
         """
         colors = [(colormap.get(lbl, self.default_line_color), cnt / len(cluster)) for (lbl, cnt) in
-                  sorted(list(Counter(map(lambda x: x.name, cluster.members)).items()))]
+                  sorted(list(Counter(map(lambda x: x.meta_string, cluster.members)).items()))]
         if direction:
             coloured_bezier(context,
                             (cluster.x - self.xseparation / 3., cluster.y),
