@@ -71,3 +71,4 @@ colors = {"group1": (0., 0.5, 1., 1.), "group2": (0.75, 0.4, 0.2, 1.)}
 
 tg = TimeGraph(contactlist, nodes=nodes_with_metadata)
 SizedConnectionLayout(tg).draw_graph("example4.svg", scale=10., colormap=colors)
+

@@ -1,6 +1,3 @@
-from tgv.timegraph import TimeGraph
-from tgv.layout import SizedConnectionLayout
-
 from tgv.io_operations import null_model
 #from tgv.colours import *
 
@@ -172,7 +169,7 @@ def stat_plot(ylabel, res, aggregate_time_to_range):
 
 if __name__ == '__main__':
 
-    from importer import DataContainer, SCIENCEGALLERY0717_SETTINGS_BASE, SCIENCEGALLERY_EVALUATE_RANGE
+    from tgv.data_importer import DataContainer, SCIENCEGALLERY0717_SETTINGS_BASE, SCIENCEGALLERY_EVALUATE_RANGE
     dc = DataContainer(SCIENCEGALLERY0717_SETTINGS_BASE)
     aggregate_time_to_range = list(SCIENCEGALLERY_EVALUATE_RANGE)
 

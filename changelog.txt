@@ -1,5 +1,24 @@
 Changelog TemporalGraphVisualization
 
+=== 2021-02-11 ===
+= Documentation =
+
+ - Documentation updated and added for changes made in last update.
+
+=== 2021-01-13 ===
+= Features =
+
+ - Added data_importer.py for easily importing data
+
+ - Timegraph now accepts more forms of input for nodes and conns and has more defaults
+
+ - Split out add_missing to separate function
+
+=== 2021-01-11 ===
+= Bugfixes =
+
+ - Removed RecordingSurface from code due to bugged behaviour
+
 === 2020-12-15 ===
 = Features =
 

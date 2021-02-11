@@ -6,8 +6,6 @@ def read_pair_contacts_from_file(fin_name, separator=' ', start_timestamp=-1, en
         fin_name : str
             input file with whitespace-separated triplets per line:
             timestamp node1 node2 (assumed to appear chronologically)
-        grain_t : int
-            sensing interval in fin_name
         start_timestamp, end_timestamp : int
             interval of timestamps to read from file (inclusive)
             either neither or both should be set
@@ -55,8 +53,8 @@ def read_pair_contacts_from_file(fin_name, separator=' ', start_timestamp=-1, en
     return pair_contacts
 
 
-def add_missing_timestamps(pair_contacts, grain_t=20, start_timestamp=-1, end_timestamp=-1, verbose=False):
-    # Missing timestamps are timestamp in which there were no connections
+def add_missing_timestamps(pair_contacts, grain_t, start_timestamp=-1, end_timestamp=-1, verbose=False):
+    # Missing timestamps are timestamps in which there were no connections and thus are not in the data
     timestamps = sorted(list(pair_contacts.keys()))
 
     # Extend range if timestamps are missing at the beginning or end

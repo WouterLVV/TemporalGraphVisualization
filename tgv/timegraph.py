@@ -10,16 +10,16 @@ import itertools
 class TimeNode:
     """Simple data structure for nodes than can belong to different groups over time"""
 
-    def __init__(self, conns: set = None, max_step: int = -1, id=-1, name=None):
+    def __init__(self, conns: set = None, max_step: int = -1, id=-1, meta_string=None):
         """Initializes a TimeNode structure
 
         :param conns: a set of connections this node has in tuple form (neighbour, time step)
         :param max_step: The maximum number of steps in the total graph
         :param id: Node identifier, should be unique over the graph this TimeNode belongs to
-        :param name: (Optional) Human readable name of this node
+        :param meta_string: (Optional) Human readable name of this node
         """
         self.id = id
-        self.name = name
+        self.meta_string = meta_string
 
         self.nbs = [set() for _ in range(max_step)]
         self.clusters = [None] * max_step  # type: List[TimeCluster or None]
@@ -38,7 +38,7 @@ class TimeNode:
         self.nbs[t].add(n)
 
     def __str__(self):
-        return str(self.id) + ((": " + self.name) if self.name is not None else "")
+        return str(self.id) + ((": " + self.meta_string) if self.meta_string is not None else "")
 
 
 class TimeCluster:
@@ -183,8 +183,9 @@ class TimeGraph:
     def __init__(self, conns, nodes: None or int or List[str] or Dict[Any, str] or set[Any] = None, num_steps: int = -1, minimum_cluster_size=1, minimum_connection_size=1):
         """Initializes a TimeGraph
 
-        :param conns: Iterable of undirected connections in the form of (head, tail, timestep)
-        :param nodes: Either an int (#nodes) or a list [ node_name, ... ]
+        :param conns: Iterable of undirected connections in the form of (head, tail, timestep) or in dictionary format
+                        by form of {timestamp: [(head, tail), ...]} or as a list of lists where the index of the list is the timestep.
+        :param nodes: Either an int (#nodes) or a list/set [ node_id, ... ] or a dict {node_id: node_metadata}
         :param num_steps: Total number of steps
         """
 
@@ -193,26 +194,27 @@ class TimeGraph:
         self.min_clust_size = minimum_cluster_size
         self.min_conn_size = minimum_connection_size
 
-
-        if isinstance(conns, dict):
-            if self.num_steps < 0:
-                self.num_steps = max(conns.keys()) + 1
-            if nodes is None:
+        if isinstance(conns, dict):  # {timestamp: [iterable of connections in timestamp]}
+            if self.num_steps < 0:   # If number of steps is not given, derive from data
+                self.num_steps = max(conns.keys()) + 1  # timestamps should be 0-indexed.
+            if nodes is None:        # If no node ids were given, derive from data
                 nodes = set([x for pair in conns.values() for x in pair])
-            self._make_nodes(nodes)
 
+            self._make_nodes(nodes)
             for t, l in conns.items():
                 for (f, b) in l:
                     self.nodes[f].add_connection(self.nodes[b], t)
                     self.nodes[b].add_connection(self.nodes[f], t)
-        elif isinstance(conns, list):
+
+        elif isinstance(conns, list):  # Either a list of [(a, b, t), ...] or [[(a,b), ...], [(b,c), ...]]
             list_of_list_of_pairs = False
             try:
                 if len(conns[0][0]) == 2:
-                    list_of_list_of_pairs = True
+                    list_of_list_of_pairs = True  # If true, that interprets the index of a list as the timestamp
             except TypeError:
                 pass
-            if list_of_list_of_pairs:
+
+            if list_of_list_of_pairs:  # List of list of connections
                 if self.num_steps < 0:
                     self.num_steps = len(conns)
                 if nodes is None:
@@ -223,7 +225,8 @@ class TimeGraph:
                     for (f, b) in l:
                         self.nodes[f].add_connection(self.nodes[b], t)
                         self.nodes[b].add_connection(self.nodes[f], t)
-            else:
+
+            else:  # List of triplets of (a, b, t)
                 if self.num_steps < 0:
                     self.num_steps = max([x[2] for x in conns]) + 1
                 if nodes is None:
@@ -233,9 +236,10 @@ class TimeGraph:
                 for (f, b, t) in conns:
                     self.nodes[f].add_connection(self.nodes[b], t)
                     self.nodes[b].add_connection(self.nodes[f], t)
-        else:
+
+        else:  # some iterable with triplets (a, b, t)
             if self.num_steps < 0:
-                self.num_steps = max([x[2] for x in conns]) + 1
+                self.num_steps = max([x[2] for x in conns]) + 1  # Find largest timestamp value
             if nodes is None:
                 nodes = set([x for (a, b, _) in conns for x in (a, b)])
             self._make_nodes(nodes)
@@ -255,12 +259,12 @@ class TimeGraph:
 
     def _make_nodes(self, nodes):
         num_steps = self.num_steps
-        if isinstance(nodes, int):
+        if isinstance(nodes, int):  # Create n nodes with 0-based index id.
             self.nodes = {d: TimeNode(None, num_steps, d) for d in range(nodes)}
-        elif isinstance(nodes, list) or isinstance(nodes, set):
+        elif isinstance(nodes, list) or isinstance(nodes, set):  # Take node ids from
             self.nodes = {d: TimeNode(max_step=num_steps, id=d) for d in nodes}
         elif isinstance(nodes, dict):
-            self.nodes = {node_id: TimeNode(max_step=num_steps, id=node_id, name=node_meta) for node_id, node_meta in nodes.items()}
+            self.nodes = {node_id: TimeNode(max_step=num_steps, id=node_id, meta_string=node_meta) for node_id, node_meta in nodes.items()}
 
     def get_cluster(self, t, id):
         return self.layers[t][id]
