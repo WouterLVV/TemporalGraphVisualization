@@ -1,5 +1,10 @@
 Changelog TemporalGraphVisualization
 
+=== 2021-02-15 ===
+= Features =
+
+ - Added total vertical distance calculation
+
 === 2021-02-11 ===
 = Features =
 

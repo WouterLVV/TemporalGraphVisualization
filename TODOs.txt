@@ -102,9 +102,10 @@ Evaluation
 -- stability: aggregated plot changes slightly when changing the start timestamp
    (check if stabilised with strong aggregation)
 -- aesthetic metrics
-   #line crossings
-   line wiggling
-   space efficiency
+   ++ #line crossings
+   ++ total vertical distance
+   -- line wiggling
+   -- space efficiency
 -- scalability metrics
    #time frames
    #agents

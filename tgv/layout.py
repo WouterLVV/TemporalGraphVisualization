@@ -1243,21 +1243,29 @@ class SizedConnectionLayout:
         :param context: cairo context to draw this line on
         :param show_annotations: provides annotations when a line changes size significantly
         """
+
+        # Determine the full width of the line
         members = source.neighbours[target]
         num_members = len(members)
         thickness = num_members * self.line_width
         half_thickness = len(members) * self.line_width / 2.
 
+        # Check the data for labels, get the corresponding color and find the factor of the total width per label
         labels = Counter(map(lambda x: x.meta_string, members))
         labels = [(colormap.get(lbl, self.default_line_color), cnt / num_members) for (lbl, cnt) in
                   sorted(list(labels.items()))]
 
+        # Get vertical coordinates of the endpoints
         y_source = line_coordinates[(source, target)]
         y_target = line_coordinates[(target, source)]
+
+        # In extreme cases the curve can be drawn partly behind the cluster,
+        # so we clip it to only the area between both clusters.
         context.save()
         context.rectangle(source.x, 0, target.x, self.height)
         context.clip()
 
+        # If the line is a single colour, draw a simple line
         if len(labels) == 1:
             (r, g, b, a) = labels[0][0]
             context.set_source_rgba(r, g, b, a)
@@ -1269,6 +1277,7 @@ class SizedConnectionLayout:
 
             context.stroke()
 
+        # When there are multiple colours, each color has to be drawn separately.
         else:
             coloured_bezier(context,
                             (source.x, y_source),
@@ -1356,6 +1365,7 @@ class SizedConnectionLayout:
         """
         Returns a cairo surface with just the connections drawn onto them.
 
+        :param emphasize_communities: Create a clear visual distinction between aligned and unaligned clusters
         :param colormap: dictionary that converts a node name to a color value
         :param show_annotations: Flag to show additional information per connection
         :param fading: Flag to also draw the fade in and out connections per cluster
