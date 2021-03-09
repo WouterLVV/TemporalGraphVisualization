@@ -1105,6 +1105,28 @@ class SizedConnectionLayout:
                     total += self.get_num_crossings_between_clusters(layer[j], layer[k])
         return total
 
+    def total_vertical_distance(self) -> float:
+        if not self.is_aligned:
+            self.set_alignment()
+
+        line_coordinates = dict()  # {(cluster, neighbour): y_value of connection at cluster}
+        for cluster in self.clusters:
+            # Lines do not necessarily originate from the center of a cluster, so calculate the origin of all
+            # individual connections in this cluster
+            line_coordinates.update(self.calculate_line_origins(cluster))
+
+        total = 0.
+        for i in range(1, self.num_layers, 2):
+            layer = self.layers[i]
+            for cluster in layer:
+                for neighbour in cluster.neighbours:
+                    total += abs(line_coordinates[(cluster, neighbour)]  # y-value of connection at cluster
+                                 - line_coordinates[(neighbour, cluster)])  # y-value of connection at neighbour
+                    # print(f"l{cluster.tc.layer}, r{cluster.rank} to l{neighbour.tc.layer}, r{neighbour.rank}: "
+                    #       f"{abs(line_coordinates[(cluster, neighbour)] - line_coordinates[(neighbour, cluster)])}")
+
+        return total
+
     def longest_chain_length(self) -> int:
         if not self.is_aligned:
             self.set_alignment()
